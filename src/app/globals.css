@@ -1,0 +1,420 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Tokens néo-futurisme — source : .claude/skills/neo-futurisme/references/design-tokens.md */
+  :root {
+    --background: 220 29% 6%;
+    --foreground: 210 40% 96%;
+    --card: 224 33% 11%;
+    --card-foreground: 210 40% 96%;
+    --primary: 198 93% 60%;
+    --primary-foreground: 220 29% 6%;
+    --secondary: 270 95% 75%;
+    --secondary-foreground: 220 29% 6%;
+    --muted: 225 30% 14%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 224 33% 16%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 350 89% 60%;
+    --destructive-foreground: 210 40% 96%;
+    --success: 158 64% 52%;
+    --success-foreground: 220 29% 6%;
+    --border: 223 25% 18%;
+    --input: 223 25% 22%;
+    --ring: 198 93% 60%;
+    --radius: 1rem;
+    /* Thème sombre : contrôles natifs (scrollbars, inputs, select) en dark. */
+    color-scheme: dark;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply bg-background;
+  }
+  body {
+    @apply text-foreground;
+    font-variant-numeric: tabular-nums;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+    /* Ancres (#recharge…) : le titre ne passe pas sous la navbar sticky. */
+    scroll-margin-top: 5rem;
+  }
+  button,
+  a {
+    touch-action: manipulation;
+  }
+  ::selection {
+    @apply bg-primary text-primary-foreground;
+  }
+}
+
+@layer utilities {
+  /* Verre — cartes et navigation (ne pas superposer deux niveaux) */
+  .glass {
+    @apply border border-white/[0.08] bg-card/60 backdrop-blur-md;
+  }
+  /* Séquence d'ouverture du hero : les textes se révèlent en cascade avec
+     un focus-pull (flou → net), synchronisés avec la naissance du sigil 3D
+     (delay via style inline) */
+  .hero-reveal {
+    animation: hero-reveal 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  /* Transition « lancement d'un rêve » : la lumière du sigil envahit
+     l'écran pendant que la caméra plonge dans le masque (launch-button) */
+  .launch-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    background: radial-gradient(
+      62% 62% at 50% 45%,
+      rgba(94, 234, 212, 0.7),
+      rgba(56, 189, 248, 0.32) 45%,
+      rgba(11, 14, 20, 0) 78%
+    );
+    animation: launch-flash 1.5s cubic-bezier(0.64, 0, 0.78, 0) forwards;
+  }
+  /* Variante identité (connexion / inscription) : la lumière monte en bleu
+     puis vire au violet foncé — le portail se referme sur l'utilisateur */
+  .launch-overlay--violet {
+    background: radial-gradient(
+      62% 62% at 50% 45%,
+      rgba(56, 189, 248, 0.6),
+      rgba(37, 99, 235, 0.32) 45%,
+      rgba(11, 14, 20, 0) 78%
+    );
+  }
+  .launch-overlay--violet::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      70% 70% at 50% 45%,
+      rgba(109, 40, 217, 0.85),
+      rgba(46, 16, 101, 0.55) 50%,
+      rgba(11, 14, 20, 0.2) 82%
+    );
+    animation: launch-violet 1.5s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+  }
+  /* Fondu de sortie : à l'arrivée sur la page cible, le voile se dissout
+     (le composant vit dans la navbar, qui ne se démonte pas) */
+  .launch-overlay--out {
+    animation: launch-fade-out 0.55s ease-out forwards;
+  }
+  /* Halo radial discret (< 6 % d'opacité) pour les pages clés */
+  .page-halo {
+    background-image: radial-gradient(
+      60% 40% at 50% 0%,
+      rgba(56, 189, 248, 0.05),
+      transparent 70%
+    );
+  }
+  /* Labels de données — JetBrains Mono en petites capitales espacées */
+  .data-label {
+    @apply font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground;
+  }
+
+  /* Lien « aller au contenu » : caché hors focus, révélé au clavier. */
+  .skip-link {
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 200;
+    transform: translateY(-160%);
+    transition: transform 0.2s ease;
+  }
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
+
+  /* Atmosphère immersive : aurora en profondeur + grain filmique + vignette.
+     Couche fixe derrière tout le contenu (le fond nuit vit désormais sur <html>). */
+  .atmosphere {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .aurora {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(90px);
+    mix-blend-mode: screen;
+    will-change: transform;
+  }
+  .aurora-1 {
+    width: 62vw;
+    height: 62vw;
+    left: -12vw;
+    top: -18vh;
+    opacity: 0.24;
+    background: radial-gradient(circle at 50% 50%, #38bdf8, transparent 68%);
+    animation: aurora-1 28s ease-in-out infinite;
+  }
+  .aurora-2 {
+    width: 58vw;
+    height: 58vw;
+    right: -16vw;
+    top: 12vh;
+    opacity: 0.22;
+    background: radial-gradient(circle at 50% 50%, #c084fc, transparent 68%);
+    animation: aurora-2 34s ease-in-out infinite;
+  }
+  .aurora-3 {
+    width: 46vw;
+    height: 46vw;
+    left: 26vw;
+    bottom: -20vh;
+    opacity: 0.16;
+    background: radial-gradient(circle at 50% 50%, #5eead4, transparent 70%);
+    animation: aurora-1 40s ease-in-out infinite reverse;
+  }
+  .grain {
+    position: absolute;
+    inset: -15%;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 170px 170px;
+    animation: grain 7s steps(5) infinite;
+  }
+  .vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(130% 120% at 50% 26%, transparent 52%, rgba(4, 6, 11, 0.6) 100%);
+  }
+
+  /* Scroll spatial : les éléments [data-reveal] émergent à l'entrée du viewport.
+     .js-reveal n'est posée que par JS hors reduced motion (ScrollReveal) →
+     sans JS, le contenu reste visible (progressive enhancement). */
+  .js-reveal [data-reveal] {
+    opacity: 0;
+    transform: translateY(32px) scale(0.985);
+    transition:
+      opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
+  }
+  .js-reveal [data-reveal].in-view {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Matérialité UI : verre « lux » — liseré haut + ombre ambiante étagée. */
+  .card-lux {
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+      0 24px 50px -30px rgba(0, 0, 0, 0.75);
+  }
+
+  /* Bord lumineux qui suit le curseur — confiné au liseré 1px (masque). */
+  [data-spotlight] {
+    position: relative;
+  }
+  [data-spotlight]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(
+      240px circle at var(--spot-x, 50%) var(--spot-y, 0%),
+      rgba(94, 234, 212, 0.55),
+      rgba(56, 189, 248, 0.12) 42%,
+      transparent 72%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+  }
+  [data-spotlight]:hover::before {
+    opacity: 1;
+  }
+
+  /* Boutons magnétiques : retour élastique (le suivi curseur est posé en JS). */
+  [data-magnetic] {
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+  }
+
+  /* Focus clavier : parité avec le survol — le liseré de la carte s'illumine. */
+  .group:focus-visible [data-spotlight]::before,
+  [data-spotlight]:focus-visible::before {
+    opacity: 1;
+  }
+
+  /* Transition de page : le contenu entrant se révèle (nav client uniquement). */
+  .page-enter {
+    animation: page-enter 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Signature — traînée de financement : un éclat balaie la barre de progression. */
+  .progress-trace {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent 15%,
+      rgba(255, 255, 255, 0.5) 50%,
+      transparent 85%
+    );
+    transform: translateX(-100%);
+    animation: progress-trace 2.6s ease-in-out infinite;
+  }
+
+  /* Signature — anneau de réputation : rotation orbitale lente (repos = -45°). */
+  .rep-ring {
+    transform-origin: center;
+    transform: rotate(-45deg);
+    animation: rep-orbit 9s linear infinite;
+  }
+}
+
+@keyframes hero-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(10px);
+  }
+  60% {
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes launch-flash {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(16px);
+  }
+}
+
+/* Le violet foncé recouvre le bleu dans la seconde moitié de la transition */
+@keyframes launch-violet {
+  from {
+    opacity: 0;
+  }
+  45% {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes launch-fade-out {
+  from {
+    opacity: 1;
+    backdrop-filter: blur(16px);
+  }
+  to {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+}
+
+
+@keyframes aurora-1 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6vw, 4vh, 0) scale(1.12);
+  }
+}
+
+@keyframes aurora-2 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-5vw, 6vh, 0) scale(0.92);
+  }
+}
+
+@keyframes grain {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-3%, 2%);
+  }
+  50% {
+    transform: translate(2%, -3%);
+  }
+  75% {
+    transform: translate(-2%, -2%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes progress-trace {
+  0% {
+    transform: translateX(-100%);
+  }
+  60%,
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+@keyframes rep-orbit {
+  from {
+    transform: rotate(-45deg);
+  }
+  to {
+    transform: rotate(315deg);
+  }
+}
+
+/* Accessibilité : couper les animations si l'utilisateur le demande */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

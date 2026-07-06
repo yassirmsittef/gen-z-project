@@ -1,0 +1,256 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Neon/serverless : url = connexion POOLÉE (runtime), directUrl = DIRECTE (migrations).
+  // En local, les deux pointent sur la même base.
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------- Utilisateurs & Auth.js ----------
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  name             String?
+  avatarUrl        String?
+  emailVerified    DateTime?
+  passwordHash     String?
+  credits          Int       @default(0)
+  totalContributed Int       @default(0) // cumul à vie (non décrémenté par les remboursements)
+  reputation       Int       @default(0)
+  skills           String[]  @default([])
+  createdAt        DateTime  @default(now())
+
+  accounts         Account[]
+  sessions         Session[]
+  projects         Project[]
+  contributions    Contribution[]
+  transactions     CreditTransaction[]
+  reputationEvents ReputationEvent[]
+  votes            Vote[]
+  messagesSent     Message[]           @relation("MessagesSent")
+  messagesReceived Message[]           @relation("MessagesReceived")
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @id
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// ---------- Projets ----------
+
+enum ProjectStatus {
+  ACTIVE // en campagne, collecte en cours
+  FUNDED // objectif atteint, fonds sous séquestre, déblocage par étapes
+  COMPLETED // toutes les étapes validées
+  FAILED // objectif non atteint ou preuves refusées → remboursement
+}
+
+enum ProjectCategory {
+  TECH
+  ECOMMERCE
+  SERVICES
+  CREATIF
+  MUSIQUE
+  MODE
+  GAMING
+  FOOD
+  EDUCATION
+  SANTE
+  FINANCE
+  IMPACT
+  SPORT
+  MEDIA
+  ARTISANAT
+  IMMOBILIER
+  AUTRE
+}
+
+model Project {
+  id            String          @id @default(cuid())
+  ownerId       String
+  title         String
+  slug          String          @unique
+  pitch         String
+  description   String
+  category      ProjectCategory
+  goal          Int
+  raised        Int             @default(0)
+  released      Int             @default(0) // crédits déjà débloqués vers le porteur
+  coverUrl      String?
+  deadline      DateTime
+  status        ProjectStatus   @default(ACTIVE)
+  failureReason String?
+  neededSkills  String[]        @default([])
+  createdAt     DateTime        @default(now())
+
+  owner         User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  milestones    Milestone[]
+  contributions Contribution[]
+
+  @@index([status, category])
+}
+
+// ---------- Étapes & preuves ----------
+
+enum MilestoneStatus {
+  LOCKED // en attente des étapes précédentes
+  AWAITING_PROOF // le porteur doit soumettre une preuve
+  UNDER_REVIEW // preuve soumise, vote pondéré des contributeurs en cours
+  RELEASED // preuve validée, fonds débloqués
+}
+
+model Milestone {
+  id             String          @id @default(cuid())
+  projectId      String
+  order          Int
+  title          String
+  description    String
+  amount         Int // montant en crédits débloqué par cette étape (somme = objectif)
+  status         MilestoneStatus @default(LOCKED)
+  rejectionCount Int             @default(0)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  proofs  Proof[]
+
+  @@unique([projectId, order])
+}
+
+enum ProofStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Proof {
+  id          String      @id @default(cuid())
+  milestoneId String
+  content     String
+  links       String[]    @default([])
+  imageUrls   String[]    @default([])
+  status      ProofStatus @default(PENDING)
+  submittedAt DateTime    @default(now())
+
+  milestone Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  votes     Vote[]
+}
+
+enum VoteDecision {
+  APPROVE
+  REJECT
+}
+
+model Vote {
+  id        String       @id @default(cuid())
+  proofId   String
+  userId    String
+  weight    Int // poids = total contribué par le votant à ce projet, figé au moment du vote
+  decision  VoteDecision
+  createdAt DateTime     @default(now())
+
+  proof Proof @relation(fields: [proofId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([proofId, userId])
+}
+
+// ---------- Contributions & crédits ----------
+
+model Contribution {
+  id        String   @id @default(cuid())
+  userId    String
+  projectId String
+  amount    Int
+  refunded  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+}
+
+enum TransactionType {
+  WELCOME
+  CONTRIBUTION
+  MILESTONE_RELEASE
+  REFUND
+  BONUS
+}
+
+model CreditTransaction {
+  id        String          @id @default(cuid())
+  userId    String
+  amount    Int // signé : négatif = débit, positif = crédit
+  type      TransactionType
+  refId     String? // id de l'objet lié (projet, étape...)
+  label     String
+  createdAt DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+// ---------- Messagerie (entraide entre porteurs) ----------
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String
+  recipientId String
+  body        String
+  createdAt   DateTime @default(now())
+
+  sender    User @relation("MessagesSent", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("MessagesReceived", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, createdAt])
+  @@index([recipientId, createdAt])
+}
+
+// ---------- Réputation ----------
+
+model ReputationEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  delta     Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}

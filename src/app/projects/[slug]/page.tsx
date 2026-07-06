@@ -1,0 +1,250 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Clock, Heart, LockOpen, MessagesSquare, PartyPopper, Users } from "lucide-react";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { ContributeForm } from "@/components/contribute-form";
+import { MilestoneTimeline } from "@/components/milestone-timeline";
+import { ReputationBadge } from "@/components/reputation-badge";
+import { ReputationRing } from "@/components/reputation-ring";
+import { SkillTag } from "@/components/skill-tag";
+import { StatusBadge } from "@/components/status-badge";
+import { UserAvatar } from "@/components/user-avatar";
+import { CATEGORY_LABELS } from "@/lib/constants";
+import { daysLeft, formatCredits, formatDate, progressPercent } from "@/lib/format";
+
+export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+
+  // La grosse requête projet démarre tout de suite ; la session (JWT, immédiate)
+  // débloque la requête « viewer » qui se chevauche alors avec elle (Promise.all)
+  // au lieu de s'enchaîner derrière — plus de cascade séquentielle.
+  const projectPromise = prisma.project.findUnique({
+    where: { slug },
+    include: {
+      owner: true,
+      milestones: {
+        orderBy: { order: "asc" },
+        include: { proofs: { include: { votes: true } } },
+      },
+      contributions: { include: { user: true }, orderBy: { createdAt: "desc" } },
+    },
+  });
+
+  const session = await auth();
+  const viewerId = session?.user?.id;
+  const [project, viewer] = await Promise.all([
+    projectPromise,
+    viewerId
+      ? prisma.user.findUnique({ where: { id: viewerId }, select: { credits: true } })
+      : Promise.resolve(null),
+  ]);
+  if (!project) notFound();
+
+  const isOwner = viewerId === project.ownerId;
+  const isContributor = project.contributions.some((c) => c.userId === viewerId);
+
+  // Total par contributeur (une personne peut contribuer plusieurs fois).
+  const byContributor = new Map<string, { name: string | null; id: string; total: number }>();
+  for (const c of project.contributions) {
+    const entry = byContributor.get(c.userId) ?? { name: c.user.name, id: c.userId, total: 0 };
+    entry.total += c.amount;
+    byContributor.set(c.userId, entry);
+  }
+  const contributors = [...byContributor.values()].sort((a, b) => b.total - a.total);
+
+  const percent = progressPercent(project.raised, project.goal);
+  const remaining = daysLeft(project.deadline);
+
+  return (
+    <div className="container py-10">
+      {project.status === "FAILED" && (
+        <Alert variant="destructive" className="mb-8">
+          <AlertTitle>Ce projet n&apos;a pas abouti</AlertTitle>
+          <AlertDescription className="space-y-3">
+            <p>
+              {project.failureReason} Les contributeurs ont été remboursés sur le séquestre
+              restant.
+            </p>
+            {isOwner ? (
+              <Button size="sm" asChild>
+                <Link href={`/rebond?from=${project.slug}`}>Rebondir maintenant →</Link>
+              </Button>
+            ) : (
+              <p className="text-sm">
+                L&apos;échec fait partie du jeu — le créateur est réorienté vers de nouvelles
+                opportunités.
+              </p>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {project.status === "COMPLETED" && (
+        <Alert variant="success" className="mb-8">
+          <PartyPopper className="h-4 w-4" />
+          <AlertTitle>Projet réalisé</AlertTitle>
+          <AlertDescription>
+            Toutes les étapes ont été validées par la communauté et les fonds intégralement
+            débloqués.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className="mb-8 space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline">{CATEGORY_LABELS[project.category]}</Badge>
+          <StatusBadge status={project.status} />
+        </div>
+        <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">{project.title}</h1>
+        <p className="max-w-3xl text-lg font-medium text-muted-foreground">{project.pitch}</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <Link href={`/u/${project.owner.id}`} className="group inline-flex items-center gap-2">
+            <ReputationRing reputation={project.owner.reputation}>
+              <UserAvatar name={project.owner.name} className="border-0" />
+            </ReputationRing>
+            <span className="font-semibold transition-colors duration-200 group-hover:text-primary">
+              {project.owner.name}
+            </span>
+            <ReputationBadge reputation={project.owner.reputation} />
+          </Link>
+          {viewerId && !isOwner && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/chat/${project.owner.id}`}>
+                <MessagesSquare aria-hidden />
+                Contacter
+              </Link>
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+        <div className="min-w-0 space-y-10">
+          <section>
+            <h2 className="mb-4 text-2xl font-semibold tracking-tight">Le projet</h2>
+            <p className="whitespace-pre-line leading-relaxed text-foreground/90">
+              {project.description}
+            </p>
+            {project.neededSkills.length > 0 && (
+              <div className="mt-6 space-y-2">
+                <p className="data-label">Compétences recherchées</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {project.neededSkills.map((skill) => (
+                    <SkillTag key={skill} skill={skill} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+
+          <section>
+            <h2 className="mb-1 text-2xl font-semibold tracking-tight">Étapes &amp; preuves d&apos;avancement</h2>
+            <p className="mb-6 text-sm text-muted-foreground">
+              Les fonds sont débloqués étape par étape : le créateur soumet une preuve, les
+              contributeurs votent.
+            </p>
+            <MilestoneTimeline
+              milestones={project.milestones}
+              project={project}
+              viewerId={viewerId}
+              isOwner={isOwner}
+              isContributor={isContributor}
+            />
+          </section>
+        </div>
+
+        <aside className="space-y-6">
+          <Card>
+            <CardContent className="space-y-4 pt-6">
+              <div>
+                <p className="font-display text-4xl font-semibold">
+                  {formatCredits(project.raised)}
+                  <span className="font-sans text-base font-normal text-muted-foreground">
+                    {" "}
+                    sur {formatCredits(project.goal)}
+                  </span>
+                </p>
+              </div>
+              <Progress value={percent} />
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <Users className="h-4 w-4" />
+                  {contributors.length} contributeur{contributors.length > 1 ? "s" : ""}
+                </span>
+                {project.status === "ACTIVE" ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {remaining} j restants
+                  </span>
+                ) : (
+                  <span>Campagne terminée le {formatDate(project.deadline)}</span>
+                )}
+              </div>
+
+              {(project.status === "FUNDED" || project.status === "COMPLETED") && (
+                <p className="rounded-xl border border-white/[0.08] bg-muted/50 p-3 text-sm">
+                  <LockOpen className="mr-1 inline h-4 w-4 text-success" aria-hidden />
+                  <span className="font-semibold">{formatCredits(project.released)}</span>{" "}
+                  débloqués sur {formatCredits(project.raised)} — le reste est sous séquestre
+                  jusqu&apos;à validation des étapes.
+                </p>
+              )}
+
+              {project.status === "ACTIVE" &&
+                (isOwner ? (
+                  <p className="rounded-xl border border-white/[0.08] bg-muted/50 p-3 text-sm text-muted-foreground">
+                    C&apos;est ton projet — partage-le pour atteindre ton objectif.
+                  </p>
+                ) : viewer ? (
+                  <ContributeForm
+                    projectId={project.id}
+                    projectTitle={project.title}
+                    balance={viewer.credits}
+                  />
+                ) : (
+                  <Button className="w-full" asChild>
+                    <Link href="/login">Connecte-toi pour contribuer</Link>
+                  </Button>
+                ))}
+            </CardContent>
+          </Card>
+
+          {contributors.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Heart className="h-4 w-4 text-primary" aria-hidden />
+                  Contributeurs
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {contributors.slice(0, 8).map((contributor) => (
+                  <div key={contributor.id} className="flex items-center gap-3 text-sm">
+                    <UserAvatar name={contributor.name} className="h-7 w-7 text-[10px]" />
+                    <Link href={`/u/${contributor.id}`} className="truncate font-bold hover:text-primary">
+                      {contributor.name}
+                    </Link>
+                    <span className="ml-auto font-bold text-muted-foreground">
+                      {formatCredits(contributor.total)}
+                    </span>
+                  </div>
+                ))}
+                {contributors.length > 8 && (
+                  <p className="text-xs text-muted-foreground">
+                    + {contributors.length - 8} autres
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </aside>
+      </div>
+    </div>
+  );
+}
