@@ -1,5 +1,16 @@
 import Link from "next/link";
-import { Flame, HandCoins, Rocket, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  Activity,
+  Flame,
+  HandCoins,
+  Heart,
+  Megaphone,
+  Rocket,
+  ShieldCheck,
+  Sparkles,
+  UserPlus,
+  type LucideIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { HeroSceneLoader } from "@/components/hero-scene-loader";
@@ -7,6 +18,7 @@ import { LaunchLink } from "@/components/launch-button";
 import { ProjectCard } from "@/components/project-card";
 import { prisma } from "@/lib/prisma";
 import { WELCOME_CREDITS } from "@/lib/constants";
+import { formatRelative } from "@/lib/format";
 
 const STEPS = [
   {
@@ -35,8 +47,25 @@ const STEPS = [
   },
 ];
 
+type PulseItem = {
+  at: Date;
+  Icon: LucideIcon;
+  tone: string;
+  href: string;
+  text: React.ReactNode;
+};
+
 export default async function HomePage() {
-  const [featured, projectCount, userCount, contributed] = await Promise.all([
+  const [
+    featured,
+    projectCount,
+    userCount,
+    contributed,
+    recentContributions,
+    recentProjects,
+    recentUpdates,
+    recentMembers,
+  ] = await Promise.all([
     prisma.project.findMany({
       where: { status: "ACTIVE" },
       orderBy: { raised: "desc" },
@@ -46,7 +75,82 @@ export default async function HomePage() {
     prisma.project.count(),
     prisma.user.count(),
     prisma.contribution.aggregate({ _sum: { amount: true } }),
+    prisma.contribution.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      include: {
+        user: { select: { name: true } },
+        project: { select: { title: true, slug: true } },
+      },
+    }),
+    prisma.project.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 4,
+      select: { title: true, slug: true, createdAt: true, owner: { select: { name: true } } },
+    }),
+    prisma.projectUpdate.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 4,
+      include: { project: { select: { title: true, slug: true } } },
+    }),
+    prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 4,
+      select: { id: true, name: true, createdAt: true },
+    }),
   ]);
+
+  // Le pouls : les derniers événements de la plateforme, toutes sources
+  // confondues, du plus récent au plus ancien.
+  const pulse: PulseItem[] = [
+    ...recentContributions.map((c) => ({
+      at: c.createdAt,
+      Icon: Heart,
+      tone: "text-primary",
+      href: `/projects/${c.project.slug}`,
+      text: (
+        <>
+          <span className="font-semibold">{c.user.name}</span> a soutenu «{" "}
+          {c.project.title} » <span className="font-mono text-primary">{c.amount} $</span>
+        </>
+      ),
+    })),
+    ...recentProjects.map((p) => ({
+      at: p.createdAt,
+      Icon: Rocket,
+      tone: "text-primary",
+      href: `/projects/${p.slug}`,
+      text: (
+        <>
+          <span className="font-semibold">{p.owner.name}</span> a lancé « {p.title} »
+        </>
+      ),
+    })),
+    ...recentUpdates.map((u) => ({
+      at: u.createdAt,
+      Icon: Megaphone,
+      tone: "text-secondary",
+      href: `/projects/${u.project.slug}#actus`,
+      text: (
+        <>
+          Actu de « {u.project.title} » : <span className="font-semibold">{u.title}</span>
+        </>
+      ),
+    })),
+    ...recentMembers.map((m) => ({
+      at: m.createdAt,
+      Icon: UserPlus,
+      tone: "text-secondary",
+      href: `/u/${m.id}`,
+      text: (
+        <>
+          <span className="font-semibold">{m.name}</span> a rejoint Tremplin
+        </>
+      ),
+    })),
+  ]
+    .sort((a, b) => b.at.getTime() - a.at.getTime())
+    .slice(0, 10);
 
   const stats = [
     { label: "Projets", value: projectCount.toLocaleString("fr-FR") },
@@ -155,6 +259,43 @@ export default async function HomePage() {
             {featured.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
+          </div>
+        </section>
+      )}
+
+      {pulse.length > 0 && (
+        <section className="container pb-24">
+          <div className="mx-auto max-w-3xl">
+            <h2
+              data-reveal
+              className="mb-2 flex items-center justify-center gap-3 text-3xl font-semibold tracking-tight sm:text-4xl"
+            >
+              <Activity className="h-8 w-8 text-primary" aria-hidden />
+              Le pouls de Tremplin
+            </h2>
+            <p data-reveal className="data-label mb-8 text-center">
+              Ce qui vient de se passer sur la plateforme
+            </p>
+            <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-tr-sm">
+              {pulse.map((item, index) => (
+                <li key={index}>
+                  <Link
+                    href={item.href}
+                    className="flex items-center gap-3.5 p-4 transition-colors duration-200 hover:bg-accent"
+                  >
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-card/80 ${item.tone}`}
+                    >
+                      <item.Icon className="h-[18px] w-[18px]" aria-hidden />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm">{item.text}</span>
+                    <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                      {formatRelative(item.at)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
       )}

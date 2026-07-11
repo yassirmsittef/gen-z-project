@@ -12,6 +12,19 @@ export function formatDate(date: Date): string {
   });
 }
 
+/** Temps relatif court en français ("à l'instant", "il y a 3 h", "il y a 2 j"...). */
+export function formatRelative(date: Date): string {
+  const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (seconds < 60) return "à l'instant";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `il y a ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `il y a ${days} j`;
+  return formatDate(date);
+}
+
 /** Jours restants avant la deadline (0 si dépassée). */
 export function daysLeft(deadline: Date): number {
   return Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / 86_400_000));
