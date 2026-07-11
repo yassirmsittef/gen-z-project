@@ -206,7 +206,7 @@ export function ContributeForm({
                   Annuler
                 </Button>
                 <Button type="submit" form={formId} size="sm" disabled={pending}>
-                  {pending ? "Envoi..." : `Confirmer — ${formatCredits(amount)}`}
+                  {pending ? "Envoi…" : `Confirmer — ${formatCredits(amount)}`}
                 </Button>
               </div>
             </div>

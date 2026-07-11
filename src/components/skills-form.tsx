@@ -30,7 +30,7 @@ export function SkillsForm({ initialSkills }: { initialSkills: string[] }) {
       )}
 
       <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "Enregistrement..." : "Enregistrer"}
+        {pending ? "Enregistrement…" : "Enregistrer"}
       </Button>
     </form>
   );

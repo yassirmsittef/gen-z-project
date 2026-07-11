@@ -96,7 +96,7 @@ export default async function ProjectsPage({
           type="search"
           name="q"
           defaultValue={query}
-          placeholder="Rechercher un projet, une idée, un mot-clé..."
+          placeholder="Rechercher un projet, une idée, un mot-clé…"
           aria-label="Rechercher un projet"
           className="flex-1"
         />

@@ -60,7 +60,7 @@ export function PartnershipForm({ projectId }: { projectId: string }) {
             className="flex h-10 w-full rounded-xl border border-input bg-card/60 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <option value="" disabled>
-              Choisir...
+              Choisir…
             </option>
             {Object.entries(PARTNERSHIP_COMPENSATION_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
@@ -107,7 +107,7 @@ export function PartnershipForm({ projectId }: { projectId: string }) {
 
       <Button type="submit" disabled={pending}>
         <Send aria-hidden />
-        {pending ? "Envoi..." : "Envoyer la demande"}
+        {pending ? "Envoi…" : "Envoyer la demande"}
       </Button>
       <p className="text-xs text-muted-foreground">
         Après envoi, vous recevrez un lien privé pour suivre la réponse du créateur ou de la

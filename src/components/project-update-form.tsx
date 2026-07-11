@@ -53,7 +53,7 @@ export function ProjectUpdateForm({ projectId }: { projectId: string }) {
 
       <Button type="submit" size="sm" disabled={pending}>
         <Megaphone aria-hidden />
-        {pending ? "Publication..." : "Publier l'actu"}
+        {pending ? "Publication…" : "Publier l'actu"}
       </Button>
     </form>
   );

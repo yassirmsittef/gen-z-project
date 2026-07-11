@@ -57,7 +57,7 @@ export function PartnershipResponseForm({
       <div className="flex flex-wrap gap-3">
         <Button type="submit" name="decision" value="ACCEPTED" disabled={pending}>
           <Check aria-hidden />
-          {pending ? "Envoi..." : "Accepter le partenariat"}
+          {pending ? "Envoi…" : "Accepter le partenariat"}
         </Button>
         <Button type="submit" name="decision" value="DECLINED" variant="outline" disabled={pending}>
           <X aria-hidden />

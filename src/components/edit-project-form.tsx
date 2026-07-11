@@ -126,7 +126,7 @@ export function EditProjectForm({ project }: { project: EditableProject }) {
 
       <Button type="submit" disabled={pending}>
         <Save aria-hidden />
-        {pending ? "Enregistrement..." : "Enregistrer les modifications"}
+        {pending ? "Enregistrement…" : "Enregistrer les modifications"}
       </Button>
     </form>
   );

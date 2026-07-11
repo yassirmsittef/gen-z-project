@@ -65,7 +65,7 @@ export function ProfileForm({
       {state?.success && <p className="text-sm font-medium text-success">Profil enregistré.</p>}
 
       <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "Enregistrement..." : "Enregistrer"}
+        {pending ? "Enregistrement…" : "Enregistrer"}
       </Button>
     </form>
   );

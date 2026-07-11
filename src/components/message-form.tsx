@@ -21,7 +21,8 @@ export function MessageForm({ recipientId }: { recipientId: string }) {
         <input type="hidden" name="recipientId" value={recipientId} />
         <Input
           name="body"
-          placeholder="Écris ton message... (entraide, collab, questions)"
+          aria-label="Ton message"
+          placeholder="Écris ton message… (entraide, collab, questions)"
           maxLength={1000}
           autoComplete="off"
           required

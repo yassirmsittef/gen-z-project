@@ -101,7 +101,7 @@ export function CreateProjectForm() {
               defaultValue=""
             >
               <option value="" disabled>
-                Choisir...
+                Choisir…
               </option>
               {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -253,7 +253,7 @@ export function CreateProjectForm() {
 
       <Button type="submit" size="lg" disabled={pending}>
         <Rocket aria-hidden />
-        {pending ? "Création..." : "Lancer mon projet"}
+        {pending ? "Création…" : "Lancer mon projet"}
       </Button>
     </form>
   );

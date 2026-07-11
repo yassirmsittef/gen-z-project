@@ -20,7 +20,7 @@ export function UserAvatar({
       {avatarUrl ? (
         // Domaine libre (l'utilisateur colle une URL) : <img> natif, pas next/image.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+        <img src={avatarUrl} alt="" width={80} height={80} className="h-full w-full object-cover" />
       ) : (
         initials(name)
       )}

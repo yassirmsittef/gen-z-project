@@ -215,7 +215,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           <img
             src={project.coverUrl}
             alt={`Visuel du projet ${project.title}`}
-            className="max-h-[380px] w-full object-cover"
+            width={1680}
+            height={720}
+            className="aspect-[21/9] max-h-[380px] w-full object-cover"
           />
         </div>
       )}

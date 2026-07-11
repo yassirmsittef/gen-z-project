@@ -46,7 +46,7 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
         {state?.error && <p role="alert" className="text-sm font-medium text-destructive">{state.error}</p>}
 
         <Button type="submit" className="w-full" disabled={pending}>
-          {pending ? "Connexion..." : "Se connecter"}
+          {pending ? "Connexion…" : "Se connecter"}
         </Button>
       </form>
 
@@ -108,7 +108,7 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
         {state?.error && <p role="alert" className="text-sm font-medium text-destructive">{state.error}</p>}
 
         <Button type="submit" className="w-full" disabled={pending}>
-          {pending ? "Création..." : "Créer mon compte (+5 tokens offerts)"}
+          {pending ? "Création…" : "Créer mon compte (+5 tokens offerts)"}
         </Button>
       </form>
 

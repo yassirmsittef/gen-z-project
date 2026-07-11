@@ -67,7 +67,7 @@ export function ConnectForm({
       <Button type="submit" variant="outline" size="sm" disabled={pending}>
         <Landmark aria-hidden />
         {pending
-          ? "Redirection vers Stripe..."
+          ? "Redirection vers Stripe…"
           : status
             ? "Reprendre la configuration"
             : "Configurer mes versements"}

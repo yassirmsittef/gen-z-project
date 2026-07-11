@@ -59,7 +59,8 @@ export function ShareButton({ title, text }: { title: string; text: string }) {
   return (
     <Button type="button" variant="outline" size="sm" onClick={share}>
       {copied ? <Check aria-hidden /> : <Share2 aria-hidden />}
-      {copied ? "Lien copié !" : "Partager"}
+      {/* aria-live : la confirmation de copie est annoncée aux lecteurs d'écran. */}
+      <span aria-live="polite">{copied ? "Lien copié !" : "Partager"}</span>
     </Button>
   );
 }

@@ -30,7 +30,7 @@ export function ProofForm({ milestoneId, lastAttempt }: { milestoneId: string; l
         <Textarea
           id={`content-${milestoneId}`}
           name="content"
-          placeholder="Décris concrètement ce qui a été fait pour cette étape (20 caractères min)..."
+          placeholder="Décris concrètement ce qui a été fait pour cette étape (20 caractères min)…"
           rows={4}
           required
         />
@@ -43,7 +43,7 @@ export function ProofForm({ milestoneId, lastAttempt }: { milestoneId: string; l
             id={`links-${milestoneId}`}
             name="links"
             rows={2}
-            placeholder={"https://demo.exemple.fr\nhttps://github.com/..."}
+            placeholder={"https://demo.exemple.fr\nhttps://github.com/…"}
           />
         </div>
         <div className="space-y-1.5">
@@ -60,7 +60,7 @@ export function ProofForm({ milestoneId, lastAttempt }: { milestoneId: string; l
       {state?.error && <p role="alert" className="text-sm font-medium text-destructive">{state.error}</p>}
 
       <Button type="submit" size="sm" disabled={pending}>
-        {pending ? "Envoi..." : "Envoyer la preuve au vote"}
+        {pending ? "Envoi…" : "Envoyer la preuve au vote"}
       </Button>
     </form>
   );

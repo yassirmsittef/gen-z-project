@@ -19,7 +19,7 @@ function SubmitButton({ following, count }: { following: boolean; count: number 
       title={following ? "Ne plus suivre ce projet" : "Suivre ce projet"}
     >
       <Star className={cn(following && "fill-current")} aria-hidden />
-      {pending ? "..." : following ? "Suivi" : "Suivre"}
+      {pending ? "…" : following ? "Suivi" : "Suivre"}
       <span className="font-mono text-xs opacity-75">{count}</span>
     </Button>
   );

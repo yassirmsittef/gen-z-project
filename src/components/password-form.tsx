@@ -62,7 +62,7 @@ export function PasswordForm() {
       )}
 
       <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "Modification..." : "Changer le mot de passe"}
+        {pending ? "Modification…" : "Changer le mot de passe"}
       </Button>
     </form>
   );

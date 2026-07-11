@@ -46,7 +46,7 @@ export function DeleteAccount() {
         )}
 
         <Button type="submit" variant="destructive" size="sm" disabled={pending}>
-          {pending ? "Suppression..." : "Supprimer définitivement mon compte"}
+          {pending ? "Suppression…" : "Supprimer définitivement mon compte"}
         </Button>
       </form>
     </details>

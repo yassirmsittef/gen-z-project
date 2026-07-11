@@ -57,7 +57,7 @@ export function LocationForm({ initialCity }: { initialCity: string | null }) {
       )}
 
       <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "Enregistrement..." : "Enregistrer"}
+        {pending ? "Enregistrement…" : "Enregistrer"}
       </Button>
     </form>
   );

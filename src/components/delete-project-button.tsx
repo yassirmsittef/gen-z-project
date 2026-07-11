@@ -28,7 +28,7 @@ export function DeleteProjectButton({ projectId }: { projectId: string }) {
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" variant="destructive" size="sm" disabled={pending}>
             <Trash2 aria-hidden />
-            {pending ? "Retrait..." : "Oui, retirer définitivement"}
+            {pending ? "Retrait…" : "Oui, retirer définitivement"}
           </Button>
           <Button type="button" variant="ghost" size="sm" onClick={() => setArmed(false)}>
             Annuler

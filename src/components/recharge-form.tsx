@@ -54,7 +54,7 @@ export function RechargeForm({ stripeEnabled }: { stripeEnabled: boolean }) {
       <Button type="submit" disabled={pending}>
         {stripeEnabled ? <CreditCard aria-hidden /> : <Wallet aria-hidden />}
         {pending
-          ? "Redirection..."
+          ? "Redirection…"
           : stripeEnabled
             ? `Payer ${amount} $ avec Stripe`
             : `Recharger ${amount} tokens`}

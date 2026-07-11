@@ -22,7 +22,7 @@ export function CommentForm({ projectId }: { projectId: string }) {
         required
         rows={3}
         maxLength={1000}
-        placeholder="Encourage, pose une question, propose un coup de main..."
+        placeholder="Encourage, pose une question, propose un coup de main…"
         aria-label="Ton commentaire"
       />
       {state?.error && (
@@ -31,7 +31,7 @@ export function CommentForm({ projectId }: { projectId: string }) {
         </p>
       )}
       <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "Envoi..." : "Commenter"}
+        {pending ? "Envoi…" : "Commenter"}
       </Button>
     </form>
   );

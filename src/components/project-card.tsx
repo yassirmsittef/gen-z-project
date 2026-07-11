@@ -30,6 +30,8 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
               src={project.coverUrl}
               alt=""
               loading="lazy"
+              width={1280}
+              height={720}
               className="aspect-video w-full object-cover"
             />
           </div>
