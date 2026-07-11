@@ -43,6 +43,7 @@ model User {
   messagesSent     Message[]           @relation("MessagesSent")
   messagesReceived Message[]           @relation("MessagesReceived")
   notifications    Notification[]
+  comments         Comment[]
 }
 
 model Account {
@@ -129,6 +130,8 @@ model Project {
   milestones          Milestone[]
   contributions       Contribution[]
   partnershipRequests PartnershipRequest[]
+  updates             ProjectUpdate[]
+  comments            Comment[]
 
   @@index([status, category])
 }
@@ -279,6 +282,36 @@ model CreditTransaction {
   @@index([userId, createdAt])
 }
 
+// ---------- Vie du projet : actus du porteur & discussion ----------
+
+/// Actualité postée par le porteur — le fil de nouvelles du projet.
+model ProjectUpdate {
+  id        String   @id @default(cuid())
+  projectId String
+  title     String
+  body      String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+}
+
+/// Commentaire public sous un projet. Modération légère : l'auteur ou le
+/// porteur du projet peuvent supprimer.
+model Comment {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  body      String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+}
+
 // ---------- Messagerie (entraide entre porteurs) ----------
 
 model Message {
@@ -307,6 +340,8 @@ enum NotificationType {
   PROOF_REJECTED // preuve refusée par la communauté
   MESSAGE // nouveau message privé
   PARTNERSHIP // nouvelle demande de partenariat
+  COMMENT // nouveau commentaire sur ton projet
+  PROJECT_UPDATE // le porteur a posté une actu
 }
 
 model Notification {

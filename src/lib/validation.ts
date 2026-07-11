@@ -129,6 +129,29 @@ export const messageSchema = z.object({
     .max(1000, "1000 caractères max par message."),
 });
 
+export const commentSchema = z.object({
+  projectId: z.string().min(1),
+  body: z
+    .string()
+    .trim()
+    .min(2, "Ton commentaire est un peu court.")
+    .max(1000, "1000 caractères max."),
+});
+
+export const projectUpdateSchema = z.object({
+  projectId: z.string().min(1),
+  title: z
+    .string()
+    .trim()
+    .min(3, "Titre trop court (3 caractères min).")
+    .max(80, "80 caractères max."),
+  body: z
+    .string()
+    .trim()
+    .min(10, "Raconte un peu plus (10 caractères min).")
+    .max(3000, "3000 caractères max."),
+});
+
 export const partnershipRequestSchema = z.object({
   projectId: z.string().min(1),
   brandName: z

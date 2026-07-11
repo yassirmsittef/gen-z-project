@@ -74,7 +74,9 @@ export function MilestoneTimeline({
               />
             </div>
 
-            <div className="flex-1 space-y-3 pb-8">
+            {/* min-w-0 : sans lui, le contenu (liens de preuve, poids de vote)
+                impose sa largeur intrinsèque et fait déborder à 375px */}
+            <div className="min-w-0 flex-1 space-y-3 pb-8">
               <div className="flex flex-wrap items-center gap-2 pt-2">
                 <h3 className="font-semibold">{milestone.title}</h3>
                 <span

@@ -409,6 +409,46 @@ async function main() {
     45
   );
 
+  console.log("📣 Actus & discussion...");
+  await prisma.projectUpdate.createMany({
+    data: [
+      {
+        projectId: p4.id,
+        title: "La démo 3 niveaux est en ligne !",
+        body: "Grâce à vous, la démo publique est jouable dès maintenant dans le navigateur. 40 testeurs, zéro crash, et déjà plein de retours pour la suite. Le netcode tient — prochaine étape : les 15 niveaux et la bande-son originale.",
+        createdAt: new Date(Date.now() - 2 * 86_400_000),
+      },
+      {
+        projectId: p3.id,
+        title: "80 kg de textile récupérés",
+        body: "Le tri est terminé : 80 kg de matières sauvées de la benne, fournitures achetées. La confection des 20 pièces démarre cette semaine — photos du stock dans la preuve d'étape.",
+        createdAt: new Date(Date.now() - 1 * 86_400_000),
+      },
+    ],
+  });
+  await prisma.comment.createMany({
+    data: [
+      {
+        projectId: p1.id,
+        userId: max.id,
+        body: "Le concept est top — si tu as besoin d'un jingle ou d'un habillage sonore pour les épisodes, fais signe !",
+        createdAt: new Date(Date.now() - 200 * 60_000),
+      },
+      {
+        projectId: p1.id,
+        userId: zoe.id,
+        body: "J'ai des chutes de tissu parfaites pour des housses de micro anti-bruit, on en parle ?",
+        createdAt: new Date(Date.now() - 90 * 60_000),
+      },
+      {
+        projectId: p4.id,
+        userId: lea.id,
+        body: "Testé la démo à deux hier soir : le niveau 3 est génial. Vivement la suite !",
+        createdAt: new Date(Date.now() - 30 * 60_000),
+      },
+    ],
+  });
+
   console.log("🤝 Demandes de partenariat (une saine, une louche — démo du copilote IA)...");
   const p1Partnership = await prisma.partnershipRequest.create({
     data: {

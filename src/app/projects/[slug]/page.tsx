@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Clock, Handshake, Heart, LockOpen, MessagesSquare, PartyPopper, Users } from "lucide-react";
+import { Clock, Handshake, Heart, LockOpen, MessagesSquare, PartyPopper, Trash2, Users } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { deleteCommentAction, deleteUpdateAction } from "@/actions/project-feed";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { CommentForm } from "@/components/comment-form";
 import { ContributeForm } from "@/components/contribute-form";
 import { MilestoneTimeline } from "@/components/milestone-timeline";
+import { ProjectUpdateForm } from "@/components/project-update-form";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
 import { SkillTag } from "@/components/skill-tag";
@@ -33,6 +36,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         include: { proofs: { include: { votes: true } } },
       },
       contributions: { include: { user: true }, orderBy: { createdAt: "desc" } },
+      updates: { orderBy: { createdAt: "desc" } },
+      comments: {
+        orderBy: { createdAt: "desc" },
+        include: { user: { select: { id: true, name: true, reputation: true } } },
+      },
     },
   });
 
@@ -164,6 +172,151 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               isOwner={isOwner}
               isContributor={isContributor}
             />
+          </section>
+
+          {/* Actus : le fil de nouvelles du porteur (contributeurs notifiés) */}
+          <section id="actus" className="scroll-mt-24">
+            <h2 className="mb-1 text-2xl font-semibold tracking-tight">
+              Actus du projet
+              {project.updates.length > 0 && (
+                <span className="ml-2 font-mono text-sm font-normal text-muted-foreground">
+                  {project.updates.length}
+                </span>
+              )}
+            </h2>
+            <p className="mb-6 text-sm text-muted-foreground">
+              Les nouvelles du terrain, racontées par {isOwner ? "toi" : project.owner.name}.
+            </p>
+
+            {isOwner && (
+              <Card className="mb-6">
+                <CardContent className="pt-6">
+                  <ProjectUpdateForm projectId={project.id} />
+                </CardContent>
+              </Card>
+            )}
+
+            {project.updates.length === 0 ? (
+              !isOwner && (
+                <p className="rounded-2xl border border-dashed border-white/[0.12] p-6 text-center text-sm text-muted-foreground">
+                  Pas encore d&apos;actu — elles apparaîtront ici au fil du projet.
+                </p>
+              )
+            ) : (
+              <ol className="relative space-y-6 border-l border-white/[0.08] pl-6">
+                {project.updates.map((update) => (
+                  <li key={update.id} className="relative">
+                    <span
+                      className="absolute -left-[30px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent-gradient shadow-glow"
+                      aria-hidden
+                    />
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <h3 className="font-display text-lg font-semibold">{update.title}</h3>
+                      <span className="flex items-center gap-2">
+                        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                          {formatDate(update.createdAt)}
+                        </span>
+                        {isOwner && (
+                          <form action={deleteUpdateAction}>
+                            <input type="hidden" name="updateId" value={update.id} />
+                            <button
+                              type="submit"
+                              title="Supprimer cette actu"
+                              className="text-muted-foreground/60 transition-colors duration-200 hover:text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                              <span className="sr-only">Supprimer cette actu</span>
+                            </button>
+                          </form>
+                        )}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
+                      {update.body}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+
+          {/* Discussion : commentaires publics, modération légère par le porteur */}
+          <section id="discussion" className="scroll-mt-24">
+            <h2 className="mb-1 text-2xl font-semibold tracking-tight">
+              Discussion
+              {project.comments.length > 0 && (
+                <span className="ml-2 font-mono text-sm font-normal text-muted-foreground">
+                  {project.comments.length}
+                </span>
+              )}
+            </h2>
+            <p className="mb-6 text-sm text-muted-foreground">
+              Questions, encouragements, coups de main — la communauté du projet.
+            </p>
+
+            {viewerId ? (
+              <Card className="mb-6">
+                <CardContent className="pt-6">
+                  <CommentForm projectId={project.id} />
+                </CardContent>
+              </Card>
+            ) : (
+              <p className="mb-6 rounded-2xl border border-white/[0.08] bg-card/60 p-4 text-sm text-muted-foreground">
+                <Link href="/login" className="font-medium text-primary hover:underline">
+                  Connecte-toi
+                </Link>{" "}
+                pour participer à la discussion.
+              </p>
+            )}
+
+            {project.comments.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-white/[0.12] p-6 text-center text-sm text-muted-foreground">
+                Personne n&apos;a encore commenté — lance la discussion !
+              </p>
+            ) : (
+              <ul className="space-y-4">
+                {project.comments.map((comment) => {
+                  const canDelete = viewerId === comment.userId || isOwner;
+                  return (
+                    <li key={comment.id} className="flex items-start gap-3">
+                      <Link href={`/u/${comment.user.id}`} className="shrink-0">
+                        <UserAvatar name={comment.user.name} className="h-9 w-9" />
+                      </Link>
+                      <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm border border-white/[0.08] bg-card/60 p-3.5">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <Link
+                            href={`/u/${comment.user.id}`}
+                            className="text-sm font-semibold transition-colors duration-200 hover:text-primary"
+                          >
+                            {comment.user.name}
+                          </Link>
+                          <ReputationBadge reputation={comment.user.reputation} showScore={false} />
+                          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                            {formatDate(comment.createdAt)}
+                          </span>
+                          {canDelete && (
+                            <form action={deleteCommentAction} className="ml-auto">
+                              <input type="hidden" name="commentId" value={comment.id} />
+                              <button
+                                type="submit"
+                                title="Supprimer ce commentaire"
+                                className="text-muted-foreground/60 transition-colors duration-200 hover:text-destructive"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                                <span className="sr-only">Supprimer ce commentaire</span>
+                              </button>
+                            </form>
+                          )}
+                        </div>
+                        <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
+                          {comment.body}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </section>
         </div>
 

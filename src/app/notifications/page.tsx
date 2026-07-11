@@ -7,6 +7,8 @@ import {
   Heart,
   LifeBuoy,
   LockOpen,
+  Megaphone,
+  MessageCircle,
   MessagesSquare,
   PartyPopper,
   ShieldX,
@@ -33,6 +35,8 @@ const TYPE_STYLES: Record<NotificationType, { Icon: LucideIcon; tone: string }> 
   PROOF_REJECTED: { Icon: ShieldX, tone: "text-destructive" },
   MESSAGE: { Icon: MessagesSquare, tone: "text-primary" },
   PARTNERSHIP: { Icon: Handshake, tone: "text-secondary" },
+  COMMENT: { Icon: MessageCircle, tone: "text-secondary" },
+  PROJECT_UPDATE: { Icon: Megaphone, tone: "text-primary" },
 };
 
 export default async function NotificationsPage() {
