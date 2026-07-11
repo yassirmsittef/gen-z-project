@@ -2,6 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "../src/lib/prisma";
 import { eraseAccount } from "../src/lib/account";
 import { createReport, handleReport } from "../src/lib/moderation";
+import { createResetToken, requestPasswordReset, resetPassword } from "../src/lib/password-reset";
 import { MIN_CONTRIBUTION, REALIZATION_DAYS } from "../src/lib/constants";
 import {
   castVote,
@@ -355,6 +356,51 @@ describe("effacement de compte (RGPD)", () => {
 
     // L'anonymisation sort la fixture du filet de nettoyage : purge directe.
     await prisma.user.delete({ where: { id: u.id } });
+  });
+});
+
+describe("réinitialisation de mot de passe", () => {
+  it("pose le nouveau mot de passe et le token ne sert qu'une fois", async () => {
+    const u = await mkUser();
+    const token = await createResetToken(u.id);
+
+    await resetPassword(token, "nouveau-mdp-123");
+
+    const bcrypt = (await import("bcryptjs")).default;
+    const après = await prisma.user.findUniqueOrThrow({
+      where: { id: u.id },
+      select: { passwordHash: true },
+    });
+    expect(await bcrypt.compare("nouveau-mdp-123", après.passwordHash!)).toBe(true);
+    await expect(resetPassword(token, "encore-un-autre-mdp")).rejects.toThrow(DomainError);
+  });
+
+  it("refuse un token expiré ou inconnu, et plafonne à 3 demandes par heure", async () => {
+    const u = await mkUser();
+    const token = await createResetToken(u.id);
+    await prisma.passwordResetToken.updateMany({
+      where: { userId: u.id },
+      data: { expiresAt: new Date(Date.now() - 1000) },
+    });
+
+    await expect(resetPassword(token, "mdp-valide-123")).rejects.toThrow(DomainError);
+    await expect(resetPassword("token-bidon", "mdp-valide-123")).rejects.toThrow(DomainError);
+
+    await createResetToken(u.id);
+    await createResetToken(u.id); // 3e de l'heure
+    await expect(createResetToken(u.id)).rejects.toThrow(DomainError);
+  });
+
+  it("une nouvelle demande invalide le lien précédent ; email inconnu = silence", async () => {
+    const u = await mkUser();
+    const t1 = await createResetToken(u.id);
+    const t2 = await createResetToken(u.id);
+
+    await expect(resetPassword(t1, "mdp-valide-123")).rejects.toThrow(DomainError);
+    await resetPassword(t2, "mdp-valide-123");
+
+    // Anti-énumération : demander sur un email inexistant ne lève rien.
+    await expect(requestPasswordReset("nexiste-pas@fixture.test")).resolves.toBeUndefined();
   });
 });
 

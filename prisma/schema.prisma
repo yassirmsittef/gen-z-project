@@ -49,6 +49,7 @@ model User {
   transactions     CreditTransaction[]
   reputationEvents ReputationEvent[]
   reports          Report[]
+  resetTokens      PasswordResetToken[]
   votes            Vote[]
   messagesSent     Message[]           @relation("MessagesSent")
   messagesReceived Message[]           @relation("MessagesReceived")
@@ -343,6 +344,21 @@ model Comment {
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([projectId, createdAt])
+}
+
+// ---------- Réinitialisation de mot de passe ----------
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique // SHA-256 du token — le token en clair ne vit que dans l'email
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 // ---------- Signalements (modération) ----------
