@@ -17,6 +17,7 @@ model User {
   email            String    @unique
   name             String?
   avatarUrl        String?
+  bio              String? // courte présentation affichée sur le profil public
   emailVerified    DateTime?
   passwordHash     String?
   credits          Int       @default(0)

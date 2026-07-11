@@ -61,7 +61,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       updates: { orderBy: { createdAt: "desc" } },
       comments: {
         orderBy: { createdAt: "desc" },
-        include: { user: { select: { id: true, name: true, reputation: true } } },
+        include: { user: { select: { id: true, name: true, avatarUrl: true, reputation: true } } },
       },
       _count: { select: { follows: true } },
     },
@@ -90,9 +90,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const isContributor = project.contributions.some((c) => c.userId === viewerId);
 
   // Total par contributeur (une personne peut contribuer plusieurs fois).
-  const byContributor = new Map<string, { name: string | null; id: string; total: number }>();
+  const byContributor = new Map<
+    string,
+    { name: string | null; avatarUrl: string | null; id: string; total: number }
+  >();
   for (const c of project.contributions) {
-    const entry = byContributor.get(c.userId) ?? { name: c.user.name, id: c.userId, total: 0 };
+    const entry =
+      byContributor.get(c.userId) ??
+      { name: c.user.name, avatarUrl: c.user.avatarUrl, id: c.userId, total: 0 };
     entry.total += c.amount;
     byContributor.set(c.userId, entry);
   }
@@ -146,7 +151,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         <div className="flex flex-wrap items-center gap-3">
           <Link href={`/u/${project.owner.id}`} className="group inline-flex items-center gap-2">
             <ReputationRing reputation={project.owner.reputation}>
-              <UserAvatar name={project.owner.name} className="border-0" />
+              <UserAvatar name={project.owner.name} avatarUrl={project.owner.avatarUrl} className="border-0" />
             </ReputationRing>
             <span className="font-semibold transition-colors duration-200 group-hover:text-primary">
               {project.owner.name}
@@ -343,7 +348,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                   return (
                     <li key={comment.id} className="flex items-start gap-3">
                       <Link href={`/u/${comment.user.id}`} className="shrink-0">
-                        <UserAvatar name={comment.user.name} className="h-9 w-9" />
+                        <UserAvatar name={comment.user.name} avatarUrl={comment.user.avatarUrl} className="h-9 w-9" />
                       </Link>
                       <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm border border-white/[0.08] bg-card/60 p-3.5">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -450,7 +455,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               <CardContent className="space-y-3">
                 {contributors.slice(0, 8).map((contributor) => (
                   <div key={contributor.id} className="flex items-center gap-3 text-sm">
-                    <UserAvatar name={contributor.name} className="h-7 w-7 text-[10px]" />
+                    <UserAvatar name={contributor.name} avatarUrl={contributor.avatarUrl} className="h-7 w-7 text-[10px]" />
                     <Link href={`/u/${contributor.id}`} className="truncate font-bold hover:text-primary">
                       {contributor.name}
                     </Link>

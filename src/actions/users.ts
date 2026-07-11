@@ -4,8 +4,39 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { findCity } from "@/lib/cities";
+import { prisma } from "@/lib/prisma";
 import { updateUserLocation, updateUserSkills } from "@/lib/project-service";
-import { parseList, userSkillsSchema } from "@/lib/validation";
+import { parseList, updateProfileSchema, userSkillsSchema } from "@/lib/validation";
+
+export type ProfileFormState = { error?: string; success?: boolean } | undefined;
+
+/** Identité publique : pseudo, avatar (URL), courte bio du profil. */
+export async function updateProfileAction(
+  _prev: ProfileFormState,
+  formData: FormData
+): Promise<ProfileFormState> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  const parsed = updateProfileSchema.safeParse({
+    name: formData.get("name"),
+    avatarUrl: formData.get("avatarUrl"),
+    bio: formData.get("bio"),
+  });
+  if (!parsed.success) return { error: parsed.error.errors[0].message };
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: {
+      name: parsed.data.name,
+      avatarUrl: parsed.data.avatarUrl || null,
+      bio: parsed.data.bio || null,
+    },
+  });
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
 
 export type SkillsFormState = { error?: string; success?: boolean } | undefined;
 

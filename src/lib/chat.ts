@@ -1,8 +1,14 @@
 import { prisma } from "@/lib/prisma";
 
-const partnerSelect = { id: true, name: true, reputation: true, skills: true } as const;
+const partnerSelect = { id: true, name: true, avatarUrl: true, reputation: true, skills: true } as const;
 
-export type ChatPartner = { id: string; name: string | null; reputation: number; skills: string[] };
+export type ChatPartner = {
+  id: string;
+  name: string | null;
+  avatarUrl: string | null;
+  reputation: number;
+  skills: string[];
+};
 
 /** Conversations de l'utilisateur : un partenaire + son dernier message. */
 export async function getConversations(userId: string) {

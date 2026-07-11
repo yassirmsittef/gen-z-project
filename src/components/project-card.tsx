@@ -59,7 +59,7 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
         </CardContent>
 
         <CardFooter className="gap-2 border-t border-white/[0.08] pt-4 text-sm">
-          <UserAvatar name={project.owner.name} className="h-7 w-7 text-[10px]" />
+          <UserAvatar name={project.owner.name} avatarUrl={project.owner.avatarUrl} className="h-7 w-7 text-[10px]" />
           <span className="truncate font-medium">{project.owner.name}</span>
           <ReputationBadge
             reputation={project.owner.reputation}

@@ -53,7 +53,7 @@ function RankedList({ projects, showPercent }: { projects: RankedProject[]; show
               </p>
             </div>
             <div className="hidden items-center gap-2 sm:flex">
-              <UserAvatar name={project.owner.name} className="h-7 w-7 text-[10px]" />
+              <UserAvatar name={project.owner.name} avatarUrl={project.owner.avatarUrl} className="h-7 w-7 text-[10px]" />
               <span className="max-w-24 truncate text-sm text-muted-foreground">
                 {project.owner.name}
               </span>

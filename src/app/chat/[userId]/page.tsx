@@ -30,7 +30,7 @@ export default async function ChatThreadPage({
 
   const partner = await prisma.user.findUnique({
     where: { id: partnerId },
-    select: { id: true, name: true, reputation: true, skills: true },
+    select: { id: true, name: true, avatarUrl: true, reputation: true, skills: true },
   });
   if (!partner) notFound();
 
@@ -55,7 +55,7 @@ export default async function ChatThreadPage({
         <div className="glass flex min-h-[60vh] flex-col rounded-2xl rounded-tr-sm">
           <div className="flex items-center gap-3 border-b border-white/[0.06] p-4">
             <Link href={`/u/${partner.id}`} className="flex items-center gap-3 hover:opacity-90">
-              <UserAvatar name={partner.name} className="h-10 w-10" />
+              <UserAvatar name={partner.name} avatarUrl={partner.avatarUrl} className="h-10 w-10" />
               <div>
                 <p className="font-semibold">{partner.name}</p>
                 <div className="mt-0.5 flex flex-wrap items-center gap-1.5">

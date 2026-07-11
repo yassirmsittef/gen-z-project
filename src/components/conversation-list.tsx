@@ -35,7 +35,7 @@ export function ConversationList({
                 activePartnerId === partner.id && "bg-primary/10"
               )}
             >
-              <UserAvatar name={partner.name} className="h-10 w-10" />
+              <UserAvatar name={partner.name} avatarUrl={partner.avatarUrl} className="h-10 w-10" />
               <div className="min-w-0">
                 <p className="truncate font-semibold">{partner.name}</p>
                 <p className="truncate text-xs text-muted-foreground">

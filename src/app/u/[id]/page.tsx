@@ -19,11 +19,16 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<{ title: string; description?: string }> {
   const { id } = await params;
-  const user = await prisma.user.findUnique({ where: { id }, select: { name: true, city: true } });
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { name: true, city: true, bio: true },
+  });
   if (!user) return { title: "Profil introuvable" };
   return {
     title: user.name ?? "Profil",
-    description: `${user.name} sur Tremplin${user.city ? ` — ${user.city}` : ""} : réputation, projets et compétences.`,
+    description:
+      user.bio ??
+      `${user.name} sur Tremplin${user.city ? ` — ${user.city}` : ""} : réputation, projets et compétences.`,
   };
 }
 
@@ -48,7 +53,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
     <div className="container space-y-10 py-10">
       <div className="flex flex-wrap items-center gap-5">
         <ReputationRing reputation={user.reputation}>
-          <UserAvatar name={user.name} className="h-20 w-20 border-0 text-2xl" />
+          <UserAvatar name={user.name} avatarUrl={user.avatarUrl} className="h-20 w-20 border-0 text-2xl" />
         </ReputationRing>
         <div className="space-y-2">
           <h1 className="text-4xl font-semibold tracking-tight">{user.name}</h1>
@@ -67,6 +72,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
             )}
             <span>Membre depuis {formatDate(user.createdAt)}</span>
           </div>
+          {user.bio && (
+            <p className="max-w-xl text-sm leading-relaxed text-foreground/85">{user.bio}</p>
+          )}
           {user.skills.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pt-1">
               {user.skills.map((skill) => (

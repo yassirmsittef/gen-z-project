@@ -51,6 +51,7 @@ export default async function CommunityPage({
       select: {
         id: true,
         name: true,
+        avatarUrl: true,
         city: true,
         country: true,
         skills: true,
@@ -236,7 +237,7 @@ export default async function CommunityPage({
                       <CardContent className="flex h-full flex-col gap-3 pt-6">
                         <div className="flex items-center gap-3">
                           <Link href={`/u/${member.id}`} className="shrink-0">
-                            <UserAvatar name={member.name} className="h-12 w-12" />
+                            <UserAvatar name={member.name} avatarUrl={member.avatarUrl} className="h-12 w-12" />
                           </Link>
                           <div className="min-w-0 flex-1">
                             <Link

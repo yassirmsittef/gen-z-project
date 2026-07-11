@@ -41,6 +41,21 @@ export const userSkillsSchema = z
   .array(skillSchema)
   .max(MAX_SKILLS_PER_USER, `${MAX_SKILLS_PER_USER} compétences max.`);
 
+export const updateProfileSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Ton pseudo doit faire au moins 2 caractères.")
+    .max(50, "50 caractères max."),
+  avatarUrl: z
+    .string()
+    .url("Lien d'avatar invalide (URL complète attendue).")
+    .optional()
+    .or(z.literal("")),
+  bio: z.string().trim().max(280, "280 caractères max — va à l'essentiel.").optional(),
+});
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
 export const milestoneInputSchema = z.object({
   title: z.string().min(3, "Titre d'étape trop court.").max(80, "80 caractères max."),
   description: z

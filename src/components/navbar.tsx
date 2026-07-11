@@ -13,7 +13,7 @@ export async function Navbar() {
   const user = session?.user?.id
     ? await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { id: true, name: true, credits: true },
+        select: { id: true, name: true, avatarUrl: true, credits: true },
       })
     : null;
   const unread = user
@@ -89,7 +89,7 @@ export async function Navbar() {
                 <span className="hidden sm:inline">tokens</span>
               </Link>
               <Link href={`/u/${user.id}`} title="Ton profil public">
-                <UserAvatar name={user.name} className="h-8 w-8 sm:h-9 sm:w-9" />
+                <UserAvatar name={user.name} avatarUrl={user.avatarUrl} className="h-8 w-8 sm:h-9 sm:w-9" />
               </Link>
               <form action={signOutAction}>
                 <Button

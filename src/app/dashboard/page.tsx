@@ -15,6 +15,7 @@ import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
 import { ConnectForm } from "@/components/connect-form";
 import { LocationForm } from "@/components/location-form";
+import { ProfileForm } from "@/components/profile-form";
 import { SkillsForm } from "@/components/skills-form";
 import { getConnectStatus } from "@/lib/payouts";
 import { StatRing } from "@/components/stat-ring";
@@ -153,7 +154,7 @@ export default async function DashboardPage({
         )}
         <div className="flex flex-wrap items-center gap-5">
           <ReputationRing reputation={user.reputation}>
-            <UserAvatar name={user.name} className="h-16 w-16 border-0 text-xl" />
+            <UserAvatar name={user.name} avatarUrl={user.avatarUrl} className="h-16 w-16 border-0 text-xl" />
           </ReputationRing>
           <div className="space-y-1.5">
             <h1 className="text-4xl font-semibold tracking-tight">Salut {user.name}</h1>
@@ -382,6 +383,18 @@ export default async function DashboardPage({
         </section>
 
         <section data-reveal className="grid gap-8 lg:grid-cols-2">
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold tracking-tight">Mon profil</h2>
+            <Card>
+              <CardContent className="pt-6">
+                <ProfileForm
+                  initialName={user.name}
+                  initialAvatarUrl={user.avatarUrl}
+                  initialBio={user.bio}
+                />
+              </CardContent>
+            </Card>
+          </div>
           <div id="recharge" className="space-y-4">
             <h2 className="text-2xl font-semibold tracking-tight">Recharger mon compte</h2>
             <Card>
