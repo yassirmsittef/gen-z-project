@@ -15,6 +15,7 @@ import { ContributeForm } from "@/components/contribute-form";
 import { FollowButton } from "@/components/follow-button";
 import { MilestoneTimeline } from "@/components/milestone-timeline";
 import { ProjectUpdateForm } from "@/components/project-update-form";
+import { ReportButton } from "@/components/report-button";
 import { ShareButton } from "@/components/share-button";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
@@ -205,6 +206,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             </Button>
           )}
           <ShareButton title={project.title} text={project.pitch} />
+          {viewerId && !isOwner && (
+            <ReportButton
+              targetType="PROJECT"
+              targetId={project.id}
+              className="text-muted-foreground"
+            />
+          )}
         </div>
       </div>
 
@@ -385,8 +393,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                           <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                             {formatDate(comment.createdAt)}
                           </span>
+                          <span className="ml-auto flex items-center gap-1.5">
+                            {viewerId && viewerId !== comment.userId && (
+                              <ReportButton
+                                targetType="COMMENT"
+                                targetId={comment.id}
+                                iconOnly
+                                label="Signaler ce commentaire"
+                                className="h-6 w-6 text-muted-foreground/60 hover:text-destructive [&_svg]:size-3.5"
+                              />
+                            )}
                           {canDelete && (
-                            <form action={deleteCommentAction} className="ml-auto">
+                            <form action={deleteCommentAction}>
                               <input type="hidden" name="commentId" value={comment.id} />
                               <button
                                 type="submit"
@@ -398,6 +416,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                               </button>
                             </form>
                           )}
+                          </span>
                         </div>
                         <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
                           {comment.body}

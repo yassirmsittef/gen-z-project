@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectCard } from "@/components/project-card";
+import { ReportButton } from "@/components/report-button";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
 import { SkillTag } from "@/components/skill-tag";
@@ -84,12 +85,21 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
           )}
         </div>
         {session?.user?.id && session.user.id !== user.id && (
-          <Button variant="outline" size="sm" asChild className="ml-auto">
-            <Link href={`/chat/${user.id}`}>
-              <MessagesSquare aria-hidden />
-              Envoyer un message
-            </Link>
-          </Button>
+          <div className="ml-auto flex items-center gap-1.5">
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/chat/${user.id}`}>
+                <MessagesSquare aria-hidden />
+                Envoyer un message
+              </Link>
+            </Button>
+            <ReportButton
+              targetType="USER"
+              targetId={user.id}
+              iconOnly
+              label="Signaler ce profil"
+              className="text-muted-foreground/70"
+            />
+          </div>
         )}
       </div>
 

@@ -63,9 +63,16 @@ export async function deleteCommentAction(formData: FormData): Promise<void> {
   });
   if (!comment) return;
 
-  // Modération légère : l'auteur du commentaire OU le porteur du projet.
+  // Modération : l'auteur du commentaire, le porteur du projet, ou un admin
+  // (file des signalements).
+  const viewer = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
   const canDelete =
-    comment.userId === session.user.id || comment.project.ownerId === session.user.id;
+    comment.userId === session.user.id ||
+    comment.project.ownerId === session.user.id ||
+    viewer?.role === "ADMIN";
   if (!canDelete) return;
 
   await prisma.comment.delete({ where: { id: commentId } });

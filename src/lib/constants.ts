@@ -128,6 +128,14 @@ export const PARTNERSHIP_STATUS_LABELS = {
 } as const;
 
 /** Libellés des types de notifications (préférences + affichage). */
+/** Motifs de signalement proposés (le service refuse tout autre motif). */
+export const REPORT_REASONS = [
+  "Arnaque ou contenu trompeur",
+  "Contenu inapproprié ou haineux",
+  "Spam ou démarchage",
+  "Autre",
+] as const;
+
 export const NOTIFICATION_TYPE_LABELS = {
   CONTRIBUTION: "Contribution reçue sur mes projets",
   PROJECT_FUNDED: "Objectif atteint",

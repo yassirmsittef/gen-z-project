@@ -1,6 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "../src/lib/prisma";
 import { eraseAccount } from "../src/lib/account";
+import { createReport, handleReport } from "../src/lib/moderation";
 import { MIN_CONTRIBUTION, REALIZATION_DAYS } from "../src/lib/constants";
 import {
   castVote,
@@ -354,6 +355,75 @@ describe("effacement de compte (RGPD)", () => {
 
     // L'anonymisation sort la fixture du filet de nettoyage : purge directe.
     await prisma.user.delete({ where: { id: u.id } });
+  });
+});
+
+describe("signalements et modération", () => {
+  it("refuse le doublon ouvert, le motif hors liste et l'auto-signalement", async () => {
+    const reporter = await mkUser();
+    const porteur = await mkUser();
+    const projet = await mkProject(porteur.id);
+
+    await createReport(reporter.id, {
+      targetType: "PROJECT",
+      targetId: projet.id,
+      reason: "Spam ou démarchage",
+    });
+    await expect(
+      createReport(reporter.id, {
+        targetType: "PROJECT",
+        targetId: projet.id,
+        reason: "Spam ou démarchage",
+      })
+    ).rejects.toThrow(DomainError);
+    await expect(
+      createReport(reporter.id, {
+        targetType: "PROJECT",
+        targetId: projet.id,
+        reason: "Motif inventé",
+      })
+    ).rejects.toThrow(DomainError);
+    await expect(
+      createReport(reporter.id, {
+        targetType: "USER",
+        targetId: reporter.id,
+        reason: "Autre",
+      })
+    ).rejects.toThrow(DomainError);
+  });
+
+  it("seul un admin tranche, une seule fois — et re-signaler après résolution est permis", async () => {
+    const reporter = await mkUser();
+    const quidam = await mkUser();
+    const admin = await mkUser();
+    await prisma.user.update({ where: { id: admin.id }, data: { role: "ADMIN" } });
+    const porteur = await mkUser();
+    const projet = await mkProject(porteur.id);
+
+    await createReport(reporter.id, {
+      targetType: "PROJECT",
+      targetId: projet.id,
+      reason: "Autre",
+      detail: "Détail de test.",
+    });
+    const report = await prisma.report.findFirstOrThrow({
+      where: { reporterId: reporter.id, status: "OPEN" },
+    });
+
+    await expect(handleReport(quidam.id, report.id, "RESOLVED")).rejects.toThrow(DomainError);
+    await handleReport(admin.id, report.id, "RESOLVED");
+    await expect(handleReport(admin.id, report.id, "DISMISSED")).rejects.toThrow(DomainError);
+
+    const après = await prisma.report.findUniqueOrThrow({ where: { id: report.id } });
+    expect(après.status).toBe("RESOLVED");
+    expect(après.handledBy).toBe(admin.id);
+
+    // La cible peut être re-signalée maintenant que le dossier est clos.
+    await createReport(reporter.id, {
+      targetType: "PROJECT",
+      targetId: projet.id,
+      reason: "Autre",
+    });
   });
 });
 

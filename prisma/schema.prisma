@@ -12,9 +12,15 @@ datasource db {
 
 // ---------- Utilisateurs & Auth.js ----------
 
+enum Role {
+  MEMBER
+  ADMIN // modération : file des signalements, suppression de commentaires
+}
+
 model User {
   id               String    @id @default(cuid())
   email            String    @unique
+  role             Role      @default(MEMBER)
   name             String?
   avatarUrl        String?
   bio              String? // courte présentation affichée sur le profil public
@@ -42,6 +48,7 @@ model User {
   contributions    Contribution[]
   transactions     CreditTransaction[]
   reputationEvents ReputationEvent[]
+  reports          Report[]
   votes            Vote[]
   messagesSent     Message[]           @relation("MessagesSent")
   messagesReceived Message[]           @relation("MessagesReceived")
@@ -336,6 +343,41 @@ model Comment {
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([projectId, createdAt])
+}
+
+// ---------- Signalements (modération) ----------
+
+enum ReportTargetType {
+  PROJECT
+  COMMENT
+  USER
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED // traité (action prise ou jugé fondé)
+  DISMISSED // rejeté (non fondé)
+}
+
+model Report {
+  id         String           @id @default(cuid())
+  reporterId String
+  targetType ReportTargetType
+  targetId   String // id de l'objet visé (projet, commentaire, membre)
+  reason     String // motif choisi dans REPORT_REASONS
+  detail     String? // précision libre du signaleur
+  status     ReportStatus     @default(OPEN)
+  handledAt  DateTime?
+  handledBy  String? // id de l'admin qui a tranché
+  createdAt  DateTime         @default(now())
+
+  reporter User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  // « Un seul signalement OUVERT par personne et par cible » est garanti par
+  // le service (une contrainte unique incluant status casserait au 2e
+  // signalement résolu sur la même cible).
+  @@index([reporterId, targetType, targetId])
+  @@index([status, createdAt])
 }
 
 // ---------- Messagerie (entraide entre porteurs) ----------

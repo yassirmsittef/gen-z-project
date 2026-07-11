@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Globe2, LogOut, MessagesSquare, Zap } from "lucide-react";
+import { Globe2, LogOut, MessagesSquare, ShieldAlert, Zap } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { signOutAction } from "@/actions/auth";
@@ -21,11 +21,15 @@ export async function Navbar() {
           name: true,
           avatarUrl: true,
           credits: true,
+          role: true,
           _count: { select: { notifications: { where: { readAt: null } } } },
         },
       })
     : null;
   const unread = user?._count.notifications ?? 0;
+  // File de modération : compteur pour les admins uniquement.
+  const openReports =
+    user?.role === "ADMIN" ? await prisma.report.count({ where: { status: "OPEN" } }) : 0;
 
   // Largeur mobile au cordeau (375px) : icônes 32px et pastille compacte
   // sous `sm`, tailles confortables au-dessus.
@@ -86,6 +90,30 @@ export async function Navbar() {
                   <span className="sr-only">Chat</span>
                 </Link>
               </Button>
+              {user.role === "ADMIN" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  title="Modération — signalements"
+                  className={`relative ${iconButton}`}
+                >
+                  <Link href="/admin/signalements">
+                    <ShieldAlert aria-hidden />
+                    {openReports > 0 && (
+                      <span
+                        className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 font-mono text-[9px] font-bold text-destructive-foreground"
+                        aria-hidden
+                      >
+                        {openReports > 9 ? "9+" : openReports}
+                      </span>
+                    )}
+                    <span className="sr-only">
+                      Modération{openReports > 0 ? ` (${openReports} signalements ouverts)` : ""}
+                    </span>
+                  </Link>
+                </Button>
+              )}
               <NavbarBell initialUnread={unread} className={`relative ${iconButton}`} />
               <Link
                 href="/dashboard"
