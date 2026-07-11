@@ -1,4 +1,4 @@
-import type { ProjectCategory } from "@prisma/client";
+import type { NotificationType, ProjectCategory } from "@prisma/client";
 
 // ---------- Économie (Phase 1 : tokens fictifs, 1 token = 1 $) ----------
 
@@ -131,4 +131,4 @@ export const NOTIFICATION_TYPE_LABELS = {
   PARTNERSHIP: "Demandes de partenariat",
   COMMENT: "Commentaires sur mes projets",
   PROJECT_UPDATE: "Actus des projets que je soutiens ou suis",
-} as const;
+} as const satisfies Record<NotificationType, string>;

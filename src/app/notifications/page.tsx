@@ -59,15 +59,13 @@ export default async function NotificationsPage() {
     }),
   ]);
 
-  // L'état non-lu est capturé pour l'affichage, PUIS tout passe en lu :
-  // la visite de la page vaut lecture (la cloche retombe à zéro).
+  // L'état non-lu est capturé pour l'affichage, PUIS tout passe en lu — y
+  // compris au-delà des 50 affichées, sinon le badge ne retombe jamais à zéro.
   const unreadIds = notifications.filter((n) => !n.readAt).map((n) => n.id);
-  if (unreadIds.length > 0) {
-    await prisma.notification.updateMany({
-      where: { id: { in: unreadIds } },
-      data: { readAt: new Date() },
-    });
-  }
+  await prisma.notification.updateMany({
+    where: { userId: session.user.id, readAt: null },
+    data: { readAt: new Date() },
+  });
   const unreadSet = new Set(unreadIds);
 
   return (
@@ -90,7 +88,7 @@ export default async function NotificationsPage() {
         {notifications.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-white/[0.12] p-10 text-center text-sm text-muted-foreground">
             Rien pour l&apos;instant. Contributions reçues, preuves à voter, étapes débloquées,
-            messages et demandes de partenariat arriveront ici.
+            messages, commentaires, actus et demandes de partenariat arriveront ici.
           </p>
         ) : (
           <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-tr-sm">

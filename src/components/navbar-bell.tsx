@@ -21,7 +21,7 @@ export function NavbarBell({
   const [unread, setUnread] = useState(initialUnread);
   const pathname = usePathname();
 
-  // Le serveur re-rend la navbar à chaque navigation : on réaligne.
+  // Quand le serveur re-rend la navbar (revalidatePath après une action), on réaligne.
   useEffect(() => {
     setUnread(initialUnread);
   }, [initialUnread]);
