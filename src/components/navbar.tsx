@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { signOutAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
+import { CommandPalette } from "@/components/command-palette";
 import { NavbarBell } from "@/components/navbar-bell";
 import { NavbarSigilLoader } from "@/components/navbar-sigil-loader";
 import { UserAvatar } from "@/components/user-avatar";
@@ -60,6 +61,7 @@ export async function Navbar() {
               <span className="sr-only">Communauté</span>
             </Link>
           </Button>
+          <CommandPalette className={iconButton} />
           <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex">
             <Link href="/classements">Classements</Link>
           </Button>
