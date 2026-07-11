@@ -180,6 +180,25 @@ prisma/
 - **Auth** : sessions JWT (nécessaire avec le provider credentials), adapter Prisma pour OAuth ;
   les inscriptions Google reçoivent aussi leurs crédits de bienvenue (event `createUser`).
 
+### Partenariats de marques (copilote IA)
+
+Les marques proposent un partenariat **sans compte** depuis la page d'un projet
+(« Partenariat marque ») et suivent la réponse via un **lien privé à token**
+(`/partenariats/suivi/[token]`). Le porteur reçoit la demande dans sa boîte
+`/partenariats` avec une **analyse fiabilité/équité** avant de répondre :
+
+- **Moteur heuristique** (toujours actif, instantané) : détection des arnaques
+  classiques — frais à payer d'avance, trop-perçu, paiement intraçable, email
+  jetable/perso, incohérence email↔site, pression temporelle, bascule WhatsApp,
+  « visibilité » seule, exclusivité gratuite (`src/lib/partnership-ai.ts`).
+- **Analyse approfondie Claude** (optionnelle) : renseigner `ANTHROPIC_API_KEY`
+  (https://platform.claude.com) — modèle `claude-opus-4-8`, sortie JSON structurée,
+  déclenchée automatiquement à l'ouverture d'une demande en attente ; en cas
+  d'échec, l'heuristique reste affichée.
+
+La réponse (accepter/refuser) part avec un **brouillon pré-rédigé** par le
+copilote, éditable. L'analyse interne n'est jamais exposée à la marque.
+
 ## Phase 2 (hors scope MVP)
 
 Paiements réels (Stripe Connect), notifications, commentaires/updates de projet, recherche,

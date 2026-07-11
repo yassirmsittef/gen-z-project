@@ -22,6 +22,7 @@ import {
 
 async function reset() {
   await prisma.$transaction([
+    prisma.partnershipRequest.deleteMany(),
     prisma.vote.deleteMany(),
     prisma.proof.deleteMany(),
     prisma.milestone.deleteMany(),
@@ -407,6 +408,35 @@ async function main() {
     "Carrément — envoie-moi les sprites, je fais des essais sur les pièces de la prochaine fournée.",
     45
   );
+
+  console.log("🤝 Demandes de partenariat (une saine, une louche — démo du copilote IA)...");
+  await prisma.partnershipRequest.create({
+    data: {
+      projectId: p1.id,
+      brandName: "Micros & Ondes",
+      contactName: "Claire Fontaine",
+      brandEmail: "claire@microsetondes.fr",
+      brandWebsite: "https://www.microsetondes.fr",
+      compensation: "MIXED",
+      budget: 250,
+      message:
+        "Bonjour Léa,\n\nNous fabriquons des microphones nomades à Nantes et ton projet de studio itinérant colle parfaitement à notre communauté. Nous proposons 250 $ + le prêt longue durée d'un kit micro complet pour la saison.\n\nCalendrier souple, paiement 50% à la signature, 50% à la diffusion. Brief écrit et contrat fournis, bien sûr.",
+      deliverables:
+        "2 mentions de 20 secondes en début d'épisode sur la saison + 1 post Instagram avec le kit en situation. Rien d'exclusif.",
+    },
+  });
+  await prisma.partnershipRequest.create({
+    data: {
+      projectId: p1.id,
+      brandName: "GlobalPromo Agency",
+      brandEmail: "promo.global.2024@gmail.com",
+      compensation: "VISIBILITY",
+      message:
+        "OFFRE URGENTE !! Nous adorons votre podcast et voulons le promouvoir à des MILLIONS d'auditeurs via notre réseau international. Pour activer le partenariat il faut simplement régler des frais d'inscription de 49$ (remboursés au premier versement). Places limitées, répondez aujourd'hui seulement. Contactez-nous directement sur WhatsApp pour aller plus vite.",
+      deliverables:
+        "Promotion exclusive de notre plateforme dans tous vos épisodes et sur tous vos réseaux pendant 12 mois.",
+    },
+  });
 
   console.log("💥 Échec du food-truck (deadline dépassée)...");
   await prisma.project.update({

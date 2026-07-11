@@ -104,3 +104,16 @@ export const STATUS_LABELS = {
   COMPLETED: "Réalisé",
   FAILED: "Non abouti",
 } as const;
+
+export const PARTNERSHIP_COMPENSATION_LABELS = {
+  MONEY: "Rémunération en argent",
+  PRODUCT: "Produits / dotation",
+  VISIBILITY: "Visibilité uniquement",
+  MIXED: "Argent + produits",
+} as const;
+
+export const PARTNERSHIP_STATUS_LABELS = {
+  PENDING: "En attente",
+  ACCEPTED: "Acceptée",
+  DECLINED: "Refusée",
+} as const;

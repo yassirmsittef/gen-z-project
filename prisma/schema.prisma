@@ -124,11 +124,54 @@ model Project {
   neededSkills  String[]        @default([])
   createdAt     DateTime        @default(now())
 
-  owner         User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  milestones    Milestone[]
-  contributions Contribution[]
+  owner               User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  milestones          Milestone[]
+  contributions       Contribution[]
+  partnershipRequests PartnershipRequest[]
 
   @@index([status, category])
+}
+
+// ---------- Partenariats de marques ----------
+
+enum PartnershipStatus {
+  PENDING // en attente de réponse du porteur
+  ACCEPTED
+  DECLINED
+}
+
+enum PartnershipCompensation {
+  MONEY // rémunération en argent
+  PRODUCT // produits / dotation
+  VISIBILITY // « exposition » seule — signal de prudence classique
+  MIXED // argent + produits
+}
+
+/// Demande de partenariat déposée par une marque (formulaire public, sans compte).
+/// La marque suit la réponse via un lien privé (trackToken) ; le porteur répond
+/// depuis sa boîte /partenariats avec l'aide de l'analyse IA (aiAnalysis).
+model PartnershipRequest {
+  id           String                  @id @default(cuid())
+  projectId    String
+  brandName    String
+  contactName  String?
+  brandEmail   String
+  brandWebsite String?
+  compensation PartnershipCompensation
+  budget       Int? // en $ (si MONEY ou MIXED)
+  message      String // l'offre détaillée
+  deliverables String? // ce que la marque attend en retour
+  status       PartnershipStatus       @default(PENDING)
+  trackToken   String                  @unique @default(cuid())
+  aiAnalysis   Json? // analyse fiabilité/équité (cache)
+  aiAnalyzedAt DateTime?
+  ownerReply   String? // réponse envoyée à la marque
+  respondedAt  DateTime?
+  createdAt    DateTime                @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, status])
 }
 
 // ---------- Étapes & preuves ----------

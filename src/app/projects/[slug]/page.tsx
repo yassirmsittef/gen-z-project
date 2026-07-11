@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Clock, Heart, LockOpen, MessagesSquare, PartyPopper, Users } from "lucide-react";
+import { Clock, Handshake, Heart, LockOpen, MessagesSquare, PartyPopper, Users } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -118,6 +118,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               <Link href={`/chat/${project.owner.id}`}>
                 <MessagesSquare aria-hidden />
                 Contacter
+              </Link>
+            </Button>
+          )}
+          {!isOwner && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/projects/${project.slug}/partenariat`}>
+                <Handshake aria-hidden />
+                Partenariat marque
               </Link>
             </Button>
           )}

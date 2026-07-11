@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type { TransactionType } from "@prisma/client";
-import { Sparkles } from "lucide-react";
+import { Handshake, Sparkles } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -71,7 +71,8 @@ export default async function DashboardPage({
   const connectBanner =
     connect === "done" || connect === "refresh" ? CONNECT_BANNERS[connect] : null;
 
-  const [user, transactions, contributions, myProjects, reputationEvents] = await Promise.all([
+  const [user, transactions, contributions, myProjects, reputationEvents, pendingPartnerships] =
+    await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),
     prisma.creditTransaction.findMany({
       where: { userId: session.user.id },
@@ -92,6 +93,9 @@ export default async function DashboardPage({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
       take: 5,
+    }),
+    prisma.partnershipRequest.count({
+      where: { project: { ownerId: session.user.id }, status: "PENDING" },
     }),
   ]);
   if (!user) redirect("/login");
@@ -227,12 +231,30 @@ export default async function DashboardPage({
           </section>
         )}
 
+        {pendingPartnerships > 0 && (
+          <p className="rounded-2xl border border-secondary/40 bg-secondary/10 p-4 text-sm font-medium">
+            <Handshake className="mr-2 inline h-4 w-4 text-secondary" aria-hidden />
+            {pendingPartnerships} demande{pendingPartnerships > 1 ? "s" : ""} de partenariat en
+            attente de ta réponse —{" "}
+            <Link href="/partenariats" className="font-semibold text-secondary hover:underline">
+              voir avec le copilote IA →
+            </Link>
+          </p>
+        )}
+
         <section className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <h2 className="text-2xl font-semibold tracking-tight">Mes projets</h2>
-            <Button size="sm" asChild>
-              <Link href="/projects/new">Lancer un projet</Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="ghost" asChild>
+                <Link href="/partenariats">
+                  Partenariats{pendingPartnerships > 0 ? ` (${pendingPartnerships})` : ""}
+                </Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/projects/new">Lancer un projet</Link>
+              </Button>
+            </div>
           </div>
           {myProjects.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-white/[0.12] p-8 text-center text-sm text-muted-foreground">

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ProjectCategory } from "@prisma/client";
+import { PartnershipCompensation, ProjectCategory } from "@prisma/client";
 import {
   MAX_DURATION_DAYS,
   MAX_GOAL,
@@ -127,6 +127,53 @@ export const messageSchema = z.object({
     .trim()
     .min(1, "Ton message est vide.")
     .max(1000, "1000 caractères max par message."),
+});
+
+export const partnershipRequestSchema = z.object({
+  projectId: z.string().min(1),
+  brandName: z
+    .string()
+    .trim()
+    .min(2, "Le nom de la marque fait au moins 2 caractères.")
+    .max(80, "80 caractères max."),
+  contactName: z.string().trim().max(80, "80 caractères max.").optional().or(z.literal("")),
+  brandEmail: z.string().trim().email("Adresse email invalide."),
+  brandWebsite: z
+    .string()
+    .trim()
+    .url("URL complète attendue (https://...).")
+    .optional()
+    .or(z.literal("")),
+  compensation: z.nativeEnum(PartnershipCompensation, {
+    errorMap: () => ({ message: "Choisis le type de contrepartie." }),
+  }),
+  budget: z.preprocess(
+    (value) => (value === "" || value == null ? undefined : value),
+    z.coerce
+      .number({ invalid_type_error: "Budget invalide." })
+      .int("Montant entier uniquement.")
+      .min(0, "Budget invalide.")
+      .max(1_000_000, "Budget invalide.")
+      .optional()
+  ),
+  message: z
+    .string()
+    .trim()
+    .min(30, "Décris ta proposition (30 caractères minimum).")
+    .max(3000, "3000 caractères max."),
+  deliverables: z.string().trim().max(1500, "1500 caractères max.").optional().or(z.literal("")),
+});
+
+export const partnershipResponseSchema = z.object({
+  requestId: z.string().min(1),
+  decision: z.enum(["ACCEPTED", "DECLINED"], {
+    errorMap: () => ({ message: "Choisis accepter ou refuser." }),
+  }),
+  reply: z
+    .string()
+    .trim()
+    .min(10, "Ta réponse est trop courte (10 caractères minimum).")
+    .max(3000, "3000 caractères max."),
 });
 
 /** Transforme un champ texte "un élément par ligne (ou virgule)" en tableau propre. */
