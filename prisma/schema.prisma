@@ -126,9 +126,9 @@ model Project {
   coverUrl      String?
   deadline      DateTime
   // Échéance de réalisation : REALIZATION_DAYS après le financement pour
-  // livrer toutes les étapes, sinon échec + remboursement du séquestre
-  // restant (décision 2026-07-11 : rétention totale ≤ 60 j, sous le plafond
-  // Stripe de ~90 j de rétention des fonds).
+  // livrer toutes les étapes. Au-delà, un vote ouvert est tranché à la
+  // balance courante puis le séquestre restant est remboursé (décision
+  // 2026-07-11 : 90 j, au plafond de rétention Stripe).
   realizationDeadline DateTime?
   status        ProjectStatus   @default(ACTIVE)
   failureReason String?

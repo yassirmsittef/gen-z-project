@@ -660,9 +660,13 @@ export async function failExpiredProjects() {
 
 /**
  * Fait échouer les projets financés dont l'échéance de réalisation est
- * dépassée : le porteur n'a pas fait valider toutes ses étapes à temps, le
- * séquestre restant repart aux contributeurs (même mécanique d'échec que la
- * fin de campagne — prorata, réputation, notifications).
+ * dépassée. Un vote encore ouvert à l'échéance est d'abord TRANCHÉ à la
+ * balance des bulletins posés (même règle que le décompte final : égalité →
+ * refus) — le porteur repart ainsi avec tout ce que la communauté a validé,
+ * y compris in extremis. Puis, sauf si cette validation a réalisé le projet
+ * (dernière étape), le séquestre restant repart aux contributeurs (même
+ * mécanique d'échec que la fin de campagne — prorata, réputation,
+ * notifications).
  */
 export async function failOverdueRealizations() {
   const overdue = await prisma.project.findMany({
@@ -670,12 +674,47 @@ export async function failOverdueRealizations() {
     select: { id: true },
   });
   for (const p of overdue) {
-    await prisma.$transaction(async (tx) =>
-      failProjectTx(
-        tx,
-        p.id,
-        `Étapes non réalisées dans les ${REALIZATION_DAYS} jours suivant le financement.`
-      )
-    );
+    const released = await prisma.$transaction(async (tx) => {
+      const pending = await tx.proof.findFirst({
+        where: { milestone: { projectId: p.id }, status: "PENDING" },
+        include: { votes: true },
+      });
+
+      let releasedMilestone: { milestoneId: string; amount: number } | null = null;
+      if (pending) {
+        const approveWeight = pending.votes
+          .filter((v) => v.decision === "APPROVE")
+          .reduce((sum, v) => sum + v.weight, 0);
+        const rejectWeight = pending.votes
+          .filter((v) => v.decision === "REJECT")
+          .reduce((sum, v) => sum + v.weight, 0);
+        if (approveWeight > rejectWeight) {
+          releasedMilestone = await approveProofTx(tx, pending.id);
+        } else {
+          await rejectProofTx(tx, pending.id);
+        }
+      }
+
+      // La validation in extremis a pu réaliser le projet (dernière étape →
+      // COMPLETED) ou le refus l'a déjà fait échouer (2e rejet) : dans ces
+      // cas, rien à ajouter. Sinon, échec + remboursement du reste.
+      const current = await tx.project.findUniqueOrThrow({
+        where: { id: p.id },
+        select: { status: true },
+      });
+      if (current.status === "FUNDED") {
+        await failProjectTx(
+          tx,
+          p.id,
+          `Étapes non réalisées dans les ${REALIZATION_DAYS} jours suivant le financement.`
+        );
+      }
+      return releasedMilestone;
+    });
+
+    if (released) {
+      const { attemptMilestonePayout } = await import("@/lib/payouts");
+      await attemptMilestonePayout(released.milestoneId, released.amount);
+    }
   }
 }

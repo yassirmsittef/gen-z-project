@@ -23,11 +23,12 @@ export const MAX_DURATION_DAYS = 60;
 
 /**
  * Jours accordés après le financement pour réaliser et faire valider TOUTES
- * les étapes ; au-delà, échec + remboursement du séquestre restant.
- * Décision 2026-07-11 : rétention totale des fonds ≤ 60 j, sous le plafond
- * Stripe (~90 j max de rétention) — cf docs/sequestre-ue.md.
+ * les étapes. Au-delà : un vote encore ouvert est tranché à la balance des
+ * bulletins posés (le porteur garde ce que la communauté a validé), puis le
+ * séquestre restant est remboursé. Décision 2026-07-11 : 90 j, au plafond de
+ * rétention Stripe — cf docs/sequestre-ue.md.
  */
-export const REALIZATION_DAYS = 60;
+export const REALIZATION_DAYS = 90;
 
 /** Compétences : tags libres, bornés pour rester lisibles. */
 export const MAX_SKILLS_PER_USER = 8;
