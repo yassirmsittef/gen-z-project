@@ -30,7 +30,12 @@ export const MIN_CONTRIBUTIONS_TO_CREATE = 1;
 export const MIN_GOAL = 50;
 export const MAX_GOAL = 10_000;
 export const MIN_DURATION_DAYS = 7;
-export const MAX_DURATION_DAYS = 60;
+/**
+ * Durée maximale de campagne : 90 jours (décision 2026-07-12), alignée sur
+ * REALIZATION_DAYS — au-delà, les tokens des contributeurs resteraient
+ * bloqués trop longtemps sous séquestre.
+ */
+export const MAX_DURATION_DAYS = 90;
 
 /**
  * Jours accordés après le financement pour réaliser et faire valider TOUTES

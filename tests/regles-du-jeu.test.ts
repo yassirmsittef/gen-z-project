@@ -2,6 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "../src/lib/prisma";
 import { eraseAccount } from "../src/lib/account";
 import { createReport, handleReport } from "../src/lib/moderation";
+import { createProjectSchema } from "../src/lib/validation";
 import { createResetToken, requestPasswordReset, resetPassword } from "../src/lib/password-reset";
 import { MIN_CONTRIBUTION, REALIZATION_DAYS } from "../src/lib/constants";
 import {
@@ -327,6 +328,33 @@ describe("échéance de réalisation", () => {
     expect(après.released).toBe(100);
     // Commission sur la première étape uniquement : 60−5 puis 40 pleins.
     expect(await credits(porteur.id)).toBe(95);
+  });
+});
+
+describe("durée de campagne", () => {
+  it("borne le choix du porteur à 7–90 jours, avec le pourquoi dans l'erreur", async () => {
+    const base = {
+      title: "Titre valide de projet",
+      pitch: "Pitch valide de projet.",
+      description: "Description valide suffisamment longue pour la validation Zod.",
+      category: "TECH",
+      goal: 100,
+      coverUrl: "",
+      neededSkills: [],
+      milestones: [
+        { title: "Étape un", description: "Livrable un.", amount: 50 },
+        { title: "Étape deux", description: "Livrable deux.", amount: 50 },
+      ],
+    };
+
+    expect(createProjectSchema.safeParse({ ...base, durationDays: 90 }).success).toBe(true);
+    const trop = createProjectSchema.safeParse({ ...base, durationDays: 91 });
+    expect(trop.success).toBe(false);
+    if (!trop.success) {
+      expect(trop.error.errors[0].message).toContain("90 jours maximum");
+      expect(trop.error.errors[0].message).toContain("séquestre");
+    }
+    expect(createProjectSchema.safeParse({ ...base, durationDays: 6 }).success).toBe(false);
   });
 });
 

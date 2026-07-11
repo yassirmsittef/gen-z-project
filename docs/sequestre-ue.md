@@ -123,7 +123,9 @@ devis. ⚖️ CGU tripartites (membre ↔ PSP ↔ plateforme) à faire relire.
 
 Stripe **ne fournit pas d'escrow** ; les payouts manuels permettent de retenir les
 fonds **au maximum ~90 jours** ([doc Stripe](https://docs.stripe.com/connect/manual-payouts)).
-Nos campagnes (jusqu'à 60 j) + libération par étapes (des mois) dépassent ce cadre.
+Nos campagnes (jusqu'à 90 j) + libération par étapes dépassent ce cadre pris à la
+lettre — nuance : les charges alimentent le float de tokens mutualisé (cf 1.3), le
+décompte par charge est donc théorique ; ⚖️ à confirmer avec Stripe en argent réel.
 
 Rester chez Stripe imposerait le modèle Kickstarter : débit au succès de la campagne,
 **versement intégral et rapide au porteur**, et la « libération par étapes » redevient un

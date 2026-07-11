@@ -17,7 +17,9 @@ sont branchés **en mode test** : les mécaniques sont réelles, aucun vrai déb
   idempotence par session id.
 - **Contribution confirmée en deux temps** — un dialogue récapitulatif (montant, équivalence
   en $, rappel du séquestre) doit être accepté avant que la contribution soit enregistrée.
-- **Financement tout-ou-rien** — une campagne a un objectif et une deadline (7 à 60 jours).
+- **Financement tout-ou-rien** — une campagne a un objectif et une deadline (7 à 90 jours,
+  le porteur choisit ; plafond aligné sur le délai de réalisation : les tokens des
+  contributeurs ne restent jamais bloqués indéfiniment).
   Objectif atteint → statut *Financé*, la collecte s'arrête. Deadline dépassée sans objectif →
   *Non abouti*, tous les contributeurs sont remboursés.
 - **Fonds débloqués par étapes** — le porteur découpe son plan en 2 à 5 étapes, chacune avec un

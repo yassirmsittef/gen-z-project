@@ -10,7 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   CATEGORY_LABELS,
+  MAX_DURATION_DAYS,
+  MAX_GOAL,
   MAX_MILESTONES,
+  MIN_DURATION_DAYS,
+  MIN_GOAL,
   MIN_MILESTONES,
   PLATFORM_FEE_MIN,
   PLATFORM_FEE_RATE,
@@ -124,8 +128,8 @@ export function CreateProjectForm() {
               id="goal"
               name="goal"
               type="number"
-              min={50}
-              max={10000}
+              min={MIN_GOAL}
+              max={MAX_GOAL}
               placeholder="500"
               onChange={(e) => setGoal(Number(e.target.value) || 0)}
               required
@@ -133,13 +137,15 @@ export function CreateProjectForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="durationDays">Durée de campagne (jours)</Label>
+            <Label htmlFor="durationDays">
+              Durée de campagne ({MIN_DURATION_DAYS}–{MAX_DURATION_DAYS} jours)
+            </Label>
             <Input
               id="durationDays"
               name="durationDays"
               type="number"
-              min={7}
-              max={60}
+              min={MIN_DURATION_DAYS}
+              max={MAX_DURATION_DAYS}
               defaultValue={30}
               required
             />

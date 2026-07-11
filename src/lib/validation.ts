@@ -133,8 +133,14 @@ export const createProjectSchema = z
     durationDays: z.coerce
       .number({ invalid_type_error: "Durée invalide." })
       .int()
-      .min(MIN_DURATION_DAYS, `Campagne de ${MIN_DURATION_DAYS} jours minimum.`)
-      .max(MAX_DURATION_DAYS, `Campagne de ${MAX_DURATION_DAYS} jours maximum.`),
+      .min(
+        MIN_DURATION_DAYS,
+        `Campagne de ${MIN_DURATION_DAYS} jours minimum — laisse à la communauté le temps de te découvrir.`
+      )
+      .max(
+        MAX_DURATION_DAYS,
+        `Campagne de ${MAX_DURATION_DAYS} jours maximum — au-delà, les tokens de tes contributeurs resteraient bloqués trop longtemps sous séquestre.`
+      ),
     milestones: z
       .array(milestoneInputSchema)
       .min(MIN_MILESTONES, `Au moins ${MIN_MILESTONES} étapes.`)
