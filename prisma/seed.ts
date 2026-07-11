@@ -410,7 +410,7 @@ async function main() {
   );
 
   console.log("🤝 Demandes de partenariat (une saine, une louche — démo du copilote IA)...");
-  await prisma.partnershipRequest.create({
+  const p1Partnership = await prisma.partnershipRequest.create({
     data: {
       projectId: p1.id,
       brandName: "Micros & Ondes",
@@ -425,7 +425,7 @@ async function main() {
         "2 mentions de 20 secondes en début d'épisode sur la saison + 1 post Instagram avec le kit en situation. Rien d'exclusif.",
     },
   });
-  await prisma.partnershipRequest.create({
+  const p1Scam = await prisma.partnershipRequest.create({
     data: {
       projectId: p1.id,
       brandName: "GlobalPromo Agency",
@@ -436,6 +436,25 @@ async function main() {
       deliverables:
         "Promotion exclusive de notre plateforme dans tous vos épisodes et sur tous vos réseaux pendant 12 mois.",
     },
+  });
+
+  await prisma.notification.createMany({
+    data: [
+      {
+        userId: lea.id,
+        type: "PARTNERSHIP",
+        title: "Demande de partenariat de Micros & Ondes",
+        body: "Pour « Studio de podcast nomade » · 250 $ proposés. Le copilote IA a préparé son analyse.",
+        href: `/partenariats/${p1Partnership.id}`,
+      },
+      {
+        userId: lea.id,
+        type: "PARTNERSHIP",
+        title: "Demande de partenariat de GlobalPromo Agency",
+        body: "Pour « Studio de podcast nomade ». Le copilote IA a préparé son analyse.",
+        href: `/partenariats/${p1Scam.id}`,
+      },
+    ],
   });
 
   console.log("💥 Échec du food-truck (deadline dépassée)...");

@@ -8,6 +8,7 @@ import {
   WELCOME_CREDITS,
 } from "@/lib/constants";
 import type { City } from "@/lib/cities";
+import { notify, notifyMany } from "@/lib/notifications";
 import type { CreateProjectInput } from "@/lib/validation";
 
 /** Erreur métier : son message est affichable tel quel à l'utilisateur. */
@@ -186,12 +187,47 @@ export async function makeContribution(userId: string, projectId: string, amount
       data: { raised: newRaised, ...(funded ? { status: "FUNDED" } : {}) },
     });
 
+    await notify(
+      {
+        userId: project.ownerId,
+        type: "CONTRIBUTION",
+        title: `${user.name ?? "Quelqu'un"} a soutenu « ${project.title} » (${amount} $)`,
+        href: `/projects/${project.slug}`,
+      },
+      tx
+    );
+
     // Objectif atteint : la collecte s'arrête, l'étape 1 attend sa preuve.
     if (funded) {
       const first = await tx.milestone.findFirst({ where: { projectId, order: 1 } });
       if (first) {
         await tx.milestone.update({ where: { id: first.id }, data: { status: "AWAITING_PROOF" } });
       }
+
+      const contributors = await tx.contribution.findMany({
+        where: { projectId },
+        distinct: ["userId"],
+        select: { userId: true },
+      });
+      await notifyMany(
+        [
+          {
+            userId: project.ownerId,
+            type: "PROJECT_FUNDED" as const,
+            title: `Objectif atteint pour « ${project.title} » !`,
+            body: "La collecte est terminée — soumets la preuve de l'étape 1 pour débloquer les premiers fonds.",
+            href: `/projects/${project.slug}`,
+          },
+          ...contributors.map((c) => ({
+            userId: c.userId,
+            type: "PROJECT_FUNDED" as const,
+            title: `« ${project.title} » est financé !`,
+            body: "Tu voteras sur les preuves d'avancement pour débloquer les fonds étape par étape.",
+            href: `/projects/${project.slug}`,
+          })),
+        ],
+        tx
+      );
     }
   });
 }
@@ -227,6 +263,23 @@ export async function submitMilestoneProof(
       },
     });
     await tx.milestone.update({ where: { id: milestone.id }, data: { status: "UNDER_REVIEW" } });
+
+    // Les contributeurs sont le jury : chacun est prévenu qu'un vote l'attend.
+    const contributors = await tx.contribution.findMany({
+      where: { projectId: milestone.projectId },
+      distinct: ["userId"],
+      select: { userId: true },
+    });
+    await notifyMany(
+      contributors.map((c) => ({
+        userId: c.userId,
+        type: "PROOF_TO_VOTE" as const,
+        title: `Preuve à examiner — « ${milestone.project.title} »`,
+        body: `Étape ${milestone.order} : ${milestone.title}. Ton vote débloque (ou non) les fonds.`,
+        href: `/projects/${milestone.project.slug}`,
+      })),
+      tx
+    );
   });
 }
 
@@ -376,6 +429,19 @@ async function approveProofTx(
     });
   }
 
+  await notify(
+    {
+      userId: project.ownerId,
+      type: "MILESTONE_RELEASED",
+      title: `Étape ${milestone.order} validée — ${release} $ débloqués`,
+      body: next
+        ? `La communauté a validé ta preuve pour « ${project.title} ». Prochaine étape : « ${next.title} ».`
+        : `« ${project.title} » est entièrement réalisé. Bravo !`,
+      href: `/projects/${project.slug}`,
+    },
+    tx
+  );
+
   return { milestoneId: milestone.id, amount: release };
 }
 
@@ -403,6 +469,23 @@ async function rejectProofTx(tx: Tx, proofId: string) {
       where: { id: proof.milestoneId },
       data: { status: "AWAITING_PROOF" },
     });
+
+    const project = await tx.project.findUniqueOrThrow({
+      where: { id: proof.milestone.projectId },
+      select: { ownerId: true, title: true, slug: true },
+    });
+    await notify(
+      {
+        userId: project.ownerId,
+        type: "PROOF_REJECTED",
+        title: `Preuve refusée — « ${project.title} »`,
+        body: `Étape ${proof.milestone.order} : la communauté n'a pas validé. Il te reste ${
+          MAX_PROOF_ATTEMPTS - milestone.rejectionCount
+        } tentative — renforce ta preuve (photos, liens publics).`,
+        href: `/projects/${project.slug}`,
+      },
+      tx
+    );
   }
 }
 
@@ -417,6 +500,7 @@ async function failProjectTx(tx: Tx, projectId: string, reason: string) {
 
   // Remboursement au prorata du séquestre restant (raised − released).
   const remaining = project.raised - project.released;
+  const refundNotifications = [];
   for (const c of project.contributions) {
     const refund = project.raised > 0 ? Math.floor((c.amount * remaining) / project.raised) : 0;
     if (refund > 0) {
@@ -429,6 +513,13 @@ async function failProjectTx(tx: Tx, projectId: string, reason: string) {
           refId: project.id,
           label: `Remboursement — ${project.title}`,
         },
+      });
+      refundNotifications.push({
+        userId: c.userId,
+        type: "REFUND" as const,
+        title: `Remboursement de ${refund} $ — « ${project.title} »`,
+        body: "La campagne n'a pas abouti : ta part du séquestre restant t'a été recréditée.",
+        href: "/dashboard",
       });
     }
     await tx.contribution.update({ where: { id: c.id }, data: { refunded: true } });
@@ -449,6 +540,20 @@ async function failProjectTx(tx: Tx, projectId: string, reason: string) {
       reason: `Projet « ${project.title} » non abouti`,
     },
   });
+
+  await notifyMany(
+    [
+      {
+        userId: project.ownerId,
+        type: "PROJECT_FAILED" as const,
+        title: `« ${project.title} » n'a pas abouti`,
+        body: `${reason} L'échec n'est pas une sortie : des opportunités t'attendent sur le parcours rebond.`,
+        href: `/rebond?from=${project.slug}`,
+      },
+      ...refundNotifications,
+    ],
+    tx
+  );
 }
 
 export async function failProject(projectId: string, reason: string) {

@@ -42,6 +42,7 @@ model User {
   votes            Vote[]
   messagesSent     Message[]           @relation("MessagesSent")
   messagesReceived Message[]           @relation("MessagesReceived")
+  notifications    Notification[]
 }
 
 model Account {
@@ -292,6 +293,36 @@ model Message {
 
   @@index([senderId, createdAt])
   @@index([recipientId, createdAt])
+}
+
+// ---------- Notifications ----------
+
+enum NotificationType {
+  CONTRIBUTION // quelqu'un a soutenu ton projet
+  PROJECT_FUNDED // objectif atteint
+  PROJECT_FAILED // campagne non aboutie
+  REFUND // contribution remboursée
+  PROOF_TO_VOTE // une preuve attend ton vote
+  MILESTONE_RELEASED // étape validée, fonds débloqués
+  PROOF_REJECTED // preuve refusée par la communauté
+  MESSAGE // nouveau message privé
+  PARTNERSHIP // nouvelle demande de partenariat
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String?
+  href      String // destination du clic
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
 }
 
 // ---------- Réputation ----------

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { notifyOnceUnread } from "@/lib/notifications";
 import { messageSchema } from "@/lib/validation";
 
 export type MessageFormState = { error?: string; sentAt?: number } | undefined;
@@ -36,6 +37,14 @@ export async function sendMessageAction(
       recipientId: parsed.data.recipientId,
       body: parsed.data.body,
     },
+  });
+
+  // Une seule notification non lue par conversation (pas une par message).
+  await notifyOnceUnread({
+    userId: parsed.data.recipientId,
+    type: "MESSAGE",
+    title: `Nouveau message de ${session.user.name ?? "un membre"}`,
+    href: `/chat/${session.user.id}`,
   });
 
   revalidatePath("/chat", "layout");

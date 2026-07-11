@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notifications";
 import { deepAnalyze } from "@/lib/partnership-ai";
 import { partnershipRequestSchema, partnershipResponseSchema } from "@/lib/validation";
 
@@ -38,7 +39,7 @@ export async function submitPartnershipAction(
 
   const project = await prisma.project.findUnique({
     where: { id: parsed.data.projectId },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, title: true, ownerId: true },
   });
   if (!project) return { error: "Projet introuvable." };
 
@@ -66,7 +67,15 @@ export async function submitPartnershipAction(
       message: parsed.data.message,
       deliverables: parsed.data.deliverables || null,
     },
-    select: { trackToken: true },
+    select: { id: true, trackToken: true },
+  });
+
+  await notify({
+    userId: project.ownerId,
+    type: "PARTNERSHIP",
+    title: `Demande de partenariat de ${parsed.data.brandName}`,
+    body: `Pour « ${project.title} »${parsed.data.budget != null ? ` · ${parsed.data.budget} $ proposés` : ""}. Le copilote IA a préparé son analyse.`,
+    href: `/partenariats/${request.id}`,
   });
 
   revalidatePath("/partenariats");
