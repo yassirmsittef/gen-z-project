@@ -7,12 +7,55 @@ import { findCity } from "@/lib/cities";
 import { prisma } from "@/lib/prisma";
 import { updateUserLocation, updateUserSkills } from "@/lib/project-service";
 import bcrypt from "bcryptjs";
+import { signOut } from "@/auth";
+import { eraseAccount } from "@/lib/account";
+import { DomainError } from "@/lib/project-service";
 import {
   changePasswordSchema,
   parseList,
   updateProfileSchema,
   userSkillsSchema,
 } from "@/lib/validation";
+
+export type DeleteAccountState = { error?: string } | undefined;
+
+/**
+ * Suppression du compte (anonymisation RGPD, cf src/lib/account.ts).
+ * Confirmée par le mot de passe ; déconnecte et renvoie à l'accueil.
+ */
+export async function deleteAccountAction(
+  _prev: DeleteAccountState,
+  formData: FormData
+): Promise<DeleteAccountState> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  const password = String(formData.get("password") ?? "");
+  if (!password) return { error: "Mot de passe requis pour confirmer." };
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { passwordHash: true },
+  });
+  if (!user?.passwordHash) {
+    return {
+      error:
+        "Ce compte utilise une connexion externe (Google) : écris-nous pour supprimer ton compte.",
+    };
+  }
+  if (!(await bcrypt.compare(password, user.passwordHash))) {
+    return { error: "Mot de passe incorrect." };
+  }
+
+  try {
+    await eraseAccount(session.user.id);
+  } catch (error) {
+    if (error instanceof DomainError) return { error: error.message };
+    throw error;
+  }
+
+  await signOut({ redirectTo: "/" });
+}
 
 export type PasswordFormState = { error?: string; success?: boolean } | undefined;
 

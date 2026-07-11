@@ -14,6 +14,7 @@ import { stripeEnabled } from "@/lib/stripe";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
 import { ConnectForm } from "@/components/connect-form";
+import { DeleteAccount } from "@/components/delete-account";
 import { LocationForm } from "@/components/location-form";
 import { PasswordForm } from "@/components/password-form";
 import { ProfileForm } from "@/components/profile-form";
@@ -431,8 +432,9 @@ export default async function DashboardPage({
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold tracking-tight">Sécurité</h2>
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="space-y-6 pt-6">
                 <PasswordForm />
+                <DeleteAccount />
               </CardContent>
             </Card>
           </div>
