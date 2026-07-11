@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CITIES } from "@/lib/cities";
-import { WELCOME_CREDITS } from "@/lib/constants";
 
 function GoogleButton() {
   return (
@@ -117,7 +116,7 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
         {state?.error && <p role="alert" className="text-sm font-medium text-destructive">{state.error}</p>}
 
         <Button type="submit" className="w-full" disabled={pending}>
-          {pending ? "Création…" : `Créer mon compte (+${WELCOME_CREDITS} tokens offerts)`}
+          {pending ? "Création…" : "Créer mon compte"}
         </Button>
       </form>
 

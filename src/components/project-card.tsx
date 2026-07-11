@@ -8,7 +8,8 @@ import { ReputationBadge } from "@/components/reputation-badge";
 import { StatusBadge } from "@/components/status-badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { CATEGORY_LABELS } from "@/lib/constants";
-import { daysLeft, formatCredits, progressPercent } from "@/lib/format";
+import { daysLeft, progressPercent } from "@/lib/format";
+import { formatMoney } from "@/lib/money";
 
 export type ProjectCardData = Prisma.ProjectGetPayload<{
   include: { owner: true; _count: { select: { contributions: true } } };
@@ -53,8 +54,8 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
           <Progress value={percent} />
           <div className="flex items-baseline justify-between text-sm">
             <span className="font-semibold">
-              {formatCredits(project.raised)}
-              <span className="font-normal text-muted-foreground"> / {formatCredits(project.goal)}</span>
+              {formatMoney(project.raised, project.currency)}
+              <span className="font-normal text-muted-foreground"> / {formatMoney(project.goal, project.currency)}</span>
             </span>
             <span className="font-display text-base font-semibold text-primary">{percent}%</span>
           </div>

@@ -26,8 +26,10 @@ model User {
   bio              String? // courte présentation affichée sur le profil public
   emailVerified    DateTime?
   passwordHash     String?
-  credits          Int       @default(0)
-  totalContributed Int       @default(0) // cumul à vie (non décrémenté par les remboursements)
+  // Cumul à vie des contributions converties en cents US au moment du
+  // paiement (non décrémenté par les remboursements) — alimente le gate
+  // « 50 $ contribués avant de poster » et les classements inter-devises.
+  contributedUsdCents Int    @default(0)
   reputation       Int       @default(0)
   skills           String[]  @default([])
   // Localisation déclarative pour le globe Communauté : ville choisie dans la
@@ -46,7 +48,6 @@ model User {
   sessions         Session[]
   projects         Project[]
   contributions    Contribution[]
-  transactions     CreditTransaction[]
   reputationEvents ReputationEvent[]
   reports          Report[]
   resetTokens      PasswordResetToken[]
@@ -128,9 +129,13 @@ model Project {
   pitch         String
   description   String
   category      ProjectCategory
+  // Devise du projet (code ISO minuscule accepté par Stripe : eur, usd, mad…).
+  // TOUS les montants du projet (goal, raised, released, étapes, votes) sont
+  // en unités MINEURES de cette devise.
+  currency      String          @default("usd")
   goal          Int
   raised        Int             @default(0)
-  released      Int             @default(0) // crédits déjà débloqués vers le porteur
+  released      Int             @default(0) // déjà débloqué vers le porteur (unités mineures)
   coverUrl      String?
   deadline      DateTime
   // Échéance de réalisation : REALIZATION_DAYS après le financement pour
@@ -267,8 +272,19 @@ model Contribution {
   id        String   @id @default(cuid())
   userId    String
   projectId String
+  // Montant en unités MINEURES de la devise du projet (cents, centimes…).
   amount    Int
-  refunded  Boolean  @default(false)
+  // Équivalent en cents US au taux du jour du paiement (gate + classements).
+  usdCents  Int      @default(0)
+  // Références Stripe : la session (idempotence du webhook) et le
+  // payment_intent (support des remboursements réels).
+  stripeSessionId       String? @unique
+  stripePaymentIntentId String?
+  // Remboursement : montant dû (prorata, unités mineures) posé à l'échec,
+  // exécuté chez Stripe après commit — stripeRefundId absent = à rejouer.
+  refunded        Boolean @default(false)
+  refundDueMinor  Int     @default(0)
+  stripeRefundId  String?
   createdAt DateTime @default(now())
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -276,29 +292,6 @@ model Contribution {
 
   @@index([projectId])
   @@index([userId])
-}
-
-enum TransactionType {
-  WELCOME
-  CONTRIBUTION
-  MILESTONE_RELEASE
-  REFUND
-  BONUS
-  FEE // commission plateforme (première étape débloquée) — provisionne les tokens de bienvenue
-}
-
-model CreditTransaction {
-  id        String          @id @default(cuid())
-  userId    String
-  amount    Int // signé : négatif = débit, positif = crédit
-  type      TransactionType
-  refId     String? // id de l'objet lié (projet, étape...)
-  label     String
-  createdAt DateTime        @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, createdAt])
 }
 
 // ---------- Vie du projet : suivi, actus du porteur & discussion ----------

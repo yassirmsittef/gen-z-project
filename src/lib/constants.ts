@@ -1,34 +1,26 @@
 import type { NotificationType, ProjectCategory } from "@prisma/client";
 
-// ---------- Économie (Phase 1 : tokens fictifs, 1 token = 1 $) ----------
+// ---------- Économie (argent réel, une devise par projet) ----------
+// Décisions fondateur 2026-07-12 : plus de wallet de tokens, plus de bonus
+// de bienvenue, pas de commission pour le moment. Paiement carte direct dans
+// la devise du projet ; les clés Stripe restent en mode TEST jusqu'à
+// l'activation Connect + relecture légale.
 
 /**
- * Tokens offerts à l'inscription — PROVISIONNÉS par la commission plateforme
- * (décision 2026-07-12) : un token vaut un vrai dollar à terme, le cadeau
- * d'acquisition est financé par PLATFORM_FEE_* prélevée sur la première
- * étape débloquée de chaque projet. Les deux règles vont ensemble : ne pas
- * augmenter l'un sans l'autre.
+ * Gate « contribue d'abord » : cumul de contributions (équivalent USD figé
+ * au moment de chaque paiement) requis avant de pouvoir poster son projet.
+ * Affiché en jauge de progression.
  */
-export const WELCOME_CREDITS = 5;
+export const GATE_USD_CENTS = 5000; // 50 $
 
-/** Commission plateforme : 5 % de la PREMIÈRE étape débloquée d'un projet… */
-export const PLATFORM_FEE_RATE = 0.05;
-/** …avec un plancher — c'est elle qui finance les tokens de bienvenue. */
-export const PLATFORM_FEE_MIN = 5;
-
-/** Montants de recharge proposés (fictifs en Phase 1, Stripe en Phase 2). */
-export const RECHARGE_PRESETS = [10, 25, 50, 100] as const;
-
-/** Contribution minimale à un projet. */
-export const MIN_CONTRIBUTION = 5;
-
-/** Nombre de contributions requises avant de pouvoir poster un projet. */
-export const MIN_CONTRIBUTIONS_TO_CREATE = 1;
+/** Contribution minimale, en unités MAJEURES de la devise du projet. */
+export const MIN_CONTRIBUTION_MAJOR = 5;
 
 // ---------- Règles de campagne ----------
 
+/** Bornes de l'objectif, en unités MAJEURES de la devise du projet. */
 export const MIN_GOAL = 50;
-export const MAX_GOAL = 10_000;
+export const MAX_GOAL = 100_000;
 export const MIN_DURATION_DAYS = 7;
 /**
  * Durée maximale de campagne : 90 jours (décision 2026-07-12), alignée sur

@@ -42,23 +42,6 @@ export async function eraseAccount(userId: string) {
     await tx.session.deleteMany({ where: { userId } });
     await tx.account.deleteMany({ where: { userId } });
 
-    // Solde annulé AVEC trace au ledger : l'invariant « somme des mouvements
-    // = solde » reste vrai.
-    const user = await tx.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: { credits: true },
-    });
-    if (user.credits !== 0) {
-      await tx.creditTransaction.create({
-        data: {
-          userId,
-          amount: -user.credits,
-          type: "BONUS",
-          label: "Compte supprimé — solde annulé",
-        },
-      });
-    }
-
     await tx.user.update({
       where: { id: userId },
       data: {
@@ -74,7 +57,6 @@ export async function eraseAccount(userId: string) {
         skills: [],
         mutedNotifications: [],
         stripeAccountId: null,
-        credits: 0,
       },
     });
   });

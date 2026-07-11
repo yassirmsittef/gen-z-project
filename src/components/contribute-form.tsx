@@ -1,101 +1,39 @@
 "use client";
 
-import Link from "next/link";
-import { useActionState, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { ShieldCheck, Zap } from "lucide-react";
+import { useActionState, useEffect, useState } from "react";
+import { ShieldCheck } from "lucide-react";
 import { contributeAction } from "@/actions/contributions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { contributeSchema } from "@/lib/validation";
-import { MIN_CONTRIBUTION } from "@/lib/constants";
-import { formatCredits } from "@/lib/format";
+import { MIN_CONTRIBUTION_MAJOR } from "@/lib/constants";
+import { formatMoney, toMinor } from "@/lib/money";
+import { cn } from "@/lib/utils";
 
 const QUICK_AMOUNTS = [5, 10, 25, 50];
 
+/**
+ * Contribution en argent réel : montant choisi en devise du projet, puis
+ * paiement sur Stripe Checkout (qui EST l'écran de confirmation). L'URL
+ * externe est naviguée côté client — un redirect serveur ne sort pas de
+ * l'app.
+ */
 export function ContributeForm({
   projectId,
-  projectTitle,
-  balance,
+  currency,
 }: {
   projectId: string;
-  projectTitle: string;
-  balance: number;
+  currency: string;
 }) {
   const [state, formAction, pending] = useActionState(contributeAction, undefined);
   const [amount, setAmount] = useState(10);
-  const [clientError, setClientError] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState(false);
 
-  // La contribution n'est enregistrée qu'après confirmation explicite :
-  // ce bouton valide côté client puis ouvre le dialogue.
-  function requestConfirmation() {
-    const parsed = contributeSchema.safeParse({ projectId, amount });
-    if (!parsed.success) {
-      setClientError(parsed.error.errors[0].message);
-      return;
-    }
-    if (amount > balance) {
-      setClientError(`Solde insuffisant (${formatCredits(balance)} disponibles).`);
-      return;
-    }
-    setClientError(null);
-    setConfirming(true);
-  }
-
-  // Fermer le dialogue après succès, ou via Échap.
   useEffect(() => {
-    if (state?.success) setConfirming(false);
-  }, [state?.success]);
-
-  // Gestion du focus du dialogue (WAI-ARIA) : déplace le focus dedans à
-  // l'ouverture, le piège (Tab cycle), Échap ferme, et rend le focus au
-  // déclencheur à la fermeture.
-  const dialogRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!confirming) return;
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    const focusables = dialogRef.current
-      ? Array.from(
-          dialogRef.current.querySelectorAll<HTMLElement>(
-            'button, [href], input, [tabindex]:not([tabindex="-1"])'
-          )
-        )
-      : [];
-    focusables[focusables.length - 1]?.focus();
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setConfirming(false);
-        return;
-      }
-      if (event.key !== "Tab" || focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      previouslyFocused?.focus?.();
-    };
-  }, [confirming]);
-
-  const error = clientError ?? state?.error;
-  const insufficient = error?.includes("insuffisant");
-  // Le dialogue vit dans un portal (hors du DOM du <form>) : son bouton
-  // Confirmer est rattaché au formulaire via l'attribut HTML `form`.
-  const formId = `contribute-${projectId}`;
+    if (state?.checkoutUrl) window.location.assign(state.checkoutUrl);
+  }, [state?.checkoutUrl]);
 
   return (
-    <form id={formId} action={formAction} className="space-y-3">
+    <form action={formAction} className="space-y-3">
       <input type="hidden" name="projectId" value={projectId} />
       <input type="hidden" name="amount" value={amount} />
 
@@ -105,114 +43,45 @@ export function ContributeForm({
             key={value}
             type="button"
             onClick={() => setAmount(value)}
-            className={
+            className={cn(
+              "rounded-full border px-3.5 py-1.5 font-mono text-sm transition duration-200",
               amount === value
-                ? "rounded-full border border-primary/40 bg-primary/15 px-3.5 py-1.5 font-mono text-sm text-primary shadow-glow transition-all duration-200"
-                : "rounded-full border border-white/[0.12] bg-card/60 px-3.5 py-1.5 font-mono text-sm text-muted-foreground transition-all duration-200 hover:text-foreground"
-            }
+                ? "border-primary/40 bg-primary/15 text-primary shadow-glow"
+                : "border-white/[0.12] bg-card/60 text-muted-foreground hover:text-foreground"
+            )}
           >
-            {value}
+            {formatMoney(toMinor(value, currency), currency)}
           </button>
         ))}
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="amount-input">Montant (tokens)</Label>
+        <Label htmlFor="contribute-amount">Montant libre ({currency.toUpperCase()})</Label>
         <Input
-          id="amount-input"
+          id="contribute-amount"
           type="number"
-          min={MIN_CONTRIBUTION}
-          value={amount}
-          onChange={(e) => setAmount(Number(e.target.value))}
-          onKeyDown={(e) => {
-            // Entrée ne doit jamais court-circuiter la confirmation.
-            if (e.key === "Enter") {
-              e.preventDefault();
-              requestConfirmation();
-            }
-          }}
-          required
+          min={MIN_CONTRIBUTION_MAJOR}
+          value={amount || ""}
+          onChange={(event) => setAmount(Number(event.target.value) || 0)}
         />
       </div>
 
-      {error && (
+      {state?.error && (
         <p role="alert" className="text-sm font-medium text-destructive">
-          {error}{" "}
-          {insufficient && (
-            <Link href="/dashboard#recharge" className="text-primary underline underline-offset-4">
-              Recharger mon compte →
-            </Link>
-          )}
+          {state.error}
         </p>
       )}
-      {state?.success && !clientError && (
-        <p className="text-sm font-medium text-success">Merci ! Ta contribution est enregistrée.</p>
-      )}
 
-      <Button type="button" className="w-full" disabled={pending} onClick={requestConfirmation}>
-        <Zap aria-hidden />
-        Contribuer
+      <Button type="submit" className="w-full" disabled={pending || Boolean(state?.checkoutUrl)}>
+        {pending || state?.checkoutUrl
+          ? "Redirection vers le paiement…"
+          : `Contribuer ${formatMoney(toMinor(amount || 0, currency), currency)}`}
       </Button>
-      <p className="text-center font-mono text-xs text-muted-foreground">
-        Ton solde : {formatCredits(balance)}
+      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary/70" aria-hidden />
+        Paiement sécurisé Stripe. Fonds sous séquestre, débloqués étape par étape par le vote
+        des contributeurs — remboursés si la campagne n&apos;aboutit pas.
       </p>
-
-      {/* Dialogue de confirmation — la contribution ne part qu'après accord */}
-      {confirming &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-[110] flex items-center justify-center overscroll-contain bg-background/70 p-4 backdrop-blur-sm"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="confirm-title"
-            onClick={() => setConfirming(false)}
-          >
-            <div
-              ref={dialogRef}
-              className="glass w-full max-w-md rounded-2xl rounded-tr-sm p-6"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl rounded-br-sm border border-primary/30 bg-primary/15">
-                  <ShieldCheck className="h-5 w-5 text-primary" aria-hidden />
-                </span>
-                <h3 id="confirm-title" className="font-display text-lg font-semibold">
-                  Confirmer ta contribution
-                </h3>
-              </div>
-
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Tu t&apos;apprêtes à soutenir{" "}
-                <span className="font-semibold text-foreground">« {projectTitle} »</span> à
-                hauteur de{" "}
-                <span className="font-mono font-semibold text-primary">
-                  {formatCredits(amount)}
-                </span>{" "}
-                <span className="font-mono">(≈ {amount} $)</span>.
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Les fonds partent sous séquestre : débloqués étape par étape sur preuve, ou
-                remboursés si la campagne échoue.
-              </p>
-
-              <div className="mt-6 flex justify-end gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setConfirming(false)}
-                  disabled={pending}
-                >
-                  Annuler
-                </Button>
-                <Button type="submit" form={formId} size="sm" disabled={pending}>
-                  {pending ? "Envoi…" : `Confirmer — ${formatCredits(amount)}`}
-                </Button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
     </form>
   );
 }

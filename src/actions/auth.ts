@@ -5,7 +5,6 @@ import bcrypt from "bcryptjs";
 import { signIn, signOut } from "@/auth";
 import { findCity } from "@/lib/cities";
 import { prisma } from "@/lib/prisma";
-import { grantWelcomeCredits } from "@/lib/project-service";
 import { loginSchema, registerSchema } from "@/lib/validation";
 
 export type AuthFormState = { error?: string } | undefined;
@@ -44,7 +43,6 @@ export async function registerAction(
         : {}),
     },
   });
-  await grantWelcomeCredits(user.id);
 
   // Lance la session puis redirige (signIn lève un NEXT_REDIRECT).
   await signIn("credentials", { email, password, redirectTo: "/projects" });

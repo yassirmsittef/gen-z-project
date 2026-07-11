@@ -1,13 +1,21 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { DomainError, makeContribution } from "@/lib/project-service";
+import { usdCentsFromMinor } from "@/lib/fx";
+import { formatMoney, toMinor } from "@/lib/money";
+import { assertCanContribute, DomainError } from "@/lib/project-service";
+import { appUrl, getStripe, stripeEnabled } from "@/lib/stripe";
 import { contributeSchema } from "@/lib/validation";
 
-export type ContributeState = { error?: string; success?: boolean } | undefined;
+export type ContributeState = { error?: string; checkoutUrl?: string } | undefined;
 
+/**
+ * Contribution en argent réel : gardes AVANT paiement puis session Stripe
+ * Checkout dans la devise du projet. L'URL externe est renvoyée au client
+ * (redirect() ne sort pas de l'app) ; l'enregistrement se fait au webhook
+ * `checkout.session.completed` — jamais ici.
+ */
 export async function contributeAction(
   _prev: ContributeState,
   formData: FormData
@@ -21,13 +29,47 @@ export async function contributeAction(
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
+  if (!stripeEnabled) {
+    return { error: "Les paiements ne sont pas configurés sur cet environnement." };
+  }
+
+  let project;
   try {
-    await makeContribution(session.user.id, parsed.data.projectId, parsed.data.amount);
+    project = await assertCanContribute(session.user.id, parsed.data.projectId);
   } catch (error) {
     if (error instanceof DomainError) return { error: error.message };
     throw error;
   }
 
-  revalidatePath("/", "layout");
-  return { success: true };
+  const amountMinor = toMinor(parsed.data.amount, project.currency);
+  // L'équivalent USD (gate des 50 $) est figé MAINTENANT, au taux du jour.
+  const usdCents = await usdCentsFromMinor(amountMinor, project.currency);
+
+  const checkout = await getStripe().checkout.sessions.create({
+    mode: "payment",
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: project.currency,
+          unit_amount: amountMinor,
+          product_data: {
+            name: `Contribution — ${project.title}`,
+            description: `Séquestre communautaire Tremplin (${formatMoney(amountMinor, project.currency)})`,
+          },
+        },
+      },
+    ],
+    metadata: {
+      kind: "contribution",
+      projectId: project.id,
+      userId: session.user.id,
+      usdCents: String(usdCents),
+    },
+    success_url: `${appUrl()}/projects/${project.slug}?contribution=merci`,
+    cancel_url: `${appUrl()}/projects/${project.slug}?contribution=annulee`,
+  });
+
+  if (!checkout.url) return { error: "Stripe n'a pas fourni de page de paiement — réessaie." };
+  return { checkoutUrl: checkout.url };
 }

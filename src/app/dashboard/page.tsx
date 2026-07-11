@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import type { TransactionType } from "@prisma/client";
 import { Handshake, Sparkles, Star } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -9,7 +8,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectCard } from "@/components/project-card";
-import { RechargeForm } from "@/components/recharge-form";
 import { stripeEnabled } from "@/lib/stripe";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
@@ -23,25 +21,15 @@ import { getConnectStatus } from "@/lib/payouts";
 import { StatRing } from "@/components/stat-ring";
 import { UserAvatar } from "@/components/user-avatar";
 import { nextReputationTarget } from "@/lib/reputation";
-import { formatCredits, formatDate } from "@/lib/format";
+import { GATE_USD_CENTS } from "@/lib/constants";
+import { formatMoney } from "@/lib/money";
+import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Dashboard",
   robots: { index: false, follow: false },
 };
-
-/** Bandeaux de retour du paiement Stripe (?recharge=success|cancel). */
-const RECHARGE_BANNERS = {
-  success: {
-    tone: "text-success border-success/30 bg-success/10",
-    text: "Paiement confirmé — tes tokens sont crédités (quelques secondes si le webhook travaille encore).",
-  },
-  cancel: {
-    tone: "text-muted-foreground border-white/[0.12] bg-card/60",
-    text: "Paiement annulé — aucun débit, aucun token crédité.",
-  },
-} as const;
 
 /** Bandeaux de retour de l'onboarding Stripe Connect (?connect=done|refresh). */
 const CONNECT_BANNERS = {
@@ -55,32 +43,19 @@ const CONNECT_BANNERS = {
   },
 } as const;
 
-/** Pastilles de type pour le flux de crédits (couleur ≠ seule porteuse : label mono). */
-const TYPE_STYLES: Record<TransactionType, { dot: string; label: string }> = {
-  WELCOME: { dot: "bg-success", label: "Bienvenue" },
-  BONUS: { dot: "bg-success", label: "Bonus" },
-  CONTRIBUTION: { dot: "bg-primary", label: "Contribution" },
-  REFUND: { dot: "bg-amber-400", label: "Remboursement" },
-  MILESTONE_RELEASE: { dot: "bg-secondary", label: "Étape débloquée" },
-  FEE: { dot: "bg-amber-400", label: "Commission plateforme" },
-};
-
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ recharge?: string; connect?: string }>;
+  searchParams: Promise<{ connect?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  const { recharge, connect } = await searchParams;
-  const rechargeBanner =
-    recharge === "success" || recharge === "cancel" ? RECHARGE_BANNERS[recharge] : null;
+  const { connect } = await searchParams;
   const connectBanner =
     connect === "done" || connect === "refresh" ? CONNECT_BANNERS[connect] : null;
 
   const [
     user,
-    transactions,
     contributions,
     myProjects,
     reputationEvents,
@@ -88,11 +63,6 @@ export default async function DashboardPage({
     followedProjects,
   ] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),
-    prisma.creditTransaction.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      take: 25,
-    }),
     prisma.contribution.findMany({
       where: { userId: session.user.id },
       include: { project: true },
@@ -129,24 +99,13 @@ export default async function DashboardPage({
 
   const failedProjects = myProjects.filter((p) => p.status === "FAILED");
   const nextLevel = nextReputationTarget(user.reputation);
-  const totalMoved = user.credits + user.totalContributed;
+  const gateReached = user.contributedUsdCents >= GATE_USD_CENTS;
   // Trajectoire : du plus ancien au plus récent, gauche → droite.
   const trajectory = [...reputationEvents].reverse();
 
   return (
     <div className="page-halo">
       <div className="container space-y-12 py-10">
-        {rechargeBanner && (
-          <p
-            className={cn(
-              "rounded-2xl border p-4 text-sm font-medium",
-              rechargeBanner.tone
-            )}
-            role="status"
-          >
-            {rechargeBanner.text}
-          </p>
-        )}
         {connectBanner && (
           <p
             className={cn("rounded-2xl border p-4 text-sm font-medium", connectBanner.tone)}
@@ -199,10 +158,14 @@ export default async function DashboardPage({
               }
             />
             <StatRing
-              value={formatCredits(user.credits)}
-              percent={totalMoved > 0 ? user.credits / totalMoved : 1}
-              label="Tokens disponibles"
-              sublabel={`${formatCredits(user.totalContributed)} investis à vie`}
+              value={formatMoney(user.contributedUsdCents, "usd")}
+              percent={Math.min(1, user.contributedUsdCents / GATE_USD_CENTS)}
+              label="Vers ton projet"
+              sublabel={
+                gateReached
+                  ? "Gate débloqué — tu peux poster"
+                  : `${formatMoney(GATE_USD_CENTS - user.contributedUsdCents, "usd")} avant de pouvoir poster`
+              }
             />
             <StatRing
               value={String(contributions.length)}
@@ -335,7 +298,7 @@ export default async function DashboardPage({
                         </p>
                       </div>
                       <span className="ml-auto shrink-0 font-mono text-sm">
-                        {formatCredits(contribution.amount)}
+                        {formatMoney(contribution.amount, contribution.project.currency)}
                       </span>
                     </div>
                   ))}
@@ -344,46 +307,7 @@ export default async function DashboardPage({
             )}
           </div>
 
-          <div className="min-w-0 space-y-4">
-            <h2 className="text-2xl font-semibold tracking-tight">Mouvements</h2>
-            {transactions.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-white/[0.12] p-8 text-center text-sm text-muted-foreground">
-                Aucun mouvement.
-              </p>
-            ) : (
-              <Card>
-                <CardContent className="divide-y divide-white/[0.06] pt-6">
-                  {transactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center gap-3 py-3 text-sm">
-                      <span
-                        className={cn(
-                          "h-2 w-2 shrink-0 rounded-full",
-                          TYPE_STYLES[transaction.type].dot
-                        )}
-                        aria-hidden
-                      />
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{transaction.label}</p>
-                        <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                          {TYPE_STYLES[transaction.type].label} · {formatDate(transaction.createdAt)}
-                        </p>
-                      </div>
-                      <span
-                        className={cn(
-                          "ml-auto shrink-0 font-mono text-sm",
-                          transaction.amount > 0 ? "text-success" : "text-destructive"
-                        )}
-                      >
-                        {transaction.amount > 0 ? "+" : ""}
-                        {transaction.amount} tokens
-                      </span>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </section>
+                  </section>
 
         <section data-reveal className="grid gap-8 lg:grid-cols-2">
           <div className="space-y-4">
@@ -398,15 +322,7 @@ export default async function DashboardPage({
               </CardContent>
             </Card>
           </div>
-          <div id="recharge" className="space-y-4">
-            <h2 className="text-2xl font-semibold tracking-tight">Recharger mon compte</h2>
-            <Card>
-              <CardContent className="pt-6">
-                <RechargeForm stripeEnabled={stripeEnabled} />
-              </CardContent>
-            </Card>
-          </div>
-          <div className="space-y-4">
+                    <div className="space-y-4">
             <h2 className="text-2xl font-semibold tracking-tight">Mes compétences</h2>
             <Card>
               <CardContent className="pt-6">

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { prisma } from "@/lib/prisma";
-import { topUpCredits } from "@/lib/project-service";
+import { fulfillContribution } from "@/lib/project-service";
+import { executeDueRefunds } from "@/lib/payouts";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
 
 /**
- * Webhook Stripe : crédite les tokens quand un paiement Checkout aboutit.
- * Signature vérifiée (STRIPE_WEBHOOK_SECRET) ; idempotent — l'id de session
- * est stocké en refId de la transaction, une session ne crédite qu'une fois.
+ * Webhook Stripe : enregistre la contribution quand le paiement Checkout
+ * aboutit. Signature vérifiée (STRIPE_WEBHOOK_SECRET) ; idempotent — l'id de
+ * session est unique sur Contribution, un paiement ne compte qu'une fois.
  *
  * En local : stripe listen --forward-to localhost:3000/api/webhooks/stripe
  */
@@ -35,21 +35,26 @@ export async function POST(request: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const userId = session.metadata?.userId;
-    const tokens = Number(session.metadata?.tokens);
+    const { kind, projectId, userId, usdCents } = session.metadata ?? {};
 
-    if (session.payment_status === "paid" && userId && Number.isInteger(tokens) && tokens > 0) {
-      // Idempotence : cette session a-t-elle déjà crédité ?
-      const already = await prisma.creditTransaction.findFirst({
-        where: { refId: session.id },
-        select: { id: true },
+    if (
+      session.payment_status === "paid" &&
+      kind === "contribution" &&
+      projectId &&
+      userId &&
+      typeof session.amount_total === "number"
+    ) {
+      const { refundNeeded } = await fulfillContribution({
+        userId,
+        projectId,
+        amountMinor: session.amount_total,
+        usdCents: Number(usdCents) || 0,
+        stripeSessionId: session.id,
+        stripePaymentIntentId:
+          typeof session.payment_intent === "string" ? session.payment_intent : null,
       });
-      if (!already) {
-        const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
-        if (user) {
-          await topUpCredits(userId, tokens, `Recharge Stripe — ${tokens} tokens`, session.id);
-        }
-      }
+      // Paiement arrivé après la clôture : le remboursement part tout de suite.
+      if (refundNeeded) await executeDueRefunds();
     }
   }
 

@@ -1,8 +1,5 @@
-/** Monnaie de la plateforme : le token — 1 token = 1 $ (fictif en Phase 1). */
-export function formatCredits(amount: number): string {
-  const formatted = amount.toLocaleString("fr-FR");
-  return `${formatted} ${Math.abs(amount) === 1 ? "token" : "tokens"}`;
-}
+// La monnaie s'affiche via formatMoney (src/lib/money.ts) — argent réel,
+// une devise par projet, Intl.NumberFormat.
 
 export function formatDate(date: Date): string {
   return date.toLocaleDateString("fr-FR", {

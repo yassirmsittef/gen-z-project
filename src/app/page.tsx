@@ -17,15 +17,15 @@ import { HeroSceneLoader } from "@/components/hero-scene-loader";
 import { LaunchLink } from "@/components/launch-button";
 import { ProjectCard } from "@/components/project-card";
 import { prisma } from "@/lib/prisma";
-import { WELCOME_CREDITS } from "@/lib/constants";
-import { formatCredits, formatRelative } from "@/lib/format";
+import { formatRelative } from "@/lib/format";
+import { formatMoney } from "@/lib/money";
 
 const STEPS = [
   {
     icon: HandCoins,
     chip: "border-primary/30 bg-primary/15 text-primary",
     title: "1. Contribue",
-    text: `Tu reçois ${WELCOME_CREDITS} tokens à l'inscription. Soutiens les projets qui te parlent — c'est le ticket d'entrée de la communauté.`,
+    text: "Soutiens les projets qui te parlent, par carte, dans leur devise — 50 $ de contributions cumulées débloquent la création du tien.",
   },
   {
     icon: Rocket,
@@ -74,13 +74,13 @@ export default async function HomePage() {
     }),
     prisma.project.count(),
     prisma.user.count(),
-    prisma.contribution.aggregate({ _sum: { amount: true } }),
+    prisma.contribution.aggregate({ _sum: { usdCents: true } }),
     prisma.contribution.findMany({
       orderBy: { createdAt: "desc" },
       take: 8,
       include: {
         user: { select: { name: true } },
-        project: { select: { title: true, slug: true } },
+        project: { select: { title: true, slug: true, currency: true } },
       },
     }),
     prisma.project.findMany({
@@ -112,7 +112,7 @@ export default async function HomePage() {
         <>
           <span className="font-semibold">{c.user.name}</span> a soutenu «{" "}
           {c.project.title} »{" "}
-          <span className="font-mono text-primary">{formatCredits(c.amount)}</span>
+          <span className="font-mono text-primary">{formatMoney(c.amount, c.project.currency)}</span>
         </>
       ),
     })),
@@ -156,7 +156,7 @@ export default async function HomePage() {
   const stats = [
     { label: "Projets", value: projectCount.toLocaleString("fr-FR") },
     { label: "Membres", value: userCount.toLocaleString("fr-FR") },
-    { label: "Tokens investis", value: (contributed._sum.amount ?? 0).toLocaleString("fr-FR") },
+    { label: "Investis (équiv.)", value: formatMoney(contributed._sum.usdCents ?? 0, "usd") },
   ];
 
   return (
@@ -174,7 +174,7 @@ export default async function HomePage() {
             className="hero-reveal data-label rounded-full border border-white/[0.12] bg-card/60 px-4 py-1.5 backdrop-blur-md"
             style={{ animationDelay: "1.7s" }}
           >
-            Phase 1 · monnaie de test · vraies mécaniques
+            Bêta · paiements Stripe en mode test · vraies mécaniques
           </span>
           <h1
             className="hero-reveal max-w-4xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl"

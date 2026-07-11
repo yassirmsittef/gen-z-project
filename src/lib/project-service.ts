@@ -1,17 +1,8 @@
 import { Prisma, type VoteDecision } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import {
-  MAX_PROOF_ATTEMPTS,
-  MIN_CONTRIBUTION,
-  MIN_CONTRIBUTIONS_TO_CREATE,
-  PLATFORM_FEE_MIN,
-  PLATFORM_FEE_RATE,
-  REALIZATION_DAYS,
-  REP,
-  WELCOME_CREDITS,
-} from "@/lib/constants";
+import { GATE_USD_CENTS, MAX_PROOF_ATTEMPTS, REALIZATION_DAYS, REP } from "@/lib/constants";
 import type { City } from "@/lib/cities";
-import { formatCredits } from "@/lib/format";
+import { formatMoney, toMinor } from "@/lib/money";
 import { notify, notifyMany } from "@/lib/notifications";
 import type { CreateProjectInput, UpdateProjectInput } from "@/lib/validation";
 
@@ -19,45 +10,6 @@ import type { CreateProjectInput, UpdateProjectInput } from "@/lib/validation";
 export class DomainError extends Error {}
 
 type Tx = Prisma.TransactionClient;
-
-// ---------- Crédits ----------
-
-export async function grantWelcomeCredits(userId: string) {
-  // Bonus coupé (WELCOME_CREDITS = 0) : pas d'écriture fantôme au ledger.
-  if (WELCOME_CREDITS <= 0) return;
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: userId },
-      data: { credits: { increment: WELCOME_CREDITS } },
-    }),
-    prisma.creditTransaction.create({
-      data: {
-        userId,
-        amount: WELCOME_CREDITS,
-        type: "WELCOME",
-        label: "Crédits de bienvenue",
-      },
-    }),
-  ]);
-}
-
-/**
- * Crédit de tokens (recharge). `refId` permet l'idempotence des webhooks
- * Stripe : une session Checkout ne peut créditer qu'une seule fois.
- */
-export async function topUpCredits(
-  userId: string,
-  amount: number,
-  label: string,
-  refId?: string
-) {
-  await prisma.$transaction([
-    prisma.user.update({ where: { id: userId }, data: { credits: { increment: amount } } }),
-    prisma.creditTransaction.create({
-      data: { userId, amount, type: "BONUS", label, refId },
-    }),
-  ]);
-}
 
 // ---------- Profil ----------
 
@@ -87,13 +39,28 @@ export function skillMatchScore(userSkills: string[], neededSkills: string[]): n
 
 // ---------- Création de projet ----------
 
-export async function countUserContributions(userId: string) {
-  return prisma.contribution.count({ where: { userId } });
+/**
+ * Le gate « contribue d'abord » en argent réel : cumul des contributions
+ * (équivalent USD figé au paiement) rapporté aux 50 $ requis — alimente la
+ * jauge de progression.
+ */
+export async function gateProgress(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { contributedUsdCents: true },
+  });
+  const cents = user?.contributedUsdCents ?? 0;
+  return {
+    cents,
+    requiredCents: GATE_USD_CENTS,
+    percent: Math.min(Math.floor((cents / GATE_USD_CENTS) * 100), 100),
+    reached: cents >= GATE_USD_CENTS,
+  };
 }
 
-/** Règle clé de la plateforme : contribuer avant de pouvoir poster. */
+/** Règle clé de la plateforme : contribuer (50 $ cumulés) avant de poster. */
 export async function canCreateProject(userId: string) {
-  return (await countUserContributions(userId)) >= MIN_CONTRIBUTIONS_TO_CREATE;
+  return (await gateProgress(userId)).reached;
 }
 
 function slugify(text: string): string {
@@ -109,13 +76,15 @@ function slugify(text: string): string {
 export async function createProject(userId: string, input: CreateProjectInput): Promise<string> {
   if (!(await canCreateProject(userId))) {
     throw new DomainError(
-      `Contribue d'abord à au moins ${MIN_CONTRIBUTIONS_TO_CREATE} projet avant de lancer le tien.`
+      `Contribue d'abord — il faut ${formatMoney(GATE_USD_CENTS, "usd")} de contributions cumulées avant de lancer ton projet.`
     );
   }
 
   const slug = `${slugify(input.title)}-${Math.random().toString(36).slice(2, 6)}`;
   const deadline = new Date(Date.now() + input.durationDays * 86_400_000);
 
+  // Les montants arrivent en unités MAJEURES de la devise choisie (ce que
+  // le porteur tape) et sont stockés en unités MINEURES.
   await prisma.project.create({
     data: {
       slug,
@@ -123,7 +92,8 @@ export async function createProject(userId: string, input: CreateProjectInput): 
       pitch: input.pitch,
       description: input.description,
       category: input.category,
-      goal: input.goal,
+      currency: input.currency,
+      goal: toMinor(input.goal, input.currency),
       coverUrl: input.coverUrl || null,
       neededSkills: input.neededSkills,
       deadline,
@@ -133,7 +103,7 @@ export async function createProject(userId: string, input: CreateProjectInput): 
           order: i + 1,
           title: m.title,
           description: m.description,
-          amount: m.amount,
+          amount: toMinor(m.amount, input.currency),
         })),
       },
     },
@@ -202,44 +172,92 @@ export async function deleteProject(userId: string, projectId: string) {
   await prisma.project.delete({ where: { id: projectId } });
 }
 
-// ---------- Contribution ----------
+// ---------- Contribution (fulfillment d'un paiement Stripe) ----------
 
-export async function makeContribution(userId: string, projectId: string, amount: number) {
-  if (!Number.isInteger(amount) || amount < MIN_CONTRIBUTION) {
-    throw new DomainError(`Contribution minimum : ${MIN_CONTRIBUTION} tokens.`);
+/**
+ * Gardes AVANT paiement — appelées à la création de la session Checkout.
+ * Renvoie le projet si la contribution est possible.
+ */
+export async function assertCanContribute(userId: string, projectId: string) {
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) throw new DomainError("Projet introuvable.");
+  if (project.ownerId === userId) {
+    throw new DomainError("Tu ne peux pas contribuer à ton propre projet.");
   }
+  if (project.status !== "ACTIVE" || project.deadline < new Date()) {
+    throw new DomainError("Ce projet n'est plus en campagne.");
+  }
+  return project;
+}
 
+/**
+ * Enregistre une contribution PAYÉE (webhook `checkout.session.completed`).
+ * Idempotent par session Stripe. Un paiement réel n'est jamais rejeté : si
+ * le projet n'est plus finançable entre le checkout et le webhook, la
+ * contribution est enregistrée puis immédiatement fléchée remboursement
+ * (exécuté hors transaction, rejoué par le cron si besoin).
+ */
+export async function fulfillContribution(input: {
+  userId: string;
+  projectId: string;
+  amountMinor: number;
+  usdCents: number;
+  stripeSessionId: string;
+  stripePaymentIntentId: string | null;
+}): Promise<{ refundNeeded: boolean }> {
+  const { userId, projectId, amountMinor: amount } = input;
+
+  const existing = await prisma.contribution.findUnique({
+    where: { stripeSessionId: input.stripeSessionId },
+    select: { id: true },
+  });
+  if (existing) return { refundNeeded: false }; // webhook rejoué
+
+  let refundNeeded = false;
   await prisma.$transaction(async (tx) => {
     const project = await tx.project.findUnique({ where: { id: projectId } });
-    if (!project) throw new DomainError("Projet introuvable.");
-    if (project.ownerId === userId) {
-      throw new DomainError("Tu ne peux pas contribuer à ton propre projet.");
-    }
-    if (project.status !== "ACTIVE" || project.deadline < new Date()) {
-      throw new DomainError("Ce projet n'est plus en campagne.");
-    }
-
-    const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
-    if (user.credits < amount) {
-      throw new DomainError(`Crédits insuffisants (solde : ${user.credits} tokens).`);
+    if (!project) {
+      // Projet disparu entre checkout et webhook (retrait) : cas résiduel,
+      // remboursement manuel — on trace sans casser le webhook.
+      console.error(
+        `[contribution] paiement ${input.stripeSessionId} pour un projet disparu (${projectId})`
+      );
+      return;
     }
 
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        credits: { decrement: amount },
-        totalContributed: { increment: amount },
-        reputation: { increment: REP.CONTRIBUTION },
-      },
-    });
-    await tx.contribution.create({ data: { userId, projectId, amount } });
-    await tx.creditTransaction.create({
+    const closed = project.status !== "ACTIVE" || project.deadline < new Date();
+    await tx.contribution.create({
       data: {
         userId,
-        amount: -amount,
-        type: "CONTRIBUTION",
-        refId: projectId,
-        label: `Contribution — ${project.title}`,
+        projectId,
+        amount,
+        usdCents: input.usdCents,
+        stripeSessionId: input.stripeSessionId,
+        stripePaymentIntentId: input.stripePaymentIntentId,
+        ...(closed ? { refunded: true, refundDueMinor: amount } : {}),
+      },
+    });
+
+    if (closed) {
+      refundNeeded = true;
+      await notify(
+        {
+          userId,
+          type: "REFUND",
+          title: `Ta contribution à « ${project.title} » arrive après la clôture`,
+          body: `La campagne s'est terminée entre-temps : ${formatMoney(amount, project.currency)} repartent vers ta carte.`,
+          href: `/projects/${project.slug}`,
+        },
+        tx
+      );
+      return;
+    }
+
+    const user = await tx.user.update({
+      where: { id: userId },
+      data: {
+        contributedUsdCents: { increment: input.usdCents },
+        reputation: { increment: REP.CONTRIBUTION },
       },
     });
     await tx.reputationEvent.create({
@@ -267,7 +285,7 @@ export async function makeContribution(userId: string, projectId: string, amount
       {
         userId: project.ownerId,
         type: "CONTRIBUTION",
-        title: `${user.name ?? "Quelqu'un"} a soutenu « ${project.title} » (${formatCredits(amount)})`,
+        title: `${user.name ?? "Quelqu'un"} a soutenu « ${project.title} » (${formatMoney(amount, project.currency)})`,
         href: `/projects/${project.slug}`,
       },
       tx
@@ -315,6 +333,8 @@ export async function makeContribution(userId: string, projectId: string, amount
       );
     }
   });
+
+  return { refundNeeded };
 }
 
 // ---------- Preuves d'avancement ----------
@@ -454,10 +474,13 @@ export async function castVote(userId: string, proofId: string, decision: VoteDe
     return null;
   });
 
+  const { attemptMilestonePayout, executeDueRefunds } = await import("@/lib/payouts");
   if (released) {
-    const { attemptMilestonePayout } = await import("@/lib/payouts");
     await attemptMilestonePayout(released.milestoneId, released.amount);
   }
+  // Un 2e refus pendant ce vote a pu faire échouer le projet : les
+  // remboursements fléchés partent maintenant, hors transaction.
+  await executeDueRefunds();
 }
 
 /** Valide la preuve, débloque les fonds — renvoie l'étape et le montant réellement débloqué. */
@@ -484,43 +507,13 @@ async function approveProofTx(
     ? Math.min(milestone.amount, project.raised - project.released)
     : project.raised - project.released;
 
-  // Commission plateforme sur la PREMIÈRE étape débloquée du projet
-  // (PLATFORM_FEE_RATE, plancher PLATFORM_FEE_MIN) : c'est elle qui
-  // provisionne les tokens de bienvenue. Le porteur reçoit le net, le
-  // séquestre comptabilise le brut, le ledger montre les deux lignes.
-  const fee =
-    project.released === 0
-      ? Math.min(
-          Math.max(Math.ceil(release * PLATFORM_FEE_RATE), PLATFORM_FEE_MIN),
-          release
-        )
-      : 0;
-  const net = release - fee;
-
+  // Pas de commission pour le moment (décision 2026-07-12) : l'intégralité
+  // part au porteur, par VIREMENT Stripe uniquement — il n'y a plus de
+  // wallet interne à créditer.
   await tx.user.update({
     where: { id: project.ownerId },
-    data: { credits: { increment: net }, reputation: { increment: REP.MILESTONE_RELEASED } },
+    data: { reputation: { increment: REP.MILESTONE_RELEASED } },
   });
-  await tx.creditTransaction.create({
-    data: {
-      userId: project.ownerId,
-      amount: release,
-      type: "MILESTONE_RELEASE",
-      refId: milestone.id,
-      label: `Étape ${milestone.order} débloquée — ${project.title}`,
-    },
-  });
-  if (fee > 0) {
-    await tx.creditTransaction.create({
-      data: {
-        userId: project.ownerId,
-        amount: -fee,
-        type: "FEE",
-        refId: milestone.id,
-        label: `Commission plateforme (${Math.round(PLATFORM_FEE_RATE * 100)} %, min ${PLATFORM_FEE_MIN}) — ${project.title}`,
-      },
-    });
-  }
   await tx.reputationEvent.create({
     data: {
       userId: project.ownerId,
@@ -553,20 +546,17 @@ async function approveProofTx(
     {
       userId: project.ownerId,
       type: "MILESTONE_RELEASED",
-      title: `Étape ${milestone.order} validée — ${formatCredits(net)} débloqués`,
-      body: `${
-        next
-          ? `La communauté a validé ta preuve pour « ${project.title} ». Prochaine étape : « ${next.title} ».`
-          : `« ${project.title} » est entièrement réalisé. Bravo !`
-      }${fee > 0 ? ` Commission plateforme sur la première étape : ${formatCredits(fee)}.` : ""}`,
+      title: `Étape ${milestone.order} validée — ${formatMoney(release, project.currency)} débloqués`,
+      body: next
+        ? `La communauté a validé ta preuve pour « ${project.title} ». Prochaine étape : « ${next.title} ». Le virement part sur ton compte Stripe.`
+        : `« ${project.title} » est entièrement réalisé. Bravo ! Le virement final part sur ton compte Stripe.`,
       href: `/projects/${project.slug}`,
     },
     tx
   );
 
-  // Le versement réel (Stripe) porte sur le NET — la commission reste à la
-  // plateforme.
-  return { milestoneId: milestone.id, amount: net };
+  // Le versement réel (Stripe) est tenté après le commit de la transaction.
+  return { milestoneId: milestone.id, amount: release };
 }
 
 async function rejectProofTx(tx: Tx, proofId: string) {
@@ -622,31 +612,26 @@ async function failProjectTx(tx: Tx, projectId: string, reason: string) {
   });
   if (project.status === "FAILED" || project.status === "COMPLETED") return;
 
-  // Remboursement au prorata du séquestre restant (raised − released).
+  // Remboursement au prorata du séquestre restant (raised − released) :
+  // le montant dû est FIGÉ ici (refundDueMinor), l'appel Stripe part APRÈS
+  // le commit (executeDueRefunds) et le cron rejoue les manqués.
   const remaining = project.raised - project.released;
   const refundNotifications = [];
   for (const c of project.contributions) {
     const refund = project.raised > 0 ? Math.floor((c.amount * remaining) / project.raised) : 0;
     if (refund > 0) {
-      await tx.user.update({ where: { id: c.userId }, data: { credits: { increment: refund } } });
-      await tx.creditTransaction.create({
-        data: {
-          userId: c.userId,
-          amount: refund,
-          type: "REFUND",
-          refId: project.id,
-          label: `Remboursement — ${project.title}`,
-        },
-      });
       refundNotifications.push({
         userId: c.userId,
         type: "REFUND" as const,
-        title: `Remboursement de ${formatCredits(refund)} — « ${project.title} »`,
-        body: "La campagne n'a pas abouti : ta part du séquestre restant t'a été recréditée.",
-        href: "/dashboard",
+        title: `Remboursement de ${formatMoney(refund, project.currency)} — « ${project.title} »`,
+        body: "La campagne n'a pas abouti : ta part du séquestre restant repart vers ta carte (quelques jours selon ta banque).",
+        href: `/projects/${project.slug}`,
       });
     }
-    await tx.contribution.update({ where: { id: c.id }, data: { refunded: true } });
+    await tx.contribution.update({
+      where: { id: c.id },
+      data: { refunded: true, refundDueMinor: refund },
+    });
   }
 
   await tx.project.update({
@@ -682,6 +667,8 @@ async function failProjectTx(tx: Tx, projectId: string, reason: string) {
 
 export async function failProject(projectId: string, reason: string) {
   await prisma.$transaction(async (tx) => failProjectTx(tx, projectId, reason));
+  const { executeDueRefunds } = await import("@/lib/payouts");
+  await executeDueRefunds();
 }
 
 /**
@@ -698,6 +685,10 @@ export async function failExpiredProjects() {
     await prisma.$transaction(async (tx) =>
       failProjectTx(tx, p.id, "Objectif non atteint avant la fin de la campagne.")
     );
+  }
+  if (expired.length > 0) {
+    const { executeDueRefunds } = await import("@/lib/payouts");
+    await executeDueRefunds();
   }
 }
 
@@ -759,5 +750,9 @@ export async function failOverdueRealizations() {
       const { attemptMilestonePayout } = await import("@/lib/payouts");
       await attemptMilestonePayout(released.milestoneId, released.amount);
     }
+  }
+  if (overdue.length > 0) {
+    const { executeDueRefunds } = await import("@/lib/payouts");
+    await executeDueRefunds();
   }
 }

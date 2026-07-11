@@ -4,11 +4,12 @@ import { redirect } from "next/navigation";
 import { Lock } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { canCreateProject, skillMatchScore } from "@/lib/project-service";
+import { gateProgress, skillMatchScore } from "@/lib/project-service";
 import { CreateProjectForm } from "@/components/create-project-form";
 import { ProjectCard } from "@/components/project-card";
 import { Button } from "@/components/ui/button";
-import { MIN_CONTRIBUTION } from "@/lib/constants";
+import { Progress } from "@/components/ui/progress";
+import { formatMoney } from "@/lib/money";
 
 export const metadata: Metadata = { title: "Lancer un projet" };
 
@@ -16,10 +17,10 @@ export default async function NewProjectPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const allowed = await canCreateProject(session.user.id);
+  const gate = await gateProgress(session.user.id);
 
-  // Le gate communautaire : contribuer avant de pouvoir poster.
-  if (!allowed) {
+  // Le gate communautaire : 50 $ de contributions cumulées avant de poster.
+  if (!gate.reached) {
     const [viewer, candidates] = await Promise.all([
       prisma.user.findUnique({ where: { id: session.user.id }, select: { skills: true } }),
       prisma.project.findMany({
@@ -46,9 +47,30 @@ export default async function NewProjectPage() {
           </span>
           <h1 className="text-4xl font-semibold tracking-tight">D&apos;abord, contribue</h1>
           <p className="max-w-xl font-medium text-muted-foreground">
-            Ici, tout le monde met la main à la pâte avant de demander. Soutiens au moins un projet
-            (dès {MIN_CONTRIBUTION} tokens) pour débloquer la création du tien.
+            Ici, tout le monde met la main à la pâte avant de demander : il faut{" "}
+            {formatMoney(gate.requiredCents, "usd")} de contributions cumulées (toutes devises
+            confondues, converties au jour du paiement) pour débloquer la création de ton projet.
           </p>
+
+          {/* La jauge du gate : traînée lumineuse vers les 50 $ */}
+          <div className="glass w-full max-w-md space-y-3 rounded-2xl rounded-tr-sm p-5 text-left">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="data-label">Ta progression</p>
+              <p className="font-display text-2xl font-semibold text-primary">{gate.percent}&nbsp;%</p>
+            </div>
+            <Progress
+              value={gate.percent}
+              aria-label={`Progression vers le droit de poster : ${gate.percent} %`}
+            />
+            <p className="text-sm text-muted-foreground">
+              <span className="font-mono font-semibold text-foreground">
+                {formatMoney(gate.cents, "usd")}
+              </span>{" "}
+              sur {formatMoney(gate.requiredCents, "usd")} —{" "}
+              {formatMoney(gate.requiredCents - gate.cents, "usd")} restants.
+            </p>
+          </div>
+
           <Button asChild>
             <Link href="/projects">Explorer les projets</Link>
           </Button>

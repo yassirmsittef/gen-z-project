@@ -16,10 +16,9 @@ import {
   MIN_DURATION_DAYS,
   MIN_GOAL,
   MIN_MILESTONES,
-  PLATFORM_FEE_MIN,
-  PLATFORM_FEE_RATE,
   REALIZATION_DAYS,
 } from "@/lib/constants";
+import { CURRENCIES } from "@/lib/money";
 import { createProjectSchema, parseList } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +33,7 @@ export function CreateProjectForm() {
     { ...EMPTY_MILESTONE },
   ]);
   const [goal, setGoal] = useState(0);
+  const [currency, setCurrency] = useState("eur");
   const [clientError, setClientError] = useState<string | null>(null);
 
   const amountTotal = milestones.reduce((sum, m) => sum + (m.amount || 0), 0);
@@ -51,6 +51,7 @@ export function CreateProjectForm() {
       pitch: formData.get("pitch"),
       description: formData.get("description"),
       category: formData.get("category"),
+      currency: formData.get("currency"),
       goal: formData.get("goal"),
       coverUrl: formData.get("coverUrl"),
       durationDays: formData.get("durationDays"),
@@ -101,7 +102,7 @@ export function CreateProjectForm() {
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5">
             <Label htmlFor="category">Catégorie</Label>
             <select
@@ -123,7 +124,25 @@ export function CreateProjectForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="goal">Objectif (tokens)</Label>
+            <Label htmlFor="currency">Devise du projet</Label>
+            <select
+              id="currency"
+              name="currency"
+              required
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="flex h-11 w-full rounded-xl border border-input bg-background/60 px-3.5 py-2 text-sm transition-colors duration-200 hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="goal">Objectif ({currency.toUpperCase()})</Label>
             <Input
               id="goal"
               name="goal"
@@ -176,13 +195,10 @@ export function CreateProjectForm() {
           <div>
             <h2 className="text-xl font-semibold tracking-tight">Étapes de déblocage</h2>
             <p className="text-sm text-muted-foreground">
-              Chaque étape débloque un montant en tokens, sur preuve validée par le vote pondéré
-              de tes contributeurs. La somme doit égaler ton objectif. Une fois financé, tu as{" "}
-              {REALIZATION_DAYS} jours pour tout réaliser et faire valider — au-delà, le reste
-              du séquestre est remboursé. La plateforme prélève{" "}
-              {Math.round(PLATFORM_FEE_RATE * 100)}&nbsp;% de la première étape débloquée
-              (minimum {PLATFORM_FEE_MIN} tokens) — c&apos;est ce qui finance les tokens de
-              bienvenue.
+              Chaque étape débloque un montant en {currency.toUpperCase()}, sur preuve validée
+              par le vote pondéré de tes contributeurs. La somme doit égaler ton objectif. Une
+              fois financé, tu as {REALIZATION_DAYS} jours pour tout réaliser et faire valider —
+              au-delà, le reste du séquestre est remboursé aux contributeurs.
             </p>
           </div>
           <span
@@ -193,7 +209,7 @@ export function CreateProjectForm() {
                 : "border-amber-400/30 bg-amber-400/10 text-amber-300"
             )}
           >
-            {amountTotal} / {goal || "—"} tokens
+            {amountTotal} / {goal || "—"} {currency.toUpperCase()}
           </span>
         </div>
 
@@ -227,7 +243,7 @@ export function CreateProjectForm() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor={`m-amount-${index}`}>Montant (tokens)</Label>
+                  <Label htmlFor={`m-amount-${index}`}>Montant ({currency.toUpperCase()})</Label>
                   <Input
                     id={`m-amount-${index}`}
                     type="number"

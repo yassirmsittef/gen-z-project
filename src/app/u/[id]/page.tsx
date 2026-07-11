@@ -11,7 +11,8 @@ import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
 import { SkillTag } from "@/components/skill-tag";
 import { UserAvatar } from "@/components/user-avatar";
-import { formatCredits, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
 export async function generateMetadata({
@@ -118,7 +119,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="font-display text-3xl">{formatCredits(user.totalContributed)}</p>
+            <p className="font-display text-3xl">{formatMoney(user.contributedUsdCents, "usd")}</p>
             <p className="text-sm text-muted-foreground">Investis dans la communauté</p>
           </CardContent>
         </Card>

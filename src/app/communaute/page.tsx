@@ -13,7 +13,7 @@ import { ReputationBadge } from "@/components/reputation-badge";
 import { SkillTag } from "@/components/skill-tag";
 import { UserAvatar } from "@/components/user-avatar";
 import { CITIES } from "@/lib/cities";
-import { formatCredits } from "@/lib/format";
+import { formatMoney } from "@/lib/money";
 
 export const metadata: Metadata = { title: "Communauté" };
 
@@ -46,7 +46,7 @@ export default async function CommunityPage({
   const [members, located, totalMembers, me] = await Promise.all([
     prisma.user.findMany({
       where: filters.length ? { AND: filters } : undefined,
-      orderBy: [{ reputation: "desc" }, { totalContributed: "desc" }, { createdAt: "asc" }],
+      orderBy: [{ reputation: "desc" }, { contributedUsdCents: "desc" }, { createdAt: "asc" }],
       take: 60,
       select: {
         id: true,
@@ -56,7 +56,7 @@ export default async function CommunityPage({
         country: true,
         skills: true,
         reputation: true,
-        totalContributed: true,
+        contributedUsdCents: true,
         _count: { select: { projects: true, contributions: true } },
       },
     }),
@@ -288,12 +288,12 @@ export default async function CommunityPage({
                           <ReputationBadge reputation={member.reputation} showScore={false} />
                           <p
                             className="min-w-0 truncate font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground"
-                            title={`${member._count.projects} projets · ${member._count.contributions} soutiens · ${formatCredits(member.totalContributed)} investis`}
+                            title={`${member._count.projects} projets · ${member._count.contributions} soutiens · ${formatMoney(member.contributedUsdCents, "usd")} investis`}
                           >
                             {member._count.projects} projet{member._count.projects > 1 ? "s" : ""} ·{" "}
                             {member._count.contributions} soutien
                             {member._count.contributions > 1 ? "s" : ""} ·{" "}
-                            {formatCredits(member.totalContributed)}
+                            {formatMoney(member.contributedUsdCents, "usd")}
                           </p>
                         </div>
                       </CardContent>

@@ -1,6 +1,6 @@
 /**
  * Seed de démo : peuple la base en passant par les VRAIS services métier
- * (makeContribution, submitMilestoneProof, castVote, failExpiredProjects...)
+ * (fulfillContribution, submitMilestoneProof, castVote, failExpiredProjects...)
  * pour garantir que soldes, séquestre, réputation et ledger restent cohérents.
  *
  * Comptes de démo (mot de passe : demo1234) :
@@ -14,11 +14,11 @@ import { prisma } from "../src/lib/prisma";
 import {
   castVote,
   failExpiredProjects,
-  grantWelcomeCredits,
-  makeContribution,
+  fulfillContribution,
   submitMilestoneProof,
-  topUpCredits,
 } from "../src/lib/project-service";
+import { usdCentsFromMinor } from "../src/lib/fx";
+import { toMinor } from "../src/lib/money";
 
 async function reset() {
   await prisma.$transaction([
@@ -27,7 +27,6 @@ async function reset() {
     prisma.proof.deleteMany(),
     prisma.milestone.deleteMany(),
     prisma.contribution.deleteMany(),
-    prisma.creditTransaction.deleteMany(),
     prisma.reputationEvent.deleteMany(),
     prisma.project.deleteMany(),
     prisma.session.deleteMany(),
@@ -56,7 +55,6 @@ async function createUser(
         : {}),
     },
   });
-  await grantWelcomeCredits(user.id);
   return user;
 }
 
@@ -70,7 +68,8 @@ async function createProjectRecord(
     pitch: string;
     description: string;
     category: ProjectCategory;
-    goal: number;
+    currency?: string;
+    goal: number; // unités MAJEURES de la devise
     days: number;
     neededSkills?: string[];
     milestones: MilestoneSeed[];
@@ -83,14 +82,38 @@ async function createProjectRecord(
       pitch: data.pitch,
       description: data.description,
       category: data.category,
-      goal: data.goal,
+      currency: data.currency ?? "eur",
+      goal: toMinor(data.goal, data.currency ?? "eur"),
       neededSkills: data.neededSkills ?? [],
       deadline: new Date(Date.now() + data.days * 86_400_000),
       ownerId,
       milestones: {
-        create: data.milestones.map((m, i) => ({ order: i + 1, ...m })),
+        create: data.milestones.map((m, i) => ({
+          order: i + 1,
+          ...m,
+          amount: toMinor(m.amount, data.currency ?? "eur"),
+        })),
       },
     },
+  });
+}
+
+let seedSessionSeq = 0;
+/** Contribution PAYÉE (chemin réel du webhook), montant en unités majeures. */
+async function contribute(userId: string, projectId: string, major: number) {
+  const project = await prisma.project.findUniqueOrThrow({
+    where: { id: projectId },
+    select: { currency: true },
+  });
+  const amountMinor = toMinor(major, project.currency);
+  seedSessionSeq += 1;
+  await fulfillContribution({
+    userId,
+    projectId,
+    amountMinor,
+    usdCents: await usdCentsFromMinor(amountMinor, project.currency),
+    stripeSessionId: `cs_seed_${seedSessionSeq}`,
+    stripePaymentIntentId: null, // démo : pas de vrai paiement à rembourser
   });
 }
 
@@ -154,11 +177,6 @@ async function main() {
 
   // Recharges de démo pour que les scénarios ci-dessous soient jouables
   // (le bonus d'inscription n'est que de 5 $).
-  await topUpCredits(lea.id, 695, "Recharge démo");
-  await topUpCredits(max.id, 495, "Recharge démo");
-  await topUpCredits(zoe.id, 445, "Recharge démo");
-  await topUpCredits(sam.id, 295, "Recharge démo");
-  await topUpCredits(nina.id, 195, "Recharge démo");
 
   console.log("🚀 Projets...");
   const p1 = await createProjectRecord(lea.id, {
@@ -293,37 +311,37 @@ async function main() {
 
   console.log("💸 Contributions...");
   // P1 — en campagne, 260/400
-  await makeContribution(max.id, p1.id, 60);
-  await makeContribution(zoe.id, p1.id, 80);
-  await makeContribution(sam.id, p1.id, 70);
-  await makeContribution(nina.id, p1.id, 50);
+  await contribute(max.id, p1.id, 60);
+  await contribute(zoe.id, p1.id, 80);
+  await contribute(sam.id, p1.id, 70);
+  await contribute(nina.id, p1.id, 50);
 
   // P2 — en campagne, 45/300
-  await makeContribution(zoe.id, p2.id, 25);
-  await makeContribution(sam.id, p2.id, 20);
+  await contribute(zoe.id, p2.id, 25);
+  await contribute(sam.id, p2.id, 20);
 
   // P3 — financé (500/500), preuve étape 1 en cours de vote pondéré
-  await makeContribution(lea.id, p3.id, 200);
-  await makeContribution(max.id, p3.id, 150);
-  await makeContribution(sam.id, p3.id, 100);
-  await makeContribution(nina.id, p3.id, 50);
+  await contribute(lea.id, p3.id, 200);
+  await contribute(max.id, p3.id, 150);
+  await contribute(sam.id, p3.id, 100);
+  await contribute(nina.id, p3.id, 50);
 
   // P4 — financé (600/600), étape 1 débloquée, étape 2 en attente de preuve
-  await makeContribution(lea.id, p4.id, 250);
-  await makeContribution(max.id, p4.id, 200);
-  await makeContribution(zoe.id, p4.id, 150);
+  await contribute(lea.id, p4.id, 250);
+  await contribute(max.id, p4.id, 200);
+  await contribute(zoe.id, p4.id, 150);
 
   // P5 — réalisé (toutes étapes validées)
-  await makeContribution(lea.id, p5.id, 100);
-  await makeContribution(zoe.id, p5.id, 100);
+  await contribute(lea.id, p5.id, 100);
+  await contribute(zoe.id, p5.id, 100);
 
   // P6 — échouera (120/800 à la deadline)
-  await makeContribution(lea.id, p6.id, 80);
-  await makeContribution(nina.id, p6.id, 40);
+  await contribute(lea.id, p6.id, 80);
+  await contribute(nina.id, p6.id, 40);
 
   // P7 — en campagne, 90/250
-  await makeContribution(max.id, p7.id, 50);
-  await makeContribution(sam.id, p7.id, 40);
+  await contribute(max.id, p7.id, 50);
+  await contribute(sam.id, p7.id, 40);
 
   console.log("📎 Preuves & votes pondérés...");
   // P4 : étape 1 prouvée puis validée (léa 250 + max 200 = 450 > 300 = 50% de 600)
@@ -519,9 +537,9 @@ async function main() {
   const users = await prisma.user.findMany({ orderBy: { email: "asc" } });
   for (const u of users) {
     console.log(
-      `   ${u.email.padEnd(16)} solde ${String(u.credits).padStart(4)} $  réputation ${String(
-        u.reputation
-      ).padStart(3)}  investi ${u.totalContributed} $`
+      `   ${u.email.padEnd(16)} réputation ${String(u.reputation).padStart(3)}  investi ${(
+        u.contributedUsdCents / 100
+      ).toFixed(0)} $ (équiv.)`
     );
   }
 }

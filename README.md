@@ -1,38 +1,38 @@
 # Tremplin ⚡ — Plateforme communautaire de financement participatif
 
-**Phase 1 (MVP)** : la Gen Z et les créateurs lancent leurs projets et se font financer par la
-communauté — en **tokens** (1 token = 1 $). Les paiements Stripe (recharge, versements Connect)
-sont branchés **en mode test** : les mécaniques sont réelles, aucun vrai débit.
+**Bêta** : la Gen Z et les créateurs lancent leurs projets et se font financer par la
+communauté — **en argent réel, chacun dans sa devise** (architecture complète branchée sur
+Stripe **en mode test** : les mécaniques sont réelles, aucun vrai débit avant l'activation
+Connect + relecture légale).
 **En ligne : https://gen-z-project.vercel.app**
 
 ## Les mécaniques clés
 
 - **Contribuer avant de poster** — la création de projet est verrouillée tant que tu n'as pas
-  soutenu au moins 1 projet (`MIN_CONTRIBUTIONS_TO_CREATE`).
-- **Monnaie : le token, 1 token = 1 $** — 5 tokens offerts à l'inscription, **provisionnés
-  par la commission plateforme** (5 % de la première étape débloquée de chaque projet,
-  minimum 5 tokens : le cadeau d'acquisition n'est jamais une dette non provisionnée) ;
-  contribution minimum 5 tokens, **recharge du compte** depuis le dashboard : Stripe
-  Checkout si configuré (mode test), recharge fictive sinon. Transactions au ledger,
-  idempotence par session id.
-- **Contribution confirmée en deux temps** — un dialogue récapitulatif (montant, équivalence
-  en $, rappel du séquestre) doit être accepté avant que la contribution soit enregistrée.
+  cumulé **50 $ US de contributions** (toutes devises confondues, converties au taux du jour
+  du paiement — `GATE_USD_CENTS`), avec une jauge de progression sur la page de création.
+- **Argent réel, une devise par projet** — le porteur choisit la devise de sa campagne
+  (toutes les devises Stripe : EUR, USD, CHF, MAD…) ; les contributions se paient par carte
+  via Stripe Checkout dans cette devise (fulfillment par webhook signé, idempotent par
+  session), les remboursements repartent sur les cartes (prorata du séquestre restant,
+  rejoués par le cron), les versements aux porteurs partent en virement Stripe dans la
+  devise du projet. Montants stockés en unités mineures, affichés via Intl. Pas de wallet
+  interne, pas de bonus, pas de commission (décisions 2026-07-12). Clés Stripe en mode
+  TEST jusqu'à l'activation Connect + relecture légale.
 - **Financement tout-ou-rien** — une campagne a un objectif et une deadline (7 à 90 jours,
-  le porteur choisit ; plafond aligné sur le délai de réalisation : les tokens des
+  le porteur choisit ; plafond aligné sur le délai de réalisation : les fonds des
   contributeurs ne restent jamais bloqués indéfiniment).
   Objectif atteint → statut *Financé*, la collecte s'arrête. Deadline dépassée sans objectif →
   *Non abouti*, tous les contributeurs sont remboursés.
 - **Fonds débloqués par étapes** — le porteur découpe son plan en 2 à 5 étapes, chacune avec un
-  **montant en tokens** (somme = objectif). Les tokens restent **sous séquestre** : à chaque
+  **montant dans la devise du projet** (somme = objectif). Les fonds restent **sous séquestre** : à chaque
   étape, le porteur soumet une **preuve d'avancement** (texte + liens + images) et les
   **contributeurs votent**.
   - **Vote pondéré** : le poids d'un vote = total contribué par le votant au projet. Validation
-    dès que le poids POUR dépasse 50% des tokens collectés (refus symétrique) ; si tous les
+    dès que le poids POUR dépasse 50% des montants collectés (refus symétrique) ; si tous les
     contributeurs ont voté sans majorité stricte, la balance des poids tranche (égalité → refus).
   - Preuve validée → le montant de l'étape est viré au porteur, l'étape suivante s'ouvre (la
-    dernière étape reçoit aussi l'éventuel dépassement d'objectif). **La première étape
-    débloquée porte la commission plateforme** (5 %, minimum 5 tokens — affichée au ledger
-    du porteur et dans la notification).
+    dernière étape reçoit aussi l'éventuel dépassement d'objectif).
   - Preuve refusée → `rejectionCount` s'incrémente ; au 2e refus le projet échoue et le
     séquestre restant est remboursé au prorata.
 - **Échéance de réalisation : 90 jours après financement** (`REALIZATION_DAYS`) — le porteur
@@ -128,25 +128,26 @@ npm test                    # règles du jeu (12 tests d'intégration, base de d
 
 | Email | Situation |
 | --- | --- |
-| `demo@demo.dev` | Compte vierge : 5 tokens de bienvenue, aucune contribution → le gate « contribue d'abord » est actif |
+| `demo@demo.dev` | Compte vierge, aucune contribution → le gate « 50 $ » et sa jauge sont visibles |
 | `lea@demo.dev` | Contributrice active, 2 projets en campagne |
 | `zoe@demo.dev` | Projet financé, preuve d'étape **en cours de vote** |
 | `sam@demo.dev` | Projet financé, étape 1 déjà débloquée |
 | `nina@demo.dev` | Projet **réalisé** (toutes étapes validées) |
 | `max@demo.dev` | Projet **échoué** (deadline) → réputation en négatif, parcours rebond |
 
-### Stripe — recharges en argent réel (optionnel)
+### Stripe — contributions par carte (obligatoire)
 
-Sans clés, la recharge reste **fictive** (mode démo). Pour brancher de vrais paiements :
+Les contributions passent par Stripe Checkout dans la devise du projet — sans clés,
+contribuer est impossible. Configuration :
 
 1. [dashboard.stripe.com](https://dashboard.stripe.com) → **mode Test** → Développeurs →
    Clés API → copier la clé secrète `sk_test_...` dans `STRIPE_SECRET_KEY` (`.env`)
 2. Webhook local : installer la [CLI Stripe](https://stripe.com/docs/stripe-cli) puis
    `stripe listen --forward-to localhost:3000/api/webhooks/stripe` — copier le
    `whsec_...` affiché dans `STRIPE_WEBHOOK_SECRET`
-3. Redémarrer le serveur. Le bouton devient « Payer X $ avec Stripe » → Checkout
-   (carte de test : `4242 4242 4242 4242`, date future, CVC libre) → le webhook
-   crédite les tokens (idempotent, session id en refId au ledger)
+3. Redémarrer le serveur. « Contribuer X € » → Checkout (carte de test :
+   `4242 4242 4242 4242`, date future, CVC libre) → le webhook signé enregistre la
+   contribution (idempotent par session id) et cumule l'équivalent USD du gate
 
 En production : clés live + endpoint webhook déclaré dans le dashboard Stripe
 (`https://ton-domaine/api/webhooks/stripe`, événement `checkout.session.completed`),
@@ -157,8 +158,9 @@ et `NEXT_PUBLIC_APP_URL` sur ton domaine.
 Les porteurs configurent leurs versements depuis le dashboard (« Mes versements » →
 onboarding Express). Quand la communauté valide une étape, son montant est transféré
 depuis le solde de la plateforme vers le compte du porteur
-(`src/lib/payouts.ts`, idempotent via `Milestone.stripeTransferId`) ; tout échec est
-silencieux — le ledger interne en tokens reste la source de vérité.
+(`src/lib/payouts.ts`, idempotent via `Milestone.stripeTransferId`, dans la devise du
+projet) ; tout échec est silencieux et rejouable. Les remboursements (échec de campagne,
+échéance dépassée) repartent vers les cartes via `executeDueRefunds`, rejoués par le cron.
 
 Prérequis une seule fois : **activer Connect** sur le compte Stripe de la plateforme
 ([dashboard.stripe.com/connect](https://dashboard.stripe.com/connect) → Get started),

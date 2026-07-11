@@ -4,7 +4,8 @@ import { voteProofAction } from "@/actions/milestones";
 import { ProofForm } from "@/components/proof-form";
 import { Button } from "@/components/ui/button";
 import { MAX_PROOF_ATTEMPTS } from "@/lib/constants";
-import { formatCredits, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
 type MilestoneWithProofs = Prisma.MilestoneGetPayload<{
@@ -31,7 +32,7 @@ export function MilestoneTimeline({
   isContributor,
 }: {
   milestones: MilestoneWithProofs[];
-  project: Pick<Project, "status" | "raised" | "goal">;
+  project: Pick<Project, "status" | "raised" | "goal" | "currency">;
   viewerId?: string;
   isOwner: boolean;
   isContributor: boolean;
@@ -88,7 +89,7 @@ export function MilestoneTimeline({
                   {config.label}
                 </span>
                 <span className="ml-auto font-mono text-xs text-muted-foreground">
-                  {formatCredits(milestone.amount)}
+                  {formatMoney(milestone.amount, project.currency)}
                 </span>
               </div>
 
@@ -177,15 +178,15 @@ export function MilestoneTimeline({
                     {/* Balance des votes pondérés par les crédits contribués */}
                     <div className="flex flex-wrap items-center gap-3 text-xs">
                       <span className="inline-flex items-center gap-1 text-success">
-                        <ThumbsUp className="h-3.5 w-3.5" aria-hidden /> {formatCredits(approveWeight)}
+                        <ThumbsUp className="h-3.5 w-3.5" aria-hidden /> {formatMoney(approveWeight, project.currency)}
                       </span>
                       <span className="inline-flex items-center gap-1 text-destructive">
-                        <ThumbsDown className="h-3.5 w-3.5" aria-hidden /> {formatCredits(rejectWeight)}
+                        <ThumbsDown className="h-3.5 w-3.5" aria-hidden /> {formatMoney(rejectWeight, project.currency)}
                       </span>
                       {proof.status === "PENDING" && (
                         <span className="inline-flex items-center gap-1 text-muted-foreground">
                           <Scale className="h-3.5 w-3.5" aria-hidden />
-                          majorité à {formatCredits(Math.floor(project.raised / 2) + 1)}
+                          majorité à {formatMoney(Math.floor(project.raised / 2) + 1, project.currency)}
                         </span>
                       )}
                       {alreadyVoted && proof.status === "PENDING" && (

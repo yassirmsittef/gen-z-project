@@ -7,7 +7,6 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validation";
-import { grantWelcomeCredits } from "@/lib/project-service";
 
 const providers: Provider[] = [
   Credentials({
@@ -58,13 +57,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     session({ session, token }) {
       if (token.sub) session.user.id = token.sub;
       return session;
-    },
-  },
-  events: {
-    // Les inscriptions par credentials passent par l'action register ;
-    // cet event couvre les comptes créés via OAuth (Google).
-    async createUser({ user }) {
-      if (user.id) await grantWelcomeCredits(user.id);
     },
   },
 });

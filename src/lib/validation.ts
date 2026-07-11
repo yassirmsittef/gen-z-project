@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PartnershipCompensation, ProjectCategory } from "@prisma/client";
+import { CURRENCY_CODES } from "@/lib/money";
 import {
   MAX_DURATION_DAYS,
   MAX_GOAL,
@@ -8,7 +9,7 @@ import {
   MAX_PROOF_LINKS,
   MAX_SKILLS_PER_PROJECT,
   MAX_SKILLS_PER_USER,
-  MIN_CONTRIBUTION,
+  MIN_CONTRIBUTION_MAJOR,
   MIN_DURATION_DAYS,
   MIN_GOAL,
   MIN_MILESTONE_AMOUNT,
@@ -125,6 +126,9 @@ export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
 export const createProjectSchema = z
   .object({
     ...projectContentFields,
+    currency: z
+      .string()
+      .refine((c) => CURRENCY_CODES.includes(c), "Choisis la devise de ton projet."),
     goal: z.coerce
       .number({ invalid_type_error: "Objectif invalide." })
       .int("Objectif entier uniquement.")
@@ -155,10 +159,11 @@ export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 
 export const contributeSchema = z.object({
   projectId: z.string().min(1),
+  // Unités MAJEURES de la devise du projet (5 €, 5 MAD, 5 CHF…).
   amount: z.coerce
     .number({ invalid_type_error: "Montant invalide." })
     .int("Montant entier uniquement.")
-    .min(MIN_CONTRIBUTION, `Contribution minimum : ${MIN_CONTRIBUTION} tokens.`),
+    .min(MIN_CONTRIBUTION_MAJOR, `Contribution minimum : ${MIN_CONTRIBUTION_MAJOR}.`),
 });
 
 export const submitProofSchema = z.object({

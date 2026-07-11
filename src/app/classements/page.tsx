@@ -5,7 +5,8 @@ import { Flame, Trophy } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { UserAvatar } from "@/components/user-avatar";
 import { CATEGORY_LABELS } from "@/lib/constants";
-import { formatCredits, progressPercent } from "@/lib/format";
+import { progressPercent } from "@/lib/format";
+import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Classements" };
@@ -59,7 +60,7 @@ function RankedList({ projects, showPercent }: { projects: RankedProject[]; show
               </span>
             </div>
             <div className="shrink-0 text-right">
-              <p className="font-mono text-sm">{formatCredits(project.raised)}</p>
+              <p className="font-mono text-sm">{formatMoney(project.raised, project.currency)}</p>
               {showPercent && (
                 <p className="font-mono text-[10px] text-primary">
                   {progressPercent(project.raised, project.goal)}%

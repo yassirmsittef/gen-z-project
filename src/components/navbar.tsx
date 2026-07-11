@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Globe2, LogOut, MessagesSquare, ShieldAlert, Zap } from "lucide-react";
+import { Globe2, LogOut, MessagesSquare, ShieldAlert } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { signOutAction } from "@/actions/auth";
@@ -20,7 +20,6 @@ export async function Navbar() {
           id: true,
           name: true,
           avatarUrl: true,
-          credits: true,
           role: true,
           _count: { select: { notifications: { where: { readAt: null } } } },
         },
@@ -115,16 +114,7 @@ export async function Navbar() {
                 </Button>
               )}
               <NavbarBell initialUnread={unread} className={`relative ${iconButton}`} />
-              <Link
-                href="/dashboard"
-                className="flex h-8 items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 font-mono text-xs text-primary transition-colors duration-200 hover:bg-primary/20 sm:h-9 sm:gap-1.5 sm:px-3 sm:text-sm"
-                title="Ton solde"
-              >
-                <Zap className="h-3.5 w-3.5" aria-hidden />
-                {user.credits.toLocaleString("fr-FR")}
-                <span className="hidden sm:inline">tokens</span>
-              </Link>
-              <Link href={`/u/${user.id}`} title="Ton profil public">
+                            <Link href={`/u/${user.id}`} title="Ton profil public">
                 <UserAvatar name={user.name} avatarUrl={user.avatarUrl} className="h-8 w-8 sm:h-9 sm:w-9" />
               </Link>
               <form action={signOutAction}>

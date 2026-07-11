@@ -7,7 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { DeleteProjectButton } from "@/components/delete-project-button";
 import { EditProjectForm } from "@/components/edit-project-form";
 import { Button } from "@/components/ui/button";
-import { formatCredits, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { formatMoney } from "@/lib/money";
 
 export const metadata: Metadata = {
   title: "Modifier le projet",
@@ -59,9 +60,9 @@ export default async function EditProjectPage({
           Cadre financier figé
         </p>
         <p className="mt-2 text-sm text-foreground/90">
-          Objectif {formatCredits(project.goal)} · fin de campagne le {formatDate(project.deadline)} ·{" "}
+          Objectif {formatMoney(project.goal, project.currency)} · fin de campagne le {formatDate(project.deadline)} ·{" "}
           {project.milestones.length} étape{project.milestones.length > 1 ? "s" : ""} (
-          {project.milestones.map((m) => formatCredits(m.amount)).join(" + ")})
+          {project.milestones.map((m) => formatMoney(m.amount, project.currency)).join(" + ")})
         </p>
         <p className="mt-1.5 text-xs text-muted-foreground">
           Les contributions sont engagées sur ces règles : objectif, étapes et durée ne peuvent

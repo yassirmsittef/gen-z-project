@@ -4,7 +4,6 @@ import { auth, googleEnabled } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RegisterForm } from "@/components/auth-forms";
-import { WELCOME_CREDITS } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Inscription" };
 
@@ -28,8 +27,7 @@ export default async function RegisterPage() {
             Rejoins la communauté
           </CardTitle>
           <CardDescription>
-            {WELCOME_CREDITS} tokens offerts (1 token = 1 $) à l&apos;inscription pour soutenir tes
-            premiers projets.
+            Contribue aux projets de ta génération par carte, dans leur devise — et lance le tien dès 50&nbsp;$ de contributions cumulées.
           </CardDescription>
         </CardHeader>
         <CardContent>

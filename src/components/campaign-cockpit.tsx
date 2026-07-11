@@ -1,5 +1,6 @@
 import { Gauge } from "lucide-react";
-import { daysLeft, formatCredits, formatDate } from "@/lib/format";
+import { daysLeft, formatDate } from "@/lib/format";
+import { formatMoney } from "@/lib/money";
 
 /**
  * Poste de pilotage du porteur (visible par lui seul) : collecte par jour en
@@ -26,6 +27,7 @@ function dailyBuckets(contributions: Contribution[], from: Date, to: Date) {
 }
 
 export function CampaignCockpit({
+  currency,
   createdAt,
   deadline,
   goal,
@@ -36,6 +38,7 @@ export function CampaignCockpit({
   followerIds,
   milestones,
 }: {
+  currency: string;
   createdAt: Date;
   deadline: Date;
   goal: number;
@@ -83,7 +86,7 @@ export function CampaignCockpit({
             viewBox={`0 0 ${W} ${H}`}
             className="h-14 w-full"
             role="img"
-            aria-label={`Collecte par jour depuis le lancement : ${formatCredits(raised)} en ${buckets.length} jour${buckets.length > 1 ? "s" : ""}.`}
+            aria-label={`Collecte par jour depuis le lancement : ${formatMoney(raised, currency)} en ${buckets.length} jour${buckets.length > 1 ? "s" : ""}.`}
           >
             <defs>
               <linearGradient id="cockpit-aurora" x1="0" y1="0" x2="1" y2="0">
@@ -139,7 +142,7 @@ export function CampaignCockpit({
                 />
                 <circle cx={W / 2} cy={y(buckets[0].amount)} r="3" fill="#38BDF8" stroke="#0B0E14" strokeWidth="2" />
                 <text x={W / 2 + 10} y={y(buckets[0].amount) + 4} fontSize="11" fill="#94A3B8">
-                  {formatCredits(buckets[0].amount)} aujourd&apos;hui
+                  {formatMoney(buckets[0].amount, currency)} aujourd&apos;hui
                 </text>
               </>
             )}
@@ -153,7 +156,7 @@ export function CampaignCockpit({
                 height={H}
                 fill="transparent"
               >
-                <title>{`${formatDate(new Date(b.date))} — ${formatCredits(b.amount)}`}</title>
+                <title>{`${formatDate(new Date(b.date))} — ${formatMoney(b.amount, currency)}`}</title>
               </rect>
             ))}
           </svg>
@@ -165,7 +168,7 @@ export function CampaignCockpit({
           <div className="rounded-xl border border-white/[0.06] bg-background/40 p-3">
             <dt className="text-xs text-muted-foreground">Rythme pour y arriver</dt>
             <dd className="font-display text-lg font-semibold">
-              {neededPerDay > 0 ? `${formatCredits(neededPerDay)}/j` : "Objectif atteint"}
+              {neededPerDay > 0 ? `${formatMoney(neededPerDay, currency)}/j` : "Objectif atteint"}
             </dd>
           </div>
         ) : (

@@ -24,7 +24,8 @@ import { SkillTag } from "@/components/skill-tag";
 import { StatusBadge } from "@/components/status-badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { CATEGORY_LABELS } from "@/lib/constants";
-import { daysLeft, formatCredits, formatDate, progressPercent } from "@/lib/format";
+import { daysLeft, formatDate, progressPercent } from "@/lib/format";
+import { formatMoney } from "@/lib/money";
 
 /** Aperçus de partage : titre + pitch du projet (l'image OG est générée à côté). */
 export async function generateMetadata({
@@ -75,7 +76,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const [project, viewer] = await Promise.all([
     projectPromise,
     viewerId
-      ? prisma.user.findUnique({ where: { id: viewerId }, select: { credits: true } })
+      ? Promise.resolve(null) // plus de solde interne à charger
       : Promise.resolve(null),
   ]);
   if (!project) notFound();
@@ -437,10 +438,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             <CardContent className="space-y-4 pt-6">
               <div>
                 <p className="font-display text-4xl font-semibold">
-                  {formatCredits(project.raised)}
+                  {formatMoney(project.raised, project.currency)}
                   <span className="font-sans text-base font-normal text-muted-foreground">
                     {" "}
-                    sur {formatCredits(project.goal)}
+                    sur {formatMoney(project.goal, project.currency)}
                   </span>
                 </p>
               </div>
@@ -463,8 +464,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               {(project.status === "FUNDED" || project.status === "COMPLETED") && (
                 <p className="rounded-xl border border-white/[0.08] bg-muted/50 p-3 text-sm">
                   <LockOpen className="mr-1 inline h-4 w-4 text-success" aria-hidden />
-                  <span className="font-semibold">{formatCredits(project.released)}</span>{" "}
-                  débloqués sur {formatCredits(project.raised)} — le reste est sous séquestre
+                  <span className="font-semibold">{formatMoney(project.released, project.currency)}</span>{" "}
+                  débloqués sur {formatMoney(project.raised, project.currency)} — le reste est sous séquestre
                   jusqu&apos;à validation des étapes.
                 </p>
               )}
@@ -474,12 +475,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                   <p className="rounded-xl border border-white/[0.08] bg-muted/50 p-3 text-sm text-muted-foreground">
                     C&apos;est ton projet — partage-le pour atteindre ton objectif.
                   </p>
-                ) : viewer ? (
-                  <ContributeForm
-                    projectId={project.id}
-                    projectTitle={project.title}
-                    balance={viewer.credits}
-                  />
+                ) : viewerId ? (
+                  <ContributeForm projectId={project.id} currency={project.currency} />
                 ) : (
                   <Button className="w-full" asChild>
                     <Link href="/login">Connecte-toi pour contribuer</Link>
@@ -490,6 +487,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
           {isOwner && (
             <CampaignCockpit
+              currency={project.currency}
               createdAt={project.createdAt}
               deadline={project.deadline}
               goal={project.goal}
@@ -522,7 +520,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                       {contributor.name}
                     </Link>
                     <span className="ml-auto font-bold text-muted-foreground">
-                      {formatCredits(contributor.total)}
+                      {formatMoney(contributor.total, project.currency)}
                     </span>
                   </div>
                 ))}
