@@ -19,7 +19,7 @@ import {
 import type { NotificationType } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/format";
+import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Notifications" };
@@ -108,7 +108,7 @@ export default async function NotificationsPage() {
                           {notification.title}
                         </span>
                         <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                          {formatDate(notification.createdAt)}
+                          {formatRelative(notification.createdAt)}
                         </span>
                       </span>
                       {notification.body && (

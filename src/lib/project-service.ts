@@ -8,6 +8,7 @@ import {
   WELCOME_CREDITS,
 } from "@/lib/constants";
 import type { City } from "@/lib/cities";
+import { formatCredits } from "@/lib/format";
 import { notify, notifyMany } from "@/lib/notifications";
 import type { CreateProjectInput } from "@/lib/validation";
 
@@ -191,7 +192,7 @@ export async function makeContribution(userId: string, projectId: string, amount
       {
         userId: project.ownerId,
         type: "CONTRIBUTION",
-        title: `${user.name ?? "Quelqu'un"} a soutenu « ${project.title} » (${amount} $)`,
+        title: `${user.name ?? "Quelqu'un"} a soutenu « ${project.title} » (${formatCredits(amount)})`,
         href: `/projects/${project.slug}`,
       },
       tx
@@ -442,7 +443,7 @@ async function approveProofTx(
     {
       userId: project.ownerId,
       type: "MILESTONE_RELEASED",
-      title: `Étape ${milestone.order} validée — ${release} $ débloqués`,
+      title: `Étape ${milestone.order} validée — ${formatCredits(release)} débloqués`,
       body: next
         ? `La communauté a validé ta preuve pour « ${project.title} ». Prochaine étape : « ${next.title} ».`
         : `« ${project.title} » est entièrement réalisé. Bravo !`,
@@ -526,7 +527,7 @@ async function failProjectTx(tx: Tx, projectId: string, reason: string) {
       refundNotifications.push({
         userId: c.userId,
         type: "REFUND" as const,
-        title: `Remboursement de ${refund} $ — « ${project.title} »`,
+        title: `Remboursement de ${formatCredits(refund)} — « ${project.title} »`,
         body: "La campagne n'a pas abouti : ta part du séquestre restant t'a été recréditée.",
         href: "/dashboard",
       });

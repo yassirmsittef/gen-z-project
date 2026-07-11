@@ -194,7 +194,7 @@ export default async function DashboardPage({
             <StatRing
               value={formatCredits(user.credits)}
               percent={totalMoved > 0 ? user.credits / totalMoved : 1}
-              label="Crédits disponibles"
+              label="Tokens disponibles"
               sublabel={`${formatCredits(user.totalContributed)} investis à vie`}
             />
             <StatRing

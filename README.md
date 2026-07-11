@@ -1,27 +1,28 @@
 # Tremplin ⚡ — Plateforme communautaire de financement participatif
 
 **Phase 1 (MVP)** : la Gen Z et les créateurs lancent leurs projets et se font financer par la
-communauté — en **crédits fictifs**. Aucun paiement réel : on valide les mécaniques communautaires
-avant d'introduire Stripe Connect en Phase 2.
+communauté — en **tokens** (1 token = 1 $). Les paiements Stripe (recharge, versements Connect)
+sont branchés **en mode test** : les mécaniques sont réelles, aucun vrai débit.
+**En ligne : https://gen-z-project.vercel.app**
 
 ## Les mécaniques clés
 
 - **Contribuer avant de poster** — la création de projet est verrouillée tant que tu n'as pas
   soutenu au moins 1 projet (`MIN_CONTRIBUTIONS_TO_CREATE`).
-- **Monnaie : le token, 1 token = 1 $** (fictif en Phase 1) — 5 tokens offerts à
-  l'inscription, contribution minimum 5 tokens, **recharge du compte** depuis le dashboard
-  (montants prédéfinis, transaction BONUS au ledger — branchera Stripe en Phase 2).
+- **Monnaie : le token, 1 token = 1 $** — 5 tokens offerts à l'inscription, contribution
+  minimum 5 tokens, **recharge du compte** depuis le dashboard : Stripe Checkout si configuré
+  (mode test), recharge fictive sinon. Transactions au ledger, idempotence par session id.
 - **Contribution confirmée en deux temps** — un dialogue récapitulatif (montant, équivalence
   en $, rappel du séquestre) doit être accepté avant que la contribution soit enregistrée.
 - **Financement tout-ou-rien** — une campagne a un objectif et une deadline (7 à 60 jours).
   Objectif atteint → statut *Financé*, la collecte s'arrête. Deadline dépassée sans objectif →
   *Non abouti*, tous les contributeurs sont remboursés.
 - **Fonds débloqués par étapes** — le porteur découpe son plan en 2 à 5 étapes, chacune avec un
-  **montant en crédits** (somme = objectif). Les crédits restent **sous séquestre** : à chaque
+  **montant en tokens** (somme = objectif). Les tokens restent **sous séquestre** : à chaque
   étape, le porteur soumet une **preuve d'avancement** (texte + liens + images) et les
   **contributeurs votent**.
   - **Vote pondéré** : le poids d'un vote = total contribué par le votant au projet. Validation
-    dès que le poids POUR dépasse 50% des crédits collectés (refus symétrique) ; si tous les
+    dès que le poids POUR dépasse 50% des tokens collectés (refus symétrique) ; si tous les
     contributeurs ont voté sans majorité stricte, la balance des poids tranche (égalité → refus).
   - Preuve validée → le montant de l'étape est viré au porteur, l'étape suivante s'ouvre (la
     dernière étape reçoit aussi l'éventuel dépassement d'objectif).
@@ -35,7 +36,18 @@ avant d'introduire Stripe Connect en Phase 2.
   description) et **classements** (/classements) des meilleurs projets en campagne et réalisés.
 - **Chat d'entraide** (/chat) — messagerie directe entre membres pour faire cohabiter les
   projets : collabs, échanges de compétences, coups de main. Boutons « Contacter » sur les
-  pages projet et profils. Rafraîchissement léger par polling (pas de websocket en Phase 1).
+  pages projet et profils. **Temps réel par SSE** (`/api/chat/stream`, reconnexion auto).
+- **Communauté sur le globe** (/communaute) — Terre 3D stylisée avec un point lumineux par
+  ville de membre (localisation déclarative, ville uniquement), clic = filtre, et recherche
+  des membres par nom / compétence / ville.
+- **Vie du projet** — le porteur poste des **actus** (timeline sur la page projet), la
+  communauté **commente** (modération légère : l'auteur ou le porteur suppriment), chacun
+  peut **suivre** un projet (étoile + compteur, section « Projets suivis » au dashboard).
+- **Notifications in-app** — cloche navbar + page /notifications : contribution reçue,
+  objectif atteint, preuve à voter, étape débloquée/refusée, échec + remboursements,
+  message, demande de partenariat, commentaire, actu (contributeurs ∪ followers).
+- **Le pouls** — fil d'activité de la plateforme sur l'accueil (contributions, lancements,
+  actus, nouveaux membres, temps relatif).
 - **Réputation** — chaque utilisateur a un score public : +2 par contribution, +1 par vote,
   +10 par étape validée, +25 par projet réalisé, **−15 par projet échoué**. Niveaux : Rookie 🐣,
   Contributeur·rice 🤝 (10+), Bâtisseur·se 🧱 (50+), Légende 🌟 (150+).
@@ -201,5 +213,5 @@ copilote, éditable. L'analyse interne n'est jamais exposée à la marque.
 
 ## Phase 2 (hors scope MVP)
 
-Paiements réels (Stripe Connect), notifications, commentaires/updates de projet, recherche,
-modération, mobile.
+Passage des clés Stripe en live + montage séquestre régulé UE (Mangopay/Lemonway),
+notifications par email et préférences, modération avancée, application mobile.
