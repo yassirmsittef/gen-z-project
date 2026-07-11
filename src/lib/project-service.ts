@@ -7,6 +7,7 @@ import {
   REP,
   WELCOME_CREDITS,
 } from "@/lib/constants";
+import type { City } from "@/lib/cities";
 import type { CreateProjectInput } from "@/lib/validation";
 
 /** Erreur métier : son message est affichable tel quel à l'utilisateur. */
@@ -56,6 +57,19 @@ export async function topUpCredits(
 export async function updateUserSkills(userId: string, skills: string[]) {
   const unique = [...new Set(skills.map((s) => s.trim()).filter(Boolean))];
   await prisma.user.update({ where: { id: userId }, data: { skills: unique } });
+}
+
+/**
+ * Localisation déclarative (globe Communauté) : on enregistre la VILLE choisie
+ * dans la liste officielle et ses coordonnées — `null` retire le membre du globe.
+ */
+export async function updateUserLocation(userId: string, city: City | null) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: city
+      ? { city: city.name, country: city.country, latitude: city.lat, longitude: city.lng }
+      : { city: null, country: null, latitude: null, longitude: null },
+  });
 }
 
 /** Score de proximité entre les compétences d'un utilisateur et celles d'un projet. */
@@ -224,7 +238,9 @@ export async function submitMilestoneProof(
  * tranche (égalité → refus, protection des contributeurs).
  */
 export async function castVote(userId: string, proofId: string, decision: VoteDecision) {
-  await prisma.$transaction(async (tx) => {
+  // Si le vote a débloqué une étape, on tente le versement réel APRÈS le
+  // commit (jamais d'appel réseau dans la transaction) — voir lib/payouts.
+  const released = await prisma.$transaction(async (tx) => {
     const proof = await tx.proof.findUnique({
       where: { id: proofId },
       include: { milestone: { include: { project: true } }, votes: true },
@@ -269,12 +285,11 @@ export async function castVote(userId: string, proofId: string, decision: VoteDe
     const threshold = project.raised / 2;
 
     if (approveWeight > threshold) {
-      await approveProofTx(tx, proofId);
-      return;
+      return approveProofTx(tx, proofId);
     }
     if (rejectWeight > threshold) {
       await rejectProofTx(tx, proofId);
-      return;
+      return null;
     }
 
     // Tous les contributeurs ont voté sans majorité stricte : la balance tranche.
@@ -284,13 +299,23 @@ export async function castVote(userId: string, proofId: string, decision: VoteDe
       select: { userId: true },
     });
     if (votes.length >= contributors.length) {
-      if (approveWeight > rejectWeight) await approveProofTx(tx, proofId);
-      else await rejectProofTx(tx, proofId);
+      if (approveWeight > rejectWeight) return approveProofTx(tx, proofId);
+      await rejectProofTx(tx, proofId);
     }
+    return null;
   });
+
+  if (released) {
+    const { attemptMilestonePayout } = await import("@/lib/payouts");
+    await attemptMilestonePayout(released.milestoneId, released.amount);
+  }
 }
 
-async function approveProofTx(tx: Tx, proofId: string) {
+/** Valide la preuve, débloque les fonds — renvoie l'étape et le montant réellement débloqué. */
+async function approveProofTx(
+  tx: Tx,
+  proofId: string
+): Promise<{ milestoneId: string; amount: number }> {
   const proof = await tx.proof.findUniqueOrThrow({
     where: { id: proofId },
     include: { milestone: { include: { project: true } } },
@@ -350,6 +375,8 @@ async function approveProofTx(tx: Tx, proofId: string) {
       },
     });
   }
+
+  return { milestoneId: milestone.id, amount: release };
 }
 
 async function rejectProofTx(tx: Tx, proofId: string) {

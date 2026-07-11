@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOut, MessagesSquare, Zap } from "lucide-react";
+import { Globe2, LogOut, MessagesSquare, Zap } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { signOutAction } from "@/actions/auth";
@@ -38,6 +38,19 @@ export async function Navbar() {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/projects">Projets</Link>
           </Button>
+          {/* Icône seule (comme le chat) : la Communauté reste accessible sur mobile. */}
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
+            title="Communauté — le réseau sur le globe"
+            className="h-9 w-9 sm:h-10 sm:w-10"
+          >
+            <Link href="/communaute">
+              <Globe2 aria-hidden />
+              <span className="sr-only">Communauté</span>
+            </Link>
+          </Button>
           <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex">
             <Link href="/classements">Classements</Link>
           </Button>
@@ -50,7 +63,13 @@ export async function Navbar() {
               <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
                 <Link href="/dashboard">Dashboard</Link>
               </Button>
-              <Button variant="ghost" size="icon" asChild title="Chat — entraide entre porteurs">
+              <Button
+                variant="ghost"
+                size="icon"
+                asChild
+                title="Chat — entraide entre porteurs"
+                className="h-9 w-9 sm:h-10 sm:w-10"
+              >
                 <Link href="/chat">
                   <MessagesSquare aria-hidden />
                   <span className="sr-only">Chat</span>
@@ -62,13 +81,20 @@ export async function Navbar() {
                 title="Ton solde"
               >
                 <Zap className="h-3.5 w-3.5" aria-hidden />
-                {user.credits.toLocaleString("fr-FR")} tokens
+                {user.credits.toLocaleString("fr-FR")}
+                <span className="hidden sm:inline">tokens</span>
               </Link>
               <Link href={`/u/${user.id}`} title="Ton profil public">
                 <UserAvatar name={user.name} className="h-9 w-9" />
               </Link>
               <form action={signOutAction}>
-                <Button variant="ghost" size="icon" type="submit" title="Se déconnecter">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  type="submit"
+                  title="Se déconnecter"
+                  className="h-9 w-9 sm:h-10 sm:w-10"
+                >
                   <LogOut />
                   <span className="sr-only">Se déconnecter</span>
                 </Button>

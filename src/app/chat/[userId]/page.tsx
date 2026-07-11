@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { ChatRefresher } from "@/components/chat-refresher";
+import { ChatStream } from "@/components/chat-stream";
 import { ConversationList } from "@/components/conversation-list";
 import { MessageForm } from "@/components/message-form";
 import { ReputationBadge } from "@/components/reputation-badge";
@@ -35,7 +35,7 @@ export default async function ChatThreadPage({
 
   return (
     <div className="container py-10">
-      <ChatRefresher />
+      <ChatStream />
       <div className="mb-8 space-y-2">
         <h1 className="text-4xl font-semibold tracking-tight">Chat</h1>
         <p className="data-label">Entraide entre porteurs · collabs · coups de main</p>

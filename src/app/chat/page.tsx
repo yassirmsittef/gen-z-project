@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { MessagesSquare } from "lucide-react";
 import { auth } from "@/auth";
+import { ChatStream } from "@/components/chat-stream";
 import { ConversationList } from "@/components/conversation-list";
 import { getConversations } from "@/lib/chat";
 
@@ -15,6 +16,7 @@ export default async function ChatPage() {
 
   return (
     <div className="container py-10">
+      <ChatStream />
       <div className="mb-8 space-y-2">
         <h1 className="text-4xl font-semibold tracking-tight">Chat</h1>
         <p className="data-label">Entraide entre porteurs · collabs · coups de main</p>

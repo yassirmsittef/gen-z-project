@@ -13,7 +13,10 @@ import { RechargeForm } from "@/components/recharge-form";
 import { stripeEnabled } from "@/lib/stripe";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
+import { ConnectForm } from "@/components/connect-form";
+import { LocationForm } from "@/components/location-form";
 import { SkillsForm } from "@/components/skills-form";
+import { getConnectStatus } from "@/lib/payouts";
 import { StatRing } from "@/components/stat-ring";
 import { UserAvatar } from "@/components/user-avatar";
 import { nextReputationTarget } from "@/lib/reputation";
@@ -34,6 +37,18 @@ const RECHARGE_BANNERS = {
   },
 } as const;
 
+/** Bandeaux de retour de l'onboarding Stripe Connect (?connect=done|refresh). */
+const CONNECT_BANNERS = {
+  done: {
+    tone: "text-success border-success/30 bg-success/10",
+    text: "Configuration transmise à Stripe — tes versements s'activent dès validation (souvent immédiat en mode test).",
+  },
+  refresh: {
+    tone: "text-muted-foreground border-white/[0.12] bg-card/60",
+    text: "La session Stripe a expiré — relance la configuration des versements quand tu veux.",
+  },
+} as const;
+
 /** Pastilles de type pour le flux de crédits (couleur ≠ seule porteuse : label mono). */
 const TYPE_STYLES: Record<TransactionType, { dot: string; label: string }> = {
   WELCOME: { dot: "bg-success", label: "Bienvenue" },
@@ -46,13 +61,15 @@ const TYPE_STYLES: Record<TransactionType, { dot: string; label: string }> = {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ recharge?: string }>;
+  searchParams: Promise<{ recharge?: string; connect?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  const { recharge } = await searchParams;
+  const { recharge, connect } = await searchParams;
   const rechargeBanner =
     recharge === "success" || recharge === "cancel" ? RECHARGE_BANNERS[recharge] : null;
+  const connectBanner =
+    connect === "done" || connect === "refresh" ? CONNECT_BANNERS[connect] : null;
 
   const [user, transactions, contributions, myProjects, reputationEvents] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),
@@ -79,6 +96,10 @@ export default async function DashboardPage({
   ]);
   if (!user) redirect("/login");
 
+  // État Connect : un seul appel Stripe, uniquement si un compte existe déjà.
+  const connectStatus =
+    stripeEnabled && user.stripeAccountId ? await getConnectStatus(user.stripeAccountId) : null;
+
   const failedProjects = myProjects.filter((p) => p.status === "FAILED");
   const nextLevel = nextReputationTarget(user.reputation);
   const totalMoved = user.credits + user.totalContributed;
@@ -97,6 +118,14 @@ export default async function DashboardPage({
             role="status"
           >
             {rechargeBanner.text}
+          </p>
+        )}
+        {connectBanner && (
+          <p
+            className={cn("rounded-2xl border p-4 text-sm font-medium", connectBanner.tone)}
+            role="status"
+          >
+            {connectBanner.text}
           </p>
         )}
         <div className="flex flex-wrap items-center gap-5">
@@ -311,6 +340,22 @@ export default async function DashboardPage({
             <Card>
               <CardContent className="pt-6">
                 <SkillsForm initialSkills={user.skills} />
+              </CardContent>
+            </Card>
+          </div>
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold tracking-tight">Ma ville</h2>
+            <Card>
+              <CardContent className="pt-6">
+                <LocationForm initialCity={user.city} />
+              </CardContent>
+            </Card>
+          </div>
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold tracking-tight">Mes versements</h2>
+            <Card>
+              <CardContent className="pt-6">
+                <ConnectForm stripeEnabled={stripeEnabled} status={connectStatus} />
               </CardContent>
             </Card>
           </div>

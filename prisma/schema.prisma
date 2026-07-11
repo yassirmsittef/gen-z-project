@@ -23,6 +23,14 @@ model User {
   totalContributed Int       @default(0) // cumul à vie (non décrémenté par les remboursements)
   reputation       Int       @default(0)
   skills           String[]  @default([])
+  // Localisation déclarative pour le globe Communauté : ville choisie dans la
+  // liste de src/lib/cities.ts, coordonnées de la VILLE (jamais de position précise).
+  city             String?
+  country          String?
+  latitude         Float?
+  longitude        Float?
+  // Compte Stripe Connect Express du porteur (Phase 2 : versements réels).
+  stripeAccountId  String?
   createdAt        DateTime  @default(now())
 
   accounts         Account[]
@@ -133,14 +141,16 @@ enum MilestoneStatus {
 }
 
 model Milestone {
-  id             String          @id @default(cuid())
-  projectId      String
-  order          Int
-  title          String
-  description    String
-  amount         Int // montant en crédits débloqué par cette étape (somme = objectif)
-  status         MilestoneStatus @default(LOCKED)
-  rejectionCount Int             @default(0)
+  id               String          @id @default(cuid())
+  projectId        String
+  order            Int
+  title            String
+  description      String
+  amount           Int // montant en crédits débloqué par cette étape (somme = objectif)
+  status           MilestoneStatus @default(LOCKED)
+  rejectionCount   Int             @default(0)
+  // Transfert Stripe Connect du versement réel (null = pas encore versé).
+  stripeTransferId String?
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   proofs  Proof[]

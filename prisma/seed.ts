@@ -9,6 +9,7 @@
  */
 import bcrypt from "bcryptjs";
 import type { ProjectCategory } from "@prisma/client";
+import { findCity } from "../src/lib/cities";
 import { prisma } from "../src/lib/prisma";
 import {
   castVote,
@@ -38,9 +39,22 @@ async function createUser(
   name: string,
   email: string,
   passwordHash: string,
-  skills: string[] = []
+  skills: string[] = [],
+  cityName?: string
 ) {
-  const user = await prisma.user.create({ data: { name, email, passwordHash, skills } });
+  const city = cityName ? findCity(cityName) : undefined;
+  if (cityName && !city) throw new Error(`Ville de seed inconnue : ${cityName}`);
+  const user = await prisma.user.create({
+    data: {
+      name,
+      email,
+      passwordHash,
+      skills,
+      ...(city
+        ? { city: city.name, country: city.country, latitude: city.lat, longitude: city.lng }
+        : {}),
+    },
+  });
   await grantWelcomeCredits(user.id);
   return user;
 }
@@ -100,28 +114,42 @@ async function main() {
   const passwordHash = await bcrypt.hash("demo1234", 10);
 
   console.log("👤 Utilisateurs...");
-  const lea = await createUser("Léa", "lea@demo.dev", passwordHash, [
-    "podcast",
-    "interview",
-    "com",
-  ]);
-  const max = await createUser("Max", "max@demo.dev", passwordHash, ["musique", "mix", "cuisine"]);
-  const zoe = await createUser("Zoé", "zoe@demo.dev", passwordHash, [
-    "couture",
-    "upcycling",
-    "photo",
-  ]);
-  const sam = await createUser("Sam", "sam@demo.dev", passwordHash, [
-    "gamedev",
-    "pixel-art",
-    "montage",
-  ]);
-  const nina = await createUser("Nina", "nina@demo.dev", passwordHash, [
-    "dessin",
-    "webtoon",
-    "scénario",
-  ]);
-  await createUser("Toi (démo)", "demo@demo.dev", passwordHash, ["montage", "photo"]);
+  const lea = await createUser(
+    "Léa",
+    "lea@demo.dev",
+    passwordHash,
+    ["podcast", "interview", "com"],
+    "Paris"
+  );
+  const max = await createUser(
+    "Max",
+    "max@demo.dev",
+    passwordHash,
+    ["musique", "mix", "cuisine"],
+    "Lyon"
+  );
+  const zoe = await createUser(
+    "Zoé",
+    "zoe@demo.dev",
+    passwordHash,
+    ["couture", "upcycling", "photo"],
+    "Marseille"
+  );
+  const sam = await createUser(
+    "Sam",
+    "sam@demo.dev",
+    passwordHash,
+    ["gamedev", "pixel-art", "montage"],
+    "Montréal"
+  );
+  const nina = await createUser(
+    "Nina",
+    "nina@demo.dev",
+    passwordHash,
+    ["dessin", "webtoon", "scénario"],
+    "Casablanca"
+  );
+  await createUser("Toi (démo)", "demo@demo.dev", passwordHash, ["montage", "photo"], "Paris");
 
   // Recharges de démo pour que les scénarios ci-dessous soient jouables
   // (le bonus d'inscription n'est que de 5 $).

@@ -117,9 +117,25 @@ Sans clés, la recharge reste **fictive** (mode démo). Pour brancher de vrais p
 
 En production : clés live + endpoint webhook déclaré dans le dashboard Stripe
 (`https://ton-domaine/api/webhooks/stripe`, événement `checkout.session.completed`),
-et `NEXT_PUBLIC_APP_URL` sur ton domaine. Le versement aux porteurs (étapes débloquées →
-vrais virements) reste à brancher via Stripe Connect — voir aussi Mangopay/Lemonway pour
-le séquestre réglementé en UE.
+et `NEXT_PUBLIC_APP_URL` sur ton domaine.
+
+### Stripe Connect — versements aux porteurs (mode test)
+
+Les porteurs configurent leurs versements depuis le dashboard (« Mes versements » →
+onboarding Express). Quand la communauté valide une étape, son montant est transféré
+depuis le solde de la plateforme vers le compte du porteur
+(`src/lib/payouts.ts`, idempotent via `Milestone.stripeTransferId`) ; tout échec est
+silencieux — le ledger interne en tokens reste la source de vérité.
+
+Prérequis une seule fois : **activer Connect** sur le compte Stripe de la plateforme
+([dashboard.stripe.com/connect](https://dashboard.stripe.com/connect) → Get started),
+sinon la création de comptes renvoie « You can only create new accounts if you've
+signed up for Connect ».
+
+⚠️ **Avant tout lancement réel en UE** : encaisser pour compte de tiers exige un agrément
+d'établissement de paiement ou un partenaire régulé (Mangopay, Lemonway, ou le montage
+Stripe « destination charges »). Le montage actuel (transfers depuis le solde plateforme)
+est un prototype de test, pas un montage conforme.
 
 ### Google OAuth (optionnel)
 
