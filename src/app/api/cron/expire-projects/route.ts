@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { failExpiredProjects } from "@/lib/project-service";
+import { failExpiredProjects, failOverdueRealizations } from "@/lib/project-service";
 
 /**
  * Cron Vercel (toutes les 10 min, voir vercel.json) : expire les campagnes
@@ -23,5 +23,6 @@ export async function GET(request: Request) {
   }
 
   await failExpiredProjects();
+  await failOverdueRealizations();
   return NextResponse.json({ ok: true, ranAt: new Date().toISOString() });
 }

@@ -245,6 +245,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               Les fonds sont débloqués étape par étape : le créateur soumet une preuve, les
               contributeurs votent.
             </p>
+            {project.status === "FUNDED" && project.realizationDeadline && (
+              <p className="-mt-3 mb-6">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.14em] text-amber-300">
+                  <Clock className="h-3.5 w-3.5" aria-hidden />
+                  à réaliser avant le {formatDate(project.realizationDeadline)} · J-
+                  {daysLeft(project.realizationDeadline)}
+                </span>
+              </p>
+            )}
             <MilestoneTimeline
               milestones={project.milestones}
               project={project}

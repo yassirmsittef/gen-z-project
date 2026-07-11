@@ -4,6 +4,7 @@ import {
   MAX_PROOF_ATTEMPTS,
   MIN_CONTRIBUTION,
   MIN_CONTRIBUTIONS_TO_CREATE,
+  REALIZATION_DAYS,
   REP,
   WELCOME_CREDITS,
 } from "@/lib/constants";
@@ -245,7 +246,17 @@ export async function makeContribution(userId: string, projectId: string, amount
     const funded = newRaised >= project.goal;
     await tx.project.update({
       where: { id: projectId },
-      data: { raised: newRaised, ...(funded ? { status: "FUNDED" } : {}) },
+      data: {
+        raised: newRaised,
+        // Le financement ouvre l'échéance de réalisation : REALIZATION_DAYS
+        // pour livrer toutes les étapes, sinon échec + remboursement.
+        ...(funded
+          ? {
+              status: "FUNDED" as const,
+              realizationDeadline: new Date(Date.now() + REALIZATION_DAYS * 86_400_000),
+            }
+          : {}),
+      },
     });
 
     await notify(
@@ -643,6 +654,28 @@ export async function failExpiredProjects() {
   for (const p of expired) {
     await prisma.$transaction(async (tx) =>
       failProjectTx(tx, p.id, "Objectif non atteint avant la fin de la campagne.")
+    );
+  }
+}
+
+/**
+ * Fait échouer les projets financés dont l'échéance de réalisation est
+ * dépassée : le porteur n'a pas fait valider toutes ses étapes à temps, le
+ * séquestre restant repart aux contributeurs (même mécanique d'échec que la
+ * fin de campagne — prorata, réputation, notifications).
+ */
+export async function failOverdueRealizations() {
+  const overdue = await prisma.project.findMany({
+    where: { status: "FUNDED", realizationDeadline: { lt: new Date() } },
+    select: { id: true },
+  });
+  for (const p of overdue) {
+    await prisma.$transaction(async (tx) =>
+      failProjectTx(
+        tx,
+        p.id,
+        `Étapes non réalisées dans les ${REALIZATION_DAYS} jours suivant le financement.`
+      )
     );
   }
 }

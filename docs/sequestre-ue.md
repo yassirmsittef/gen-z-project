@@ -3,6 +3,15 @@
 *Étude de décision — 11 juillet 2026. Basée sur des sources publiques ; les points
 marqués ⚖️ sont à valider par un avocat en droit financier avant tout lancement réel.*
 
+> **✅ DÉCISION (11 juillet 2026)** : plafonner la rétention totale à **60 jours** —
+> une **échéance de réalisation** de `REALIZATION_DAYS = 60` jours court à partir du
+> financement ; au-delà, les étapes restantes échouent et le séquestre restant est
+> remboursé au prorata (cron quotidien, même mécanique que la fin de campagne). Sous le
+> plafond Stripe (~90 j), **l'option B (rester sur Stripe Connect) devient viable en
+> conservant une vraie rétention par étapes** — l'option A (Mangopay/Lemonway) reste la
+> référence si l'échéance devait sauter ou pour lever les points ⚖️ restants (float de
+> tokens = monnaie électronique, qualification AMF) avant tout argent réel.
+
 ## TL;DR
 
 - Le modèle Tremplin (don avec récompense) **échappe à l'agrément européen PSFP/ECSP**,
