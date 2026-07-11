@@ -360,13 +360,32 @@ export default function EarthScene({ markers, selectedCity, onSelectCity }: Prop
     };
 
     // ---- Interactions pointeur ----
+    // Tactile : un doigt = rotation horizontale (le scroll vertical de la page
+    // reste au navigateur, cf. touch-action pan-y) ; DEUX doigts = contrôle
+    // libre, inclinaison verticale comprise — le pattern des cartes embarquées.
+    // À la souris, un seul pointeur suffit pour tout.
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
+    const activePointers = new Map<number, { x: number; y: number }>();
     let dragging = false;
+    let twoFinger = false;
     let dragMoved = 0;
     let lastX = 0;
     let lastY = 0;
+    let lastMidX = 0;
+    let lastMidY = 0;
     let hovered: MarkerObject | null = null;
+
+    const applyDragDelta = (dx: number, dy: number) => {
+      rotY += dx * 0.0055;
+      rotVelocity = dx * 0.0055;
+      tiltX = THREE.MathUtils.clamp(tiltX + dy * 0.0035, -0.9, 0.9);
+      // Le drag reprend la main sur le focus et l'auto-rotation.
+      focusY = null;
+      focusTilt = null;
+      lastInteraction = elapsed;
+      if (reducedMotion) requestRender();
+    };
 
     const pickMarker = (): MarkerObject | null => {
       raycaster.setFromCamera(pointer, camera);
@@ -411,42 +430,80 @@ export default function EarthScene({ markers, selectedCity, onSelectCity }: Prop
     };
 
     const onPointerDown = (event: PointerEvent) => {
-      dragging = true;
-      dragMoved = 0;
-      lastX = event.clientX;
-      lastY = event.clientY;
+      activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       lastInteraction = elapsed;
-      renderer.domElement.setPointerCapture(event.pointerId);
+      // Les pointeurs synthétiques (tests) n'existent pas pour le navigateur.
+      try {
+        renderer.domElement.setPointerCapture(event.pointerId);
+      } catch {
+        /* pointeur inconnu : sans gravité */
+      }
+      if (activePointers.size === 1) {
+        dragging = true;
+        twoFinger = false;
+        dragMoved = 0;
+        lastX = event.clientX;
+        lastY = event.clientY;
+      } else if (activePointers.size === 2) {
+        // Deuxième doigt : bascule en contrôle libre, ce n'est plus un clic.
+        twoFinger = true;
+        dragMoved = Number.POSITIVE_INFINITY;
+        const [a, b] = [...activePointers.values()];
+        lastMidX = (a.x + b.x) / 2;
+        lastMidY = (a.y + b.y) / 2;
+      }
       renderer.domElement.style.cursor = "grabbing";
     };
 
     const onPointerMove = (event: PointerEvent) => {
       updatePointer(event);
-      if (dragging) {
+      if (activePointers.has(event.pointerId)) {
+        activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      }
+      if (twoFinger && activePointers.size >= 2) {
+        // Milieu des deux doigts : dx → rotation, dy → inclinaison.
+        const [a, b] = [...activePointers.values()];
+        const midX = (a.x + b.x) / 2;
+        const midY = (a.y + b.y) / 2;
+        applyDragDelta(midX - lastMidX, midY - lastMidY);
+        lastMidX = midX;
+        lastMidY = midY;
+      } else if (dragging && !twoFinger && activePointers.has(event.pointerId)) {
         const dx = event.clientX - lastX;
         const dy = event.clientY - lastY;
         dragMoved += Math.abs(dx) + Math.abs(dy);
         lastX = event.clientX;
         lastY = event.clientY;
-        rotY += dx * 0.0055;
-        rotVelocity = dx * 0.0055;
-        tiltX = THREE.MathUtils.clamp(tiltX + dy * 0.0035, -0.9, 0.9);
-        // Le drag reprend la main sur le focus et l'auto-rotation.
-        focusY = null;
-        focusTilt = null;
-        lastInteraction = elapsed;
-        if (reducedMotion) requestRender();
+        applyDragDelta(dx, dy);
       }
       refreshHover(event);
     };
 
     const endDrag = (event: PointerEvent) => {
-      if (!dragging) return;
-      dragging = false;
-      renderer.domElement.style.cursor = hovered ? "pointer" : "grab";
-      if (renderer.domElement.hasPointerCapture(event.pointerId)) {
-        renderer.domElement.releasePointerCapture(event.pointerId);
+      if (!activePointers.has(event.pointerId)) return;
+      activePointers.delete(event.pointerId);
+      try {
+        if (renderer.domElement.hasPointerCapture(event.pointerId)) {
+          renderer.domElement.releasePointerCapture(event.pointerId);
+        }
+      } catch {
+        /* pointeur inconnu : sans gravité */
       }
+
+      if (activePointers.size === 1) {
+        // Deux doigts → un : le doigt restant reprend un drag simple.
+        twoFinger = false;
+        const rest = [...activePointers.values()][0];
+        lastX = rest.x;
+        lastY = rest.y;
+        dragMoved = Number.POSITIVE_INFINITY;
+        return;
+      }
+      if (activePointers.size > 0) return;
+
+      dragging = false;
+      twoFinger = false;
+      renderer.domElement.style.cursor = hovered ? "pointer" : "grab";
       // Un déplacement quasi nul = un clic : sélection / désélection de ville.
       if (dragMoved < 7) {
         updatePointer(event);
@@ -463,6 +520,12 @@ export default function EarthScene({ markers, selectedCity, onSelectCity }: Prop
       }
     };
 
+    // iOS : avec deux doigts posés, on neutralise le pinch-zoom du navigateur
+    // pour garder la main sur le geste (le scroll à un doigt reste natif).
+    const onTouchMove = (event: TouchEvent) => {
+      if (event.touches.length >= 2) event.preventDefault();
+    };
+
     const onPointerLeave = () => {
       hovered = null;
       tooltip.style.opacity = "0";
@@ -474,6 +537,7 @@ export default function EarthScene({ markers, selectedCity, onSelectCity }: Prop
     renderer.domElement.addEventListener("pointerup", endDrag);
     renderer.domElement.addEventListener("pointercancel", endDrag);
     renderer.domElement.addEventListener("pointerleave", onPointerLeave);
+    renderer.domElement.addEventListener("touchmove", onTouchMove, { passive: false });
     renderer.domElement.style.cursor = "grab";
 
     // ---- Boucle de rendu ----
@@ -586,6 +650,7 @@ export default function EarthScene({ markers, selectedCity, onSelectCity }: Prop
       renderer.domElement.removeEventListener("pointerup", endDrag);
       renderer.domElement.removeEventListener("pointercancel", endDrag);
       renderer.domElement.removeEventListener("pointerleave", onPointerLeave);
+      renderer.domElement.removeEventListener("touchmove", onTouchMove);
       apiRef.current = null;
       for (const dispose of disposers) dispose();
       renderer.dispose();

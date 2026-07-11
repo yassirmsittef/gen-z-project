@@ -139,9 +139,14 @@ export default async function CommunityPage({
               </p>
             </div>
           ) : (
-            <p className="pointer-events-none absolute bottom-4 left-4 hidden font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:block">
-              Glisse pour explorer · clique un point
-            </p>
+            <>
+              <p className="pointer-events-none absolute bottom-4 left-4 hidden font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:block">
+                Glisse pour explorer · clique un point
+              </p>
+              <p className="pointer-events-none absolute bottom-4 left-4 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:hidden">
+                Un doigt : tourner · deux doigts : incliner
+              </p>
+            </>
           )}
         </section>
 
