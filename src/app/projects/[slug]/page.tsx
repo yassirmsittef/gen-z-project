@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Clock, Handshake, Heart, LockOpen, MessagesSquare, PartyPopper, Trash2, Users } from "lucide-react";
+import { Clock, Handshake, Heart, LockOpen, MessagesSquare, PartyPopper, Star, Trash2, Users } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { deleteCommentAction, deleteUpdateAction } from "@/actions/project-feed";
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { CommentForm } from "@/components/comment-form";
 import { ContributeForm } from "@/components/contribute-form";
+import { FollowButton } from "@/components/follow-button";
 import { MilestoneTimeline } from "@/components/milestone-timeline";
 import { ProjectUpdateForm } from "@/components/project-update-form";
 import { ReputationBadge } from "@/components/reputation-badge";
@@ -41,6 +42,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         orderBy: { createdAt: "desc" },
         include: { user: { select: { id: true, name: true, reputation: true } } },
       },
+      _count: { select: { follows: true } },
     },
   });
 
@@ -53,6 +55,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       : Promise.resolve(null),
   ]);
   if (!project) notFound();
+
+  const isFollowing = viewerId
+    ? Boolean(
+        await prisma.follow.findUnique({
+          where: { userId_projectId: { userId: viewerId, projectId: project.id } },
+          select: { id: true },
+        })
+      )
+    : false;
 
   const isOwner = viewerId === project.ownerId;
   const isContributor = project.contributions.some((c) => c.userId === viewerId);
@@ -121,6 +132,28 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             </span>
             <ReputationBadge reputation={project.owner.reputation} />
           </Link>
+          {viewerId && !isOwner ? (
+            <FollowButton
+              projectId={project.id}
+              following={isFollowing}
+              count={project._count.follows}
+            />
+          ) : !viewerId ? (
+            <Button variant="outline" size="sm" asChild title="Connecte-toi pour suivre ce projet">
+              <Link href="/login">
+                <Star aria-hidden />
+                Suivre
+                <span className="font-mono text-xs opacity-75">{project._count.follows}</span>
+              </Link>
+            </Button>
+          ) : (
+            project._count.follows > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-secondary/30 bg-secondary/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.14em] text-secondary">
+                <Star className="h-3.5 w-3.5 fill-current" aria-hidden />
+                {project._count.follows} suivi{project._count.follows > 1 ? "s" : ""}
+              </span>
+            )
+          )}
           {viewerId && !isOwner && (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/chat/${project.owner.id}`}>

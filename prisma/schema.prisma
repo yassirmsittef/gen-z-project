@@ -44,6 +44,7 @@ model User {
   messagesReceived Message[]           @relation("MessagesReceived")
   notifications    Notification[]
   comments         Comment[]
+  follows          Follow[]
 }
 
 model Account {
@@ -132,6 +133,7 @@ model Project {
   partnershipRequests PartnershipRequest[]
   updates             ProjectUpdate[]
   comments            Comment[]
+  follows             Follow[]
 
   @@index([status, category])
 }
@@ -282,7 +284,23 @@ model CreditTransaction {
   @@index([userId, createdAt])
 }
 
-// ---------- Vie du projet : actus du porteur & discussion ----------
+// ---------- Vie du projet : suivi, actus du porteur & discussion ----------
+
+/// Suivre un projet sans (encore) contribuer : les followers reçoivent les
+/// actus du porteur et l'annonce du financement, comme les contributeurs.
+model Follow {
+  id        String   @id @default(cuid())
+  userId    String
+  projectId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@index([projectId])
+}
+
 
 /// Actualité postée par le porteur — le fil de nouvelles du projet.
 model ProjectUpdate {

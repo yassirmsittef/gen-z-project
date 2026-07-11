@@ -72,6 +72,31 @@ export async function deleteCommentAction(formData: FormData): Promise<void> {
   revalidatePath(`/projects/${comment.project.slug}`);
 }
 
+/** Suivre / ne plus suivre un projet (pas son propre projet). */
+export async function toggleFollowAction(formData: FormData): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  const projectId = String(formData.get("projectId") ?? "");
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { slug: true, ownerId: true },
+  });
+  if (!project || project.ownerId === session.user.id) return;
+
+  const existing = await prisma.follow.findUnique({
+    where: { userId_projectId: { userId: session.user.id, projectId } },
+  });
+  if (existing) {
+    await prisma.follow.delete({ where: { id: existing.id } });
+  } else {
+    await prisma.follow.create({ data: { userId: session.user.id, projectId } });
+  }
+
+  revalidatePath(`/projects/${project.slug}`);
+  revalidatePath("/dashboard");
+}
+
 export async function postUpdateAction(
   _prev: FeedFormState,
   formData: FormData
@@ -103,15 +128,23 @@ export async function postUpdateAction(
     },
   });
 
-  // Les contributeurs suivent le projet : chacun est prévenu.
-  const contributors = await prisma.contribution.findMany({
-    where: { projectId: project.id },
-    distinct: ["userId"],
-    select: { userId: true },
-  });
+  // L'audience d'une actu : contributeurs ∪ followers (dédupliqués).
+  const [contributors, followers] = await Promise.all([
+    prisma.contribution.findMany({
+      where: { projectId: project.id },
+      distinct: ["userId"],
+      select: { userId: true },
+    }),
+    prisma.follow.findMany({ where: { projectId: project.id }, select: { userId: true } }),
+  ]);
+  const audience = new Set([
+    ...contributors.map((c) => c.userId),
+    ...followers.map((f) => f.userId),
+  ]);
+  audience.delete(project.ownerId);
   await notifyMany(
-    contributors.map((c) => ({
-      userId: c.userId,
+    [...audience].map((userId) => ({
+      userId,
       type: "PROJECT_UPDATE" as const,
       title: `Actu de « ${project.title} » : ${parsed.data.title}`,
       href: `/projects/${project.slug}#actus`,

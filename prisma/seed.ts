@@ -409,6 +409,17 @@ async function main() {
     45
   );
 
+  console.log("⭐ Suivis de projets...");
+  const demoUser = await prisma.user.findUniqueOrThrow({ where: { email: "demo@demo.dev" } });
+  await prisma.follow.createMany({
+    data: [
+      { userId: demoUser.id, projectId: p1.id },
+      { userId: demoUser.id, projectId: p4.id },
+      { userId: nina.id, projectId: p3.id },
+      { userId: max.id, projectId: p5.id },
+    ],
+  });
+
   console.log("📣 Actus & discussion...");
   await prisma.projectUpdate.createMany({
     data: [

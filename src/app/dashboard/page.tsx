@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type { TransactionType } from "@prisma/client";
-import { Handshake, Sparkles } from "lucide-react";
+import { Handshake, Sparkles, Star } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -71,8 +71,15 @@ export default async function DashboardPage({
   const connectBanner =
     connect === "done" || connect === "refresh" ? CONNECT_BANNERS[connect] : null;
 
-  const [user, transactions, contributions, myProjects, reputationEvents, pendingPartnerships] =
-    await Promise.all([
+  const [
+    user,
+    transactions,
+    contributions,
+    myProjects,
+    reputationEvents,
+    pendingPartnerships,
+    followedProjects,
+  ] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),
     prisma.creditTransaction.findMany({
       where: { userId: session.user.id },
@@ -96,6 +103,15 @@ export default async function DashboardPage({
     }),
     prisma.partnershipRequest.count({
       where: { project: { ownerId: session.user.id }, status: "PENDING" },
+    }),
+    prisma.follow.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        project: {
+          include: { owner: true, _count: { select: { contributions: true } } },
+        },
+      },
     }),
   ]);
   if (!user) redirect("/login");
@@ -268,6 +284,20 @@ export default async function DashboardPage({
             </div>
           )}
         </section>
+
+        {followedProjects.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+              <Star className="h-6 w-6 text-secondary" aria-hidden />
+              Projets suivis
+            </h2>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {followedProjects.map((follow) => (
+                <ProjectCard key={follow.id} project={follow.project} />
+              ))}
+            </div>
+          </section>
+        )}
 
         <section data-reveal className="grid gap-8 lg:grid-cols-2">
           {/* min-w-0 : sans lui, les lignes truncate imposent leur largeur à la colonne */}

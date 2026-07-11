@@ -204,11 +204,20 @@ export async function makeContribution(userId: string, projectId: string, amount
         await tx.milestone.update({ where: { id: first.id }, data: { status: "AWAITING_PROOF" } });
       }
 
-      const contributors = await tx.contribution.findMany({
-        where: { projectId },
-        distinct: ["userId"],
-        select: { userId: true },
-      });
+      // Contributeurs ∪ followers, dédupliqués (le porteur a son message dédié).
+      const [contributors, followers] = await Promise.all([
+        tx.contribution.findMany({
+          where: { projectId },
+          distinct: ["userId"],
+          select: { userId: true },
+        }),
+        tx.follow.findMany({ where: { projectId }, select: { userId: true } }),
+      ]);
+      const audience = new Set([
+        ...contributors.map((c) => c.userId),
+        ...followers.map((f) => f.userId),
+      ]);
+      audience.delete(project.ownerId);
       await notifyMany(
         [
           {
@@ -218,11 +227,11 @@ export async function makeContribution(userId: string, projectId: string, amount
             body: "La collecte est terminée — soumets la preuve de l'étape 1 pour débloquer les premiers fonds.",
             href: `/projects/${project.slug}`,
           },
-          ...contributors.map((c) => ({
-            userId: c.userId,
+          ...[...audience].map((userId) => ({
+            userId,
             type: "PROJECT_FUNDED" as const,
             title: `« ${project.title} » est financé !`,
-            body: "Tu voteras sur les preuves d'avancement pour débloquer les fonds étape par étape.",
+            body: "Les fonds seront débloqués étape par étape, sous le contrôle des contributeurs.",
             href: `/projects/${project.slug}`,
           })),
         ],
