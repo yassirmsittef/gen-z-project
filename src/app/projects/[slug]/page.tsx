@@ -208,6 +208,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         </div>
       </div>
 
+      {project.coverUrl && (
+        <div className="mb-8 overflow-hidden rounded-2xl rounded-tr-sm border border-white/[0.08]">
+          {/* Domaine libre (URL collée par le porteur) : <img> natif, pas next/image. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={project.coverUrl}
+            alt={`Visuel du projet ${project.title}`}
+            className="max-h-[380px] w-full object-cover"
+          />
+        </div>
+      )}
+
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-10">
           <section>

@@ -21,7 +21,19 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
   return (
     <Link href={`/projects/${project.slug}`} data-reveal className="group block h-full">
       {/* Coin signature (rounded-tr-sm) + hover : élévation et glow, jamais de scale */}
-      <Card className="flex h-full flex-col rounded-tr-sm transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:border-primary/25 group-hover:shadow-glow">
+      <Card className="flex h-full flex-col overflow-hidden rounded-tr-sm transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:border-primary/25 group-hover:shadow-glow">
+        {project.coverUrl && (
+          <div className="border-b border-white/[0.06]">
+            {/* Domaine libre (URL collée par le porteur) : <img> natif, pas next/image. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={project.coverUrl}
+              alt=""
+              loading="lazy"
+              className="aspect-video w-full object-cover"
+            />
+          </div>
+        )}
         <CardHeader className="space-y-3">
           <div className="flex items-center gap-2">
             <Badge variant="outline">{CATEGORY_LABELS[project.category]}</Badge>
