@@ -83,28 +83,6 @@
     );
     animation: launch-flash 1.5s cubic-bezier(0.64, 0, 0.78, 0) forwards;
   }
-  /* Variante identité (connexion / inscription) : la lumière monte en bleu
-     puis vire au violet foncé — le portail se referme sur l'utilisateur */
-  .launch-overlay--violet {
-    background: radial-gradient(
-      62% 62% at 50% 45%,
-      rgba(56, 189, 248, 0.6),
-      rgba(37, 99, 235, 0.32) 45%,
-      rgba(11, 14, 20, 0) 78%
-    );
-  }
-  .launch-overlay--violet::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-      70% 70% at 50% 45%,
-      rgba(109, 40, 217, 0.85),
-      rgba(46, 16, 101, 0.55) 50%,
-      rgba(11, 14, 20, 0.2) 82%
-    );
-    animation: launch-violet 1.5s cubic-bezier(0.7, 0, 0.84, 0) forwards;
-  }
   /* Fondu de sortie : à l'arrivée sur la page cible, le voile se dissout
      (le composant vit dans la navbar, qui ne se démonte pas) */
   .launch-overlay--out {
@@ -310,19 +288,6 @@
   to {
     opacity: 1;
     backdrop-filter: blur(16px);
-  }
-}
-
-/* Le violet foncé recouvre le bleu dans la seconde moitié de la transition */
-@keyframes launch-violet {
-  from {
-    opacity: 0;
-  }
-  45% {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
   }
 }
 

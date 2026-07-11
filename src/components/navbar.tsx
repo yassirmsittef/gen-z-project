@@ -4,7 +4,6 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { signOutAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
-import { LaunchLink } from "@/components/launch-button";
 import { NavbarSigilLoader } from "@/components/navbar-sigil-loader";
 import { UserAvatar } from "@/components/user-avatar";
 
@@ -21,12 +20,8 @@ export async function Navbar() {
     <header className="glass sticky top-0 z-50 border-x-0 border-t-0">
       <div className="container flex h-16 items-center justify-between gap-2">
         <Link href="/" className="group flex shrink-0 items-center gap-2.5">
-          {/* Logo 3D vivant : le masque en toupie, cible du portail de
-              lancement (ancre data-sigil-dock) */}
-          <span
-            data-sigil-dock
-            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl rounded-br-sm border border-white/[0.12] bg-card/70 shadow-glow transition-shadow duration-200 group-hover:shadow-glow-strong"
-          >
+          {/* Logo 3D vivant : le masque en toupie */}
+          <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl rounded-br-sm border border-white/[0.12] bg-card/70 shadow-glow transition-shadow duration-200 group-hover:shadow-glow-strong">
             <NavbarSigilLoader />
           </span>
           <span className="hidden font-display text-lg font-semibold tracking-tight min-[420px]:inline">
@@ -102,13 +97,12 @@ export async function Navbar() {
             </>
           ) : (
             <>
-              {/* Transition « portail » : le bleu vire au violet foncé */}
-              <LaunchLink href="/login" variant="ghost" size="sm" tint="violet">
-                Connexion
-              </LaunchLink>
-              <LaunchLink href="/register" variant="default" size="sm" tint="violet">
-                S&apos;inscrire
-              </LaunchLink>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/login">Connexion</Link>
+              </Button>
+              <Button variant="default" size="sm" asChild>
+                <Link href="/register">S&apos;inscrire</Link>
+              </Button>
             </>
           )}
         </nav>

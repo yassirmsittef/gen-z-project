@@ -9,9 +9,6 @@ import { buildSigilEnvironment, createMaskSigil } from "@/lib/mask-sigil";
  * tournant lentement sur lui-même — et qui s'emballe au toucher (survol ou
  * clic), avec une friction qui le ramène à sa vitesse de croisière.
  *
- * C'est aussi la cible d'atterrissage du portail de lancement (voir
- * launch-scene.tsx, ancre `data-sigil-dock` posée par la navbar).
- *
  * Résilience : étant le plus ancien contexte WebGL de la page, il est le
  * premier évincé quand le navigateur atteint son plafond de contextes
  * (portails de transition successifs, HMR...). Sur `webglcontextlost`, la

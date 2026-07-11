@@ -92,12 +92,12 @@ export default async function HomePage() {
             style={{ animationDelay: "2.7s" }}
           >
             <span data-magnetic className="inline-flex">
-              <LaunchLink href="/projects" variant="default" tint="aurora">
+              <LaunchLink href="/projects" variant="default">
                 Découvrir les projets
               </LaunchLink>
             </span>
             <span data-magnetic className="inline-flex">
-              <LaunchLink href="/projects/new" variant="outline" tint="aurora">
+              <LaunchLink href="/projects/new" variant="outline">
                 Lancer le mien
               </LaunchLink>
             </span>

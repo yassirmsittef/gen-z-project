@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -14,38 +13,29 @@ const LAUNCH_MS = 1450;
 /** Durée du fondu de sortie du voile à l'arrivée (ms). */
 const FADE_OUT_MS = 550;
 
-// Portail 3D de la teinte violet — chargé à la demande (et préchargé en
-// idle) pour ne pas embarquer Three.js dans le bundle de chaque page.
-const LaunchScene = dynamic(() => import("./launch-scene"), { ssr: false });
-
-type LaunchTint = "aurora" | "violet";
 type LaunchPhase = "idle" | "launching" | "fading";
 
 /**
- * Lien à transition « lancement ».
+ * Lien à transition « lancement » (teal → cyan, le rêve — boutons du hero) :
+ * la scène 3D de l'accueil plonge dans le masque (événement `tremplin:launch`)
+ * sous un voile de lumière.
  *
- * `aurora` (teal → cyan, le rêve — boutons du hero) : la scène 3D de
- * l'accueil plonge dans le masque (événement `tremplin:launch`) sous un
- * voile de lumière.
- * `violet` (identité — Connexion / S'inscrire, présents sur toutes les
- * pages) : un portail 3D autonome se monte dans le voile — le masque
- * traverse l'écran pendant que la lumière vire du bleu au violet foncé.
+ * (La variante « portail violet » de Connexion / S'inscrire a été retirée le
+ * 2026-07-11 à la demande de l'utilisateur — navigation directe désormais.)
  *
- * Le composant peut vivre dans le layout (navbar) qui ne se démonte PAS à la
+ * Le composant peut vivre dans un layout qui ne se démonte PAS à la
  * navigation : le voile est retiré explicitement en fondu dès que le pathname
  * change (+ filet de sécurité temporel). Reduced motion → navigation
  * immédiate. Clic modifié (cmd/ctrl/shift, molette) → comportement natif.
  */
 export function LaunchLink({
   href,
-  tint = "aurora",
   variant = "outline",
   size = "lg",
   className,
   children,
 }: {
   href: string;
-  tint?: LaunchTint;
   variant?: ButtonProps["variant"];
   size?: ButtonProps["size"];
   className?: string;
@@ -55,19 +45,6 @@ export function LaunchLink({
   const pathname = usePathname();
   const [phase, setPhase] = useState<LaunchPhase>("idle");
   const originRef = useRef<string | null>(null);
-
-  // Précharge le chunk du portail 3D pendant les temps morts : le clic
-  // démarre alors sans latence réseau.
-  useEffect(() => {
-    if (tint !== "violet") return;
-    const idle =
-      "requestIdleCallback" in window
-        ? (cb: () => void) => window.requestIdleCallback(cb)
-        : (cb: () => void) => window.setTimeout(cb, 1500);
-    idle(() => {
-      import("./launch-scene");
-    });
-  }, [tint]);
 
   function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
@@ -85,11 +62,7 @@ export function LaunchLink({
 
     originRef.current = pathname;
     setPhase("launching");
-    // La plongée du hero ne concerne que la teinte aurora : le portail
-    // violet embarque son propre masque 3D.
-    if (tint === "aurora") {
-      window.dispatchEvent(new CustomEvent("tremplin:launch"));
-    }
+    window.dispatchEvent(new CustomEvent("tremplin:launch"));
     window.setTimeout(() => router.push(href), LAUNCH_MS);
   }
 
@@ -121,22 +94,14 @@ export function LaunchLink({
           {children}
         </Link>
       </Button>
-      {/* Portal vers body : un ancêtre avec backdrop-filter (navbar en verre)
-          piégerait sinon le position:fixed dans son containing block. */}
+      {/* Portal vers body : un ancêtre avec backdrop-filter piégerait sinon
+          le position:fixed dans son containing block. */}
       {phase !== "idle" &&
         createPortal(
           <div
-            className={cn(
-              "launch-overlay",
-              tint === "violet" && "launch-overlay--violet",
-              phase === "fading" && "launch-overlay--out"
-            )}
+            className={cn("launch-overlay", phase === "fading" && "launch-overlay--out")}
             aria-hidden
-          >
-            {/* Le portail 3D : le masque traverse l'écran dans la lumière
-                violette — c'est lui qui porte la transition partout. */}
-            {tint === "violet" && <LaunchScene />}
-          </div>,
+          />,
           document.body
         )}
     </>
