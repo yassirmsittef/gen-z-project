@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { CampaignCockpit } from "@/components/campaign-cockpit";
 import { CommentForm } from "@/components/comment-form";
 import { ContributeForm } from "@/components/contribute-form";
 import { FollowButton } from "@/components/follow-button";
@@ -64,6 +65,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         orderBy: { createdAt: "desc" },
         include: { user: { select: { id: true, name: true, avatarUrl: true, reputation: true } } },
       },
+      follows: { select: { userId: true } },
       _count: { select: { follows: true } },
     },
   });
@@ -485,6 +487,24 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                 ))}
             </CardContent>
           </Card>
+
+          {isOwner && (
+            <CampaignCockpit
+              createdAt={project.createdAt}
+              deadline={project.deadline}
+              goal={project.goal}
+              raised={project.raised}
+              status={project.status}
+              realizationDeadline={project.realizationDeadline}
+              contributions={project.contributions.map((c) => ({
+                amount: c.amount,
+                createdAt: c.createdAt,
+                userId: c.userId,
+              }))}
+              followerIds={project.follows.map((f) => f.userId)}
+              milestones={project.milestones.map((m) => ({ status: m.status }))}
+            />
+          )}
 
           {contributors.length > 0 && (
             <Card>
