@@ -15,6 +15,7 @@ import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
 import { ConnectForm } from "@/components/connect-form";
 import { LocationForm } from "@/components/location-form";
+import { PasswordForm } from "@/components/password-form";
 import { ProfileForm } from "@/components/profile-form";
 import { SkillsForm } from "@/components/skills-form";
 import { getConnectStatus } from "@/lib/payouts";
@@ -424,6 +425,14 @@ export default async function DashboardPage({
             <Card>
               <CardContent className="pt-6">
                 <ConnectForm stripeEnabled={stripeEnabled} status={connectStatus} />
+              </CardContent>
+            </Card>
+          </div>
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold tracking-tight">Sécurité</h2>
+            <Card>
+              <CardContent className="pt-6">
+                <PasswordForm />
               </CardContent>
             </Card>
           </div>

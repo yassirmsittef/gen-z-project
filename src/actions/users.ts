@@ -6,7 +6,56 @@ import { auth } from "@/auth";
 import { findCity } from "@/lib/cities";
 import { prisma } from "@/lib/prisma";
 import { updateUserLocation, updateUserSkills } from "@/lib/project-service";
-import { parseList, updateProfileSchema, userSkillsSchema } from "@/lib/validation";
+import bcrypt from "bcryptjs";
+import {
+  changePasswordSchema,
+  parseList,
+  updateProfileSchema,
+  userSkillsSchema,
+} from "@/lib/validation";
+
+export type PasswordFormState = { error?: string; success?: boolean } | undefined;
+
+/**
+ * Changement de mot de passe : l'actuel est exigé et vérifié. Les sessions
+ * déjà ouvertes (JWT) restent valides — acceptable en Phase 1.
+ */
+export async function changePasswordAction(
+  _prev: PasswordFormState,
+  formData: FormData
+): Promise<PasswordFormState> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  const parsed = changePasswordSchema.safeParse({
+    currentPassword: formData.get("currentPassword"),
+    newPassword: formData.get("newPassword"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
+  if (!parsed.success) return { error: parsed.error.errors[0].message };
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { passwordHash: true },
+  });
+  if (!user?.passwordHash) {
+    return { error: "Ce compte n'a pas de mot de passe à changer." };
+  }
+
+  const valid = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
+  if (!valid) return { error: "Mot de passe actuel incorrect." };
+
+  if (parsed.data.newPassword === parsed.data.currentPassword) {
+    return { error: "Le nouveau mot de passe doit être différent de l'actuel." };
+  }
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { passwordHash: await bcrypt.hash(parsed.data.newPassword, 10) },
+  });
+
+  return { success: true };
+}
 
 export type ProfileFormState = { error?: string; success?: boolean } | undefined;
 

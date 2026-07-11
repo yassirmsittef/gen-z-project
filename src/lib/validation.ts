@@ -41,6 +41,17 @@ export const userSkillsSchema = z
   .array(skillSchema)
   .max(MAX_SKILLS_PER_USER, `${MAX_SKILLS_PER_USER} compétences max.`);
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Mot de passe actuel requis."),
+    newPassword: z.string().min(8, "8 caractères minimum pour le nouveau mot de passe."),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "La confirmation ne correspond pas au nouveau mot de passe.",
+    path: ["confirmPassword"],
+  });
+
 export const updateProfileSchema = z.object({
   name: z
     .string()
