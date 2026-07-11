@@ -4,6 +4,8 @@ import {
   MAX_PROOF_ATTEMPTS,
   MIN_CONTRIBUTION,
   MIN_CONTRIBUTIONS_TO_CREATE,
+  PLATFORM_FEE_MIN,
+  PLATFORM_FEE_RATE,
   REALIZATION_DAYS,
   REP,
   WELCOME_CREDITS,
@@ -21,6 +23,8 @@ type Tx = Prisma.TransactionClient;
 // ---------- Crédits ----------
 
 export async function grantWelcomeCredits(userId: string) {
+  // Bonus coupé (WELCOME_CREDITS = 0) : pas d'écriture fantôme au ledger.
+  if (WELCOME_CREDITS <= 0) return;
   await prisma.$transaction([
     prisma.user.update({
       where: { id: userId },
@@ -480,9 +484,22 @@ async function approveProofTx(
     ? Math.min(milestone.amount, project.raised - project.released)
     : project.raised - project.released;
 
+  // Commission plateforme sur la PREMIÈRE étape débloquée du projet
+  // (PLATFORM_FEE_RATE, plancher PLATFORM_FEE_MIN) : c'est elle qui
+  // provisionne les tokens de bienvenue. Le porteur reçoit le net, le
+  // séquestre comptabilise le brut, le ledger montre les deux lignes.
+  const fee =
+    project.released === 0
+      ? Math.min(
+          Math.max(Math.ceil(release * PLATFORM_FEE_RATE), PLATFORM_FEE_MIN),
+          release
+        )
+      : 0;
+  const net = release - fee;
+
   await tx.user.update({
     where: { id: project.ownerId },
-    data: { credits: { increment: release }, reputation: { increment: REP.MILESTONE_RELEASED } },
+    data: { credits: { increment: net }, reputation: { increment: REP.MILESTONE_RELEASED } },
   });
   await tx.creditTransaction.create({
     data: {
@@ -493,6 +510,17 @@ async function approveProofTx(
       label: `Étape ${milestone.order} débloquée — ${project.title}`,
     },
   });
+  if (fee > 0) {
+    await tx.creditTransaction.create({
+      data: {
+        userId: project.ownerId,
+        amount: -fee,
+        type: "FEE",
+        refId: milestone.id,
+        label: `Commission plateforme (${Math.round(PLATFORM_FEE_RATE * 100)} %, min ${PLATFORM_FEE_MIN}) — ${project.title}`,
+      },
+    });
+  }
   await tx.reputationEvent.create({
     data: {
       userId: project.ownerId,
@@ -525,16 +553,20 @@ async function approveProofTx(
     {
       userId: project.ownerId,
       type: "MILESTONE_RELEASED",
-      title: `Étape ${milestone.order} validée — ${formatCredits(release)} débloqués`,
-      body: next
-        ? `La communauté a validé ta preuve pour « ${project.title} ». Prochaine étape : « ${next.title} ».`
-        : `« ${project.title} » est entièrement réalisé. Bravo !`,
+      title: `Étape ${milestone.order} validée — ${formatCredits(net)} débloqués`,
+      body: `${
+        next
+          ? `La communauté a validé ta preuve pour « ${project.title} ». Prochaine étape : « ${next.title} ».`
+          : `« ${project.title} » est entièrement réalisé. Bravo !`
+      }${fee > 0 ? ` Commission plateforme sur la première étape : ${formatCredits(fee)}.` : ""}`,
       href: `/projects/${project.slug}`,
     },
     tx
   );
 
-  return { milestoneId: milestone.id, amount: release };
+  // Le versement réel (Stripe) porte sur le NET — la commission reste à la
+  // plateforme.
+  return { milestoneId: milestone.id, amount: net };
 }
 
 async function rejectProofTx(tx: Tx, proofId: string) {

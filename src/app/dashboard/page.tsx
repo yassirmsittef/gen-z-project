@@ -62,6 +62,7 @@ const TYPE_STYLES: Record<TransactionType, { dot: string; label: string }> = {
   CONTRIBUTION: { dot: "bg-primary", label: "Contribution" },
   REFUND: { dot: "bg-amber-400", label: "Remboursement" },
   MILESTONE_RELEASE: { dot: "bg-secondary", label: "Étape débloquée" },
+  FEE: { dot: "bg-amber-400", label: "Commission plateforme" },
 };
 
 export default async function DashboardPage({

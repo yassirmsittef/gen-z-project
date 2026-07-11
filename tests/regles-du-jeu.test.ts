@@ -134,14 +134,25 @@ describe("vote pondéré", () => {
     return { porteur, projet, a, b, preuve };
   }
 
-  it("libère l'étape à la majorité stricte et crédite le porteur", async () => {
+  it("libère l'étape à la majorité stricte et crédite le porteur (net de commission)", async () => {
     const { porteur, projet, a, preuve } = await fundedAvecPreuve();
 
     await castVote(a.id, preuve.id, "APPROVE"); // 60 > 50 = majorité
     const après = await projectState(projet.id);
-    expect(après.released).toBe(60);
+    expect(après.released).toBe(60); // le séquestre comptabilise le BRUT
     expect(après.status).toBe("FUNDED");
-    expect(await credits(porteur.id)).toBe(60);
+    // Première étape : commission max(ceil(60×5%), 5) = 5 → net 55.
+    expect(await credits(porteur.id)).toBe(55);
+    const ledger = await prisma.creditTransaction.findMany({
+      where: { userId: porteur.id },
+      select: { type: true, amount: true },
+    });
+    expect(ledger).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: "MILESTONE_RELEASE", amount: 60 }),
+        expect.objectContaining({ type: "FEE", amount: -5 }),
+      ])
+    );
     const étape2 = await prisma.milestone.findFirstOrThrow({
       where: { projectId: projet.id, order: 2 },
     });
@@ -276,8 +287,8 @@ describe("échéance de réalisation", () => {
 
     const après = await projectState(projet.id);
     expect(après.status).toBe("FAILED");
-    expect(après.released).toBe(60); // étape 1 libérée à la balance
-    expect(await credits(porteur.id)).toBe(60);
+    expect(après.released).toBe(60); // étape 1 libérée à la balance (brut)
+    expect(await credits(porteur.id)).toBe(55); // net de la commission (5)
     // Reste 40 remboursés au prorata : a = 24, b = 16.
     expect(await credits(a.id)).toBe(40 + 24);
     expect(await credits(b.id)).toBe(60 + 16);
@@ -314,7 +325,63 @@ describe("échéance de réalisation", () => {
     const après = await projectState(projet.id);
     expect(après.status).toBe("COMPLETED");
     expect(après.released).toBe(100);
-    expect(await credits(porteur.id)).toBe(100);
+    // Commission sur la première étape uniquement : 60−5 puis 40 pleins.
+    expect(await credits(porteur.id)).toBe(95);
+  });
+});
+
+describe("commission plateforme", () => {
+  it("prend 5 % au-dessus du plancher, une seule fois par projet", async () => {
+    const porteur = await mkUser();
+    const projet = await prisma.project.create({
+      data: {
+        ownerId: porteur.id,
+        title: "Fixture commission",
+        slug: `fixture-${RUN}-fee-${Date.now()}`,
+        pitch: "Pitch de test.",
+        description: "Description de test.",
+        category: "TECH",
+        goal: 300,
+        deadline: new Date(Date.now() + 30 * 86_400_000),
+        milestones: {
+          create: [
+            { title: "Grosse étape 1", description: "x", amount: 200, order: 1 },
+            { title: "Étape 2", description: "x", amount: 100, order: 2 },
+          ],
+        },
+      },
+      include: { milestones: { orderBy: { order: "asc" } } },
+    });
+    const a = await mkUser(300);
+    await makeContribution(a.id, projet.id, 300);
+
+    // Étape 1 (200) : commission = ceil(200×5 %) = 10 > plancher → net 190.
+    await submitMilestoneProof(porteur.id, {
+      milestoneId: projet.milestones[0].id,
+      content: "Preuve étape un suffisamment longue.",
+    });
+    const p1 = await prisma.proof.findFirstOrThrow({
+      where: { milestoneId: projet.milestones[0].id, status: "PENDING" },
+    });
+    await castVote(a.id, p1.id, "APPROVE");
+    expect(await credits(porteur.id)).toBe(190);
+
+    // Étape 2 (dernière, 100) : plus aucune commission → net 100.
+    await submitMilestoneProof(porteur.id, {
+      milestoneId: projet.milestones[1].id,
+      content: "Preuve étape deux suffisamment longue.",
+    });
+    const p2 = await prisma.proof.findFirstOrThrow({
+      where: { milestoneId: projet.milestones[1].id, status: "PENDING" },
+    });
+    await castVote(a.id, p2.id, "APPROVE");
+    expect(await credits(porteur.id)).toBe(290);
+
+    const fees = await prisma.creditTransaction.findMany({
+      where: { userId: porteur.id, type: "FEE" },
+    });
+    expect(fees).toHaveLength(1);
+    expect(fees[0].amount).toBe(-10);
   });
 });
 

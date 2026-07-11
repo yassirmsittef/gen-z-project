@@ -28,8 +28,8 @@ export default async function RegisterPage() {
             Rejoins la communauté
           </CardTitle>
           <CardDescription>
-            {WELCOME_CREDITS} tokens offerts (1 token = 1 $) à l&apos;inscription pour soutenir tes premiers
-            projets.
+            {WELCOME_CREDITS} tokens offerts (1 token = 1 $) à l&apos;inscription pour soutenir tes
+            premiers projets.
           </CardDescription>
         </CardHeader>
         <CardContent>

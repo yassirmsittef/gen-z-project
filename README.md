@@ -9,9 +9,12 @@ sont branchés **en mode test** : les mécaniques sont réelles, aucun vrai déb
 
 - **Contribuer avant de poster** — la création de projet est verrouillée tant que tu n'as pas
   soutenu au moins 1 projet (`MIN_CONTRIBUTIONS_TO_CREATE`).
-- **Monnaie : le token, 1 token = 1 $** — 5 tokens offerts à l'inscription, contribution
-  minimum 5 tokens, **recharge du compte** depuis le dashboard : Stripe Checkout si configuré
-  (mode test), recharge fictive sinon. Transactions au ledger, idempotence par session id.
+- **Monnaie : le token, 1 token = 1 $** — 5 tokens offerts à l'inscription, **provisionnés
+  par la commission plateforme** (5 % de la première étape débloquée de chaque projet,
+  minimum 5 tokens : le cadeau d'acquisition n'est jamais une dette non provisionnée) ;
+  contribution minimum 5 tokens, **recharge du compte** depuis le dashboard : Stripe
+  Checkout si configuré (mode test), recharge fictive sinon. Transactions au ledger,
+  idempotence par session id.
 - **Contribution confirmée en deux temps** — un dialogue récapitulatif (montant, équivalence
   en $, rappel du séquestre) doit être accepté avant que la contribution soit enregistrée.
 - **Financement tout-ou-rien** — une campagne a un objectif et une deadline (7 à 60 jours).
@@ -25,7 +28,9 @@ sont branchés **en mode test** : les mécaniques sont réelles, aucun vrai déb
     dès que le poids POUR dépasse 50% des tokens collectés (refus symétrique) ; si tous les
     contributeurs ont voté sans majorité stricte, la balance des poids tranche (égalité → refus).
   - Preuve validée → le montant de l'étape est viré au porteur, l'étape suivante s'ouvre (la
-    dernière étape reçoit aussi l'éventuel dépassement d'objectif).
+    dernière étape reçoit aussi l'éventuel dépassement d'objectif). **La première étape
+    débloquée porte la commission plateforme** (5 %, minimum 5 tokens — affichée au ledger
+    du porteur et dans la notification).
   - Preuve refusée → `rejectionCount` s'incrémente ; au 2e refus le projet échoue et le
     séquestre restant est remboursé au prorata.
 - **Échéance de réalisation : 90 jours après financement** (`REALIZATION_DAYS`) — le porteur

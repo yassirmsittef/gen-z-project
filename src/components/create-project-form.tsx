@@ -8,7 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { CATEGORY_LABELS, MAX_MILESTONES, MIN_MILESTONES, REALIZATION_DAYS } from "@/lib/constants";
+import {
+  CATEGORY_LABELS,
+  MAX_MILESTONES,
+  MIN_MILESTONES,
+  PLATFORM_FEE_MIN,
+  PLATFORM_FEE_RATE,
+  REALIZATION_DAYS,
+} from "@/lib/constants";
 import { createProjectSchema, parseList } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 
@@ -166,7 +173,10 @@ export function CreateProjectForm() {
               Chaque étape débloque un montant en tokens, sur preuve validée par le vote pondéré
               de tes contributeurs. La somme doit égaler ton objectif. Une fois financé, tu as{" "}
               {REALIZATION_DAYS} jours pour tout réaliser et faire valider — au-delà, le reste
-              du séquestre est remboursé.
+              du séquestre est remboursé. La plateforme prélève{" "}
+              {Math.round(PLATFORM_FEE_RATE * 100)}&nbsp;% de la première étape débloquée
+              (minimum {PLATFORM_FEE_MIN} tokens) — c&apos;est ce qui finance les tokens de
+              bienvenue.
             </p>
           </div>
           <span

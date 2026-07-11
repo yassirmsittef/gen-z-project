@@ -284,6 +284,7 @@ enum TransactionType {
   MILESTONE_RELEASE
   REFUND
   BONUS
+  FEE // commission plateforme (première étape débloquée) — provisionne les tokens de bienvenue
 }
 
 model CreditTransaction {
