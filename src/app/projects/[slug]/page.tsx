@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Clock, Handshake, Heart, LockOpen, MessagesSquare, PartyPopper, Star, Trash2, Users } from "lucide-react";
+import { Clock, Handshake, Heart, LockOpen, MessagesSquare, PartyPopper, PenLine, Star, Trash2, Users } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { deleteCommentAction, deleteUpdateAction } from "@/actions/project-feed";
@@ -188,6 +188,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               <Link href={`/projects/${project.slug}/partenariat`}>
                 <Handshake aria-hidden />
                 Partenariat marque
+              </Link>
+            </Button>
+          )}
+          {isOwner && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/projects/${project.slug}/modifier`}>
+                <PenLine aria-hidden />
+                Modifier
               </Link>
             </Button>
           )}

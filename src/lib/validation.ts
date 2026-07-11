@@ -53,37 +53,47 @@ export const milestoneInputSchema = z.object({
     .min(MIN_MILESTONE_AMOUNT, `Minimum ${MIN_MILESTONE_AMOUNT} tokens par étape.`),
 });
 
+// Champs de CONTENU d'un projet — partagés entre création et édition. Les
+// champs financiers (objectif, durée, étapes) n'en font pas partie : une fois
+// la campagne lancée, les contributeurs se sont engagés sur ces règles.
+const projectContentFields = {
+  title: z.string().min(5, "Titre trop court (5 caractères min).").max(80, "80 caractères max."),
+  pitch: z
+    .string()
+    .min(10, "Ton pitch doit faire au moins 10 caractères.")
+    .max(140, "140 caractères max — sois percutant·e."),
+  description: z
+    .string()
+    .min(50, "Décris ton projet en détail (50 caractères min).")
+    .max(5000, "5000 caractères max."),
+  category: z.nativeEnum(ProjectCategory, { errorMap: () => ({ message: "Choisis une catégorie." }) }),
+  coverUrl: z
+    .string()
+    .url("Lien de visuel invalide (URL complète attendue).")
+    .optional()
+    .or(z.literal("")),
+  neededSkills: z
+    .array(skillSchema)
+    .max(MAX_SKILLS_PER_PROJECT, `${MAX_SKILLS_PER_PROJECT} compétences max.`)
+    .default([]),
+} as const;
+
+export const updateProjectSchema = z.object(projectContentFields);
+export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
+
 export const createProjectSchema = z
   .object({
-    title: z.string().min(5, "Titre trop court (5 caractères min).").max(80, "80 caractères max."),
-    pitch: z
-      .string()
-      .min(10, "Ton pitch doit faire au moins 10 caractères.")
-      .max(140, "140 caractères max — sois percutant·e."),
-    description: z
-      .string()
-      .min(50, "Décris ton projet en détail (50 caractères min).")
-      .max(5000, "5000 caractères max."),
-    category: z.nativeEnum(ProjectCategory, { errorMap: () => ({ message: "Choisis une catégorie." }) }),
+    ...projectContentFields,
     goal: z.coerce
       .number({ invalid_type_error: "Objectif invalide." })
       .int("Objectif entier uniquement.")
       .min(MIN_GOAL, `Objectif minimum : ${MIN_GOAL} tokens.`)
       .max(MAX_GOAL, `Objectif maximum : ${MAX_GOAL} tokens.`),
-    coverUrl: z
-      .string()
-      .url("Lien de visuel invalide (URL complète attendue).")
-      .optional()
-      .or(z.literal("")),
     durationDays: z.coerce
       .number({ invalid_type_error: "Durée invalide." })
       .int()
       .min(MIN_DURATION_DAYS, `Campagne de ${MIN_DURATION_DAYS} jours minimum.`)
       .max(MAX_DURATION_DAYS, `Campagne de ${MAX_DURATION_DAYS} jours maximum.`),
-    neededSkills: z
-      .array(skillSchema)
-      .max(MAX_SKILLS_PER_PROJECT, `${MAX_SKILLS_PER_PROJECT} compétences max.`)
-      .default([]),
     milestones: z
       .array(milestoneInputSchema)
       .min(MIN_MILESTONES, `Au moins ${MIN_MILESTONES} étapes.`)

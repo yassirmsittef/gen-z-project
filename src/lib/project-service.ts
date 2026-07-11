@@ -10,7 +10,7 @@ import {
 import type { City } from "@/lib/cities";
 import { formatCredits } from "@/lib/format";
 import { notify, notifyMany } from "@/lib/notifications";
-import type { CreateProjectInput } from "@/lib/validation";
+import type { CreateProjectInput, UpdateProjectInput } from "@/lib/validation";
 
 /** Erreur métier : son message est affichable tel quel à l'utilisateur. */
 export class DomainError extends Error {}
@@ -135,6 +135,66 @@ export async function createProject(userId: string, input: CreateProjectInput): 
   });
 
   return slug;
+}
+
+/**
+ * Édition du CONTENU par le porteur, campagne ACTIVE uniquement : une fois la
+ * campagne terminée (financée, échouée, réalisée), la page devient un
+ * engagement figé. Objectif, étapes et deadline ne passent jamais par ici, et
+ * le slug ne change pas (liens partagés, cartes OG).
+ */
+export async function updateProject(
+  userId: string,
+  projectId: string,
+  input: UpdateProjectInput
+): Promise<string> {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { ownerId: true, status: true, slug: true },
+  });
+  if (!project) throw new DomainError("Projet introuvable.");
+  if (project.ownerId !== userId) {
+    throw new DomainError("Seul le porteur peut modifier ce projet.");
+  }
+  if (project.status !== "ACTIVE") {
+    throw new DomainError("La campagne est terminée : le contenu du projet est figé.");
+  }
+
+  await prisma.project.update({
+    where: { id: projectId },
+    data: {
+      title: input.title,
+      pitch: input.pitch,
+      description: input.description,
+      category: input.category,
+      coverUrl: input.coverUrl || null,
+      neededSkills: input.neededSkills,
+    },
+  });
+
+  return project.slug;
+}
+
+/**
+ * Retrait définitif par le porteur, uniquement tant que PERSONNE n'a
+ * contribué : dès le premier token engagé, le projet doit vivre son cycle
+ * (remboursements compris). Les enfants (étapes, commentaires, follows,
+ * actus, demandes de partenariat) partent en cascade.
+ */
+export async function deleteProject(userId: string, projectId: string) {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { ownerId: true, _count: { select: { contributions: true } } },
+  });
+  if (!project) throw new DomainError("Projet introuvable.");
+  if (project.ownerId !== userId) {
+    throw new DomainError("Seul le porteur peut retirer ce projet.");
+  }
+  if (project._count.contributions > 0) {
+    throw new DomainError("Des membres ont déjà contribué : le projet ne peut plus être retiré.");
+  }
+
+  await prisma.project.delete({ where: { id: projectId } });
 }
 
 // ---------- Contribution ----------
