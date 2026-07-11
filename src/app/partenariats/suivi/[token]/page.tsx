@@ -7,7 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PARTNERSHIP_COMPENSATION_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Suivi de votre demande" };
+// Lien privé à token : jamais indexé.
+export const metadata: Metadata = {
+  title: "Suivi de votre demande",
+  robots: { index: false, follow: false },
+};
 
 /**
  * Page PUBLIQUE de suivi pour la marque (lien privé à token, sans compte).

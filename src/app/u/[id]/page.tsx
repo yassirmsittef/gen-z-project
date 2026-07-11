@@ -13,6 +13,20 @@ import { UserAvatar } from "@/components/user-avatar";
 import { formatCredits, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<{ title: string; description?: string }> {
+  const { id } = await params;
+  const user = await prisma.user.findUnique({ where: { id }, select: { name: true, city: true } });
+  if (!user) return { title: "Profil introuvable" };
+  return {
+    title: user.name ?? "Profil",
+    description: `${user.name} sur Tremplin${user.city ? ` — ${user.city}` : ""} : réputation, projets et compétences.`,
+  };
+}
+
 export default async function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -11,6 +12,11 @@ import { UserAvatar } from "@/components/user-avatar";
 import { getConversations, getThread } from "@/lib/chat";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
+export const metadata: Metadata = {
+  title: "Chat",
+  robots: { index: false, follow: false },
+};
 
 export default async function ChatThreadPage({
   params,

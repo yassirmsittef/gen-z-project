@@ -23,7 +23,10 @@ import { nextReputationTarget } from "@/lib/reputation";
 import { formatCredits, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export const metadata: Metadata = {
+  title: "Dashboard",
+  robots: { index: false, follow: false },
+};
 
 /** Bandeaux de retour du paiement Stripe (?recharge=success|cancel). */
 const RECHARGE_BANNERS = {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Clock, Handshake, Heart, LockOpen, MessagesSquare, PartyPopper, Star, Trash2, Users } from "lucide-react";
 import { auth } from "@/auth";
@@ -21,6 +22,25 @@ import { StatusBadge } from "@/components/status-badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import { daysLeft, formatCredits, formatDate, progressPercent } from "@/lib/format";
+
+/** Aperçus de partage : titre + pitch du projet (l'image OG est générée à côté). */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const project = await prisma.project.findUnique({
+    where: { slug },
+    select: { title: true, pitch: true },
+  });
+  if (!project) return { title: "Projet introuvable" };
+  return {
+    title: project.title,
+    description: project.pitch,
+    openGraph: { title: project.title, description: project.pitch },
+  };
+}
 
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

@@ -11,7 +11,10 @@ import {
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Partenariats" };
+export const metadata: Metadata = {
+  title: "Partenariats",
+  robots: { index: false, follow: false },
+};
 
 const STATUS_TONES = {
   PENDING: "border-primary/40 bg-primary/10 text-primary",

@@ -15,7 +15,10 @@ import {
 } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Demande de partenariat" };
+export const metadata: Metadata = {
+  title: "Demande de partenariat",
+  robots: { index: false, follow: false },
+};
 
 // L'analyse approfondie (action IA) peut prendre plusieurs dizaines de secondes.
 export const maxDuration = 60;

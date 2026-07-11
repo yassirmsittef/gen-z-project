@@ -6,7 +6,10 @@ import { ChatStream } from "@/components/chat-stream";
 import { ConversationList } from "@/components/conversation-list";
 import { getConversations } from "@/lib/chat";
 
-export const metadata: Metadata = { title: "Chat" };
+export const metadata: Metadata = {
+  title: "Chat",
+  robots: { index: false, follow: false },
+};
 
 export default async function ChatPage() {
   const session = await auth();

@@ -22,7 +22,10 @@ import { prisma } from "@/lib/prisma";
 import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Notifications" };
+export const metadata: Metadata = {
+  title: "Notifications",
+  robots: { index: false, follow: false },
+};
 
 /** Icône + teinte par type — la couleur n'est jamais seule porteuse (icône dédiée). */
 const TYPE_STYLES: Record<NotificationType, { Icon: LucideIcon; tone: string }> = {
