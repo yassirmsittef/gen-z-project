@@ -334,6 +334,17 @@ export async function submitMilestoneProof(
     if (milestone.rejectionCount >= MAX_PROOF_ATTEMPTS) {
       throw new DomainError("Nombre maximum de tentatives atteint pour cette étape.");
     }
+    // Une preuve déposée APRÈS l'échéance ne peut plus être votée à temps :
+    // on la refuse à la source (le vote déjà ouvert, lui, sera tranché à la
+    // balance par le cron — cf failOverdueRealizations).
+    if (
+      milestone.project.realizationDeadline &&
+      milestone.project.realizationDeadline < new Date()
+    ) {
+      throw new DomainError(
+        "L'échéance de réalisation est dépassée : les étapes restantes ne peuvent plus être prouvées."
+      );
+    }
 
     await tx.proof.create({
       data: {

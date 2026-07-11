@@ -29,7 +29,8 @@ marqués ⚖️ sont à valider par un avocat en droit financier avant tout lanc
   porté par le partenaire agréé.
 - **Stripe Connect ne sait pas faire notre séquestre** : rétention maximale ~90 jours,
   pas d'escrow — incompatible avec la libération par étapes sur plusieurs mois.
-- **Recommandation : Mangopay (ou Lemonway) en Phase 2** — wallets par membre et par
+- **Chemin retenu : Stripe Connect + échéance de 90 jours** (cf bloc décision ci-dessus).
+  L'option ci-dessous reste la référence de repli — **Mangopay (ou Lemonway)** — wallets par membre et par
   projet, séquestre sans limite de durée, libération par étapes = simples transferts
   entre wallets. Notre ledger interne devient le miroir du PSP, l'architecture du code
   actuel s'y mappe naturellement.
@@ -140,6 +141,11 @@ Capital réglementaire, dossier ACPR, dispositif LCB-FT permanent, reporting. Pe
 grande échelle, absurde pour un MVP. Écartée.
 
 ## 3. Recommandation & plan
+
+> **Issue (11 juillet 2026)** : la contrainte de durée a été tranchée côté produit
+> (échéance de réalisation à 90 jours, votes ouverts tranchés à la balance) → **c'est
+> l'option B qui est retenue**. Le plan ci-dessous reste le chemin de repli documenté si
+> le plafond Stripe coince au passage en argent réel.
 
 **Option A, en commençant par Mangopay** (séquestre illimité explicitement produit,
 sandbox gratuite, docs développeur solides). Demander un devis aux **deux** (Lemonway,

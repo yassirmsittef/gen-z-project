@@ -210,19 +210,40 @@ describe("échec de campagne (deadline sans financement)", () => {
 });
 
 describe("échéance de réalisation", () => {
-  async function fundedEnRetard() {
+  // L'échéance tombe (antidatage) — toujours APRÈS les dépôts de preuve,
+  // comme dans la vraie chronologie.
+  const retarder = (projetId: string) =>
+    prisma.project.update({
+      where: { id: projetId },
+      data: { realizationDeadline: new Date(Date.now() - 86_400_000) },
+    });
+
+  async function funded() {
     const porteur = await mkUser();
     const projet = await mkProject(porteur.id);
     const a = await mkUser(100);
     const b = await mkUser(100);
     await makeContribution(a.id, projet.id, 60);
     await makeContribution(b.id, projet.id, 40);
-    await prisma.project.update({
-      where: { id: projet.id },
-      data: { realizationDeadline: new Date(Date.now() - 86_400_000) },
-    });
     return { porteur, projet, a, b };
   }
+
+  async function fundedEnRetard() {
+    const f = await funded();
+    await retarder(f.projet.id);
+    return f;
+  }
+
+  it("refuse une nouvelle preuve après l'échéance", async () => {
+    const { porteur, projet } = await fundedEnRetard();
+
+    await expect(
+      submitMilestoneProof(porteur.id, {
+        milestoneId: projet.milestones[0].id,
+        content: "Preuve déposée trop tard, suffisamment longue.",
+      })
+    ).rejects.toThrow(DomainError);
+  });
 
   it("sans vote en cours : échec et remboursement du séquestre restant", async () => {
     const { projet, a, b } = await fundedEnRetard();
@@ -237,7 +258,7 @@ describe("échéance de réalisation", () => {
   });
 
   it("vote en cours à la balance POUR : l'étape est libérée in extremis, seul le reste est remboursé", async () => {
-    const { porteur, projet, a, b } = await fundedEnRetard();
+    const { porteur, projet, a, b } = await funded();
     await submitMilestoneProof(porteur.id, {
       milestoneId: projet.milestones[0].id,
       content: "Preuve déposée avant l'échéance.",
@@ -248,6 +269,7 @@ describe("échéance de réalisation", () => {
     // b (40) vote POUR : 40 ≤ 50, le vote reste ouvert.
     await castVote(b.id, preuve.id, "APPROVE");
 
+    await retarder(projet.id);
     await failOverdueRealizations();
 
     const après = await projectState(projet.id);
@@ -260,7 +282,7 @@ describe("échéance de réalisation", () => {
   });
 
   it("dernière étape validée in extremis : le projet est RÉALISÉ, rien à rembourser", async () => {
-    const { porteur, projet, a } = await fundedEnRetard();
+    const { porteur, projet, a } = await funded();
     // Étape 1 déjà libérée : on avance le jeu à la main jusqu'à l'étape finale.
     const preuve1 = await (async () => {
       await submitMilestoneProof(porteur.id, {
@@ -284,6 +306,7 @@ describe("échéance de réalisation", () => {
     });
     await castVote(b2.userId, preuve2.id, "APPROVE"); // 40 ≤ 50 : vote ouvert
 
+    await retarder(projet.id);
     await failOverdueRealizations();
 
     const après = await projectState(projet.id);

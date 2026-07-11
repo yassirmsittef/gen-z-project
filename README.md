@@ -28,6 +28,16 @@ sont branchés **en mode test** : les mécaniques sont réelles, aucun vrai déb
     dernière étape reçoit aussi l'éventuel dépassement d'objectif).
   - Preuve refusée → `rejectionCount` s'incrémente ; au 2e refus le projet échoue et le
     séquestre restant est remboursé au prorata.
+- **Échéance de réalisation : 90 jours après financement** (`REALIZATION_DAYS`) — le porteur
+  doit faire valider toutes ses étapes dans ce délai. À l'échéance (cron quotidien), un vote
+  encore ouvert est **tranché à la balance des bulletins posés** (égalité → refus) : le porteur
+  repart avec tout ce que la communauté a validé, le séquestre restant est remboursé au
+  prorata. Décision documentée dans [`docs/sequestre-ue.md`](docs/sequestre-ue.md).
+- **Ton compte, ton projet** — profil éditable (pseudo, avatar, bio), changement de mot de
+  passe et **suppression de compte** (anonymisation RGPD : l'historique financier reste
+  cohérent au nom de « Membre retiré », refusée tant qu'une campagne soutenue est en cours) ;
+  le porteur **modifie le contenu** de son projet pendant la campagne (le cadre financier est
+  figé) et peut le **retirer tant que personne n'a contribué**.
 - **Compétences** — chaque membre déclare ses `skills` (dashboard), chaque projet ses
   `neededSkills` ; le gate « contribue d'abord » et la page /rebond recommandent en priorité
   les projets qui matchent tes compétences.
@@ -43,9 +53,11 @@ sont branchés **en mode test** : les mécaniques sont réelles, aucun vrai déb
 - **Vie du projet** — le porteur poste des **actus** (timeline sur la page projet), la
   communauté **commente** (modération légère : l'auteur ou le porteur suppriment), chacun
   peut **suivre** un projet (étoile + compteur, section « Projets suivis » au dashboard).
-- **Notifications in-app** — cloche navbar + page /notifications : contribution reçue,
-  objectif atteint, preuve à voter, étape débloquée/refusée, échec + remboursements,
-  message, demande de partenariat, commentaire, actu (contributeurs ∪ followers).
+- **Notifications in-app** — cloche navbar à **badge vivant** (compteur rafraîchi sans
+  navigation) + page /notifications : contribution reçue, objectif atteint, preuve à voter,
+  étape débloquée/refusée, échec + remboursements, message, demande de partenariat,
+  commentaire, actu (contributeurs ∪ followers). **Préférences par type** : chaque membre
+  coupe ce qu'il ne veut plus recevoir.
 - **Le pouls** — fil d'activité de la plateforme sur l'accueil (contributions, lancements,
   actus, nouveaux membres, temps relatif).
 - **Réputation** — chaque utilisateur a un score public : +2 par contribution, +1 par vote,
@@ -101,13 +113,15 @@ npm run db:migrate          # crée le schéma
 npm run db:seed             # données de démo
 
 npm run dev                 # http://localhost:3000
+
+npm test                    # règles du jeu (12 tests d'intégration, base de dev requise)
 ```
 
 ### Comptes de démo (mot de passe : `demo1234`)
 
 | Email | Situation |
 | --- | --- |
-| `demo@demo.dev` | Compte vierge : 100 ⚡, aucune contribution → le gate « contribue d'abord » est actif |
+| `demo@demo.dev` | Compte vierge : 5 tokens de bienvenue, aucune contribution → le gate « contribue d'abord » est actif |
 | `lea@demo.dev` | Contributrice active, 2 projets en campagne |
 | `zoe@demo.dev` | Projet financé, preuve d'étape **en cours de vote** |
 | `sam@demo.dev` | Projet financé, étape 1 déjà débloquée |
