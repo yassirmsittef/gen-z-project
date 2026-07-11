@@ -117,3 +117,18 @@ export const PARTNERSHIP_STATUS_LABELS = {
   ACCEPTED: "Acceptée",
   DECLINED: "Refusée",
 } as const;
+
+/** Libellés des types de notifications (préférences + affichage). */
+export const NOTIFICATION_TYPE_LABELS = {
+  CONTRIBUTION: "Contribution reçue sur mes projets",
+  PROJECT_FUNDED: "Objectif atteint",
+  PROJECT_FAILED: "Campagne non aboutie",
+  REFUND: "Remboursements",
+  PROOF_TO_VOTE: "Preuve à examiner (vote)",
+  MILESTONE_RELEASED: "Étape validée, fonds débloqués",
+  PROOF_REJECTED: "Preuve refusée",
+  MESSAGE: "Nouveaux messages privés",
+  PARTNERSHIP: "Demandes de partenariat",
+  COMMENT: "Commentaires sur mes projets",
+  PROJECT_UPDATE: "Actus des projets que je soutiens ou suis",
+} as const;

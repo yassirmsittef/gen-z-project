@@ -20,7 +20,23 @@ export type NotificationInput = {
   href: string;
 };
 
+/** Écarte les notifications dont le destinataire a coupé le type (préférences). */
+async function withoutMuted(
+  inputs: NotificationInput[],
+  client: Client
+): Promise<NotificationInput[]> {
+  if (inputs.length === 0) return [];
+  const users = await client.user.findMany({
+    where: { id: { in: [...new Set(inputs.map((i) => i.userId))] } },
+    select: { id: true, mutedNotifications: true },
+  });
+  const muted = new Map(users.map((u) => [u.id, new Set(u.mutedNotifications)]));
+  return inputs.filter((input) => !muted.get(input.userId)?.has(input.type));
+}
+
 export async function notify(input: NotificationInput, client: Client = prisma) {
+  const allowed = await withoutMuted([input], client);
+  if (allowed.length === 0) return;
   await client.notification.create({
     data: {
       userId: input.userId,
@@ -33,9 +49,10 @@ export async function notify(input: NotificationInput, client: Client = prisma) 
 }
 
 export async function notifyMany(inputs: NotificationInput[], client: Client = prisma) {
-  if (inputs.length === 0) return;
+  const allowed = await withoutMuted(inputs, client);
+  if (allowed.length === 0) return;
   await client.notification.createMany({
-    data: inputs.map((input) => ({
+    data: allowed.map((input) => ({
       userId: input.userId,
       type: input.type,
       title: input.title,

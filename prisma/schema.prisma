@@ -31,6 +31,8 @@ model User {
   longitude        Float?
   // Compte Stripe Connect Express du porteur (Phase 2 : versements réels).
   stripeAccountId  String?
+  // Types de notifications que l'utilisateur a coupés (préférences).
+  mutedNotifications NotificationType[] @default([])
   createdAt        DateTime  @default(now())
 
   accounts         Account[]

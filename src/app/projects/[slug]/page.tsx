@@ -15,6 +15,7 @@ import { ContributeForm } from "@/components/contribute-form";
 import { FollowButton } from "@/components/follow-button";
 import { MilestoneTimeline } from "@/components/milestone-timeline";
 import { ProjectUpdateForm } from "@/components/project-update-form";
+import { ShareButton } from "@/components/share-button";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
 import { SkillTag } from "@/components/skill-tag";
@@ -190,6 +191,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               </Link>
             </Button>
           )}
+          <ShareButton title={project.title} text={project.pitch} />
         </div>
       </div>
 

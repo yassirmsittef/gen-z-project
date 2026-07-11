@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { Bell, Globe2, LogOut, MessagesSquare, Zap } from "lucide-react";
+import { Globe2, LogOut, MessagesSquare, Zap } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { signOutAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
+import { NavbarBell } from "@/components/navbar-bell";
 import { NavbarSigilLoader } from "@/components/navbar-sigil-loader";
 import { UserAvatar } from "@/components/user-avatar";
 
@@ -77,28 +78,7 @@ export async function Navbar() {
                   <span className="sr-only">Chat</span>
                 </Link>
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                asChild
-                title="Notifications"
-                className={`relative ${iconButton}`}
-              >
-                <Link href="/notifications">
-                  <Bell aria-hidden />
-                  {unread > 0 && (
-                    <span
-                      className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono text-[9px] font-bold text-primary-foreground shadow-glow"
-                      aria-hidden
-                    >
-                      {unread > 9 ? "9+" : unread}
-                    </span>
-                  )}
-                  <span className="sr-only">
-                    Notifications{unread > 0 ? ` (${unread} non lues)` : ""}
-                  </span>
-                </Link>
-              </Button>
+              <NavbarBell initialUnread={unread} className={`relative ${iconButton}`} />
               <Link
                 href="/dashboard"
                 className="flex h-8 items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 font-mono text-xs text-primary transition-colors duration-200 hover:bg-primary/20 sm:h-9 sm:gap-1.5 sm:px-3 sm:text-sm"

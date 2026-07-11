@@ -19,6 +19,7 @@ import {
 import type { NotificationType } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { NotificationPrefs } from "@/components/notification-prefs";
 import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -46,11 +47,17 @@ export default async function NotificationsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const notifications = await prisma.notification.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
+  const [notifications, viewer] = await Promise.all([
+    prisma.notification.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { mutedNotifications: true },
+    }),
+  ]);
 
   // L'état non-lu est capturé pour l'affichage, PUIS tout passe en lu :
   // la visite de la page vaut lecture (la cloche retombe à zéro).
@@ -77,6 +84,8 @@ export default async function NotificationsPage() {
               : "Tout est à jour"}
           </p>
         </div>
+
+        <NotificationPrefs muted={viewer?.mutedNotifications ?? []} />
 
         {notifications.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-white/[0.12] p-10 text-center text-sm text-muted-foreground">
