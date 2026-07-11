@@ -10,15 +10,21 @@ import { UserAvatar } from "@/components/user-avatar";
 
 export async function Navbar() {
   const session = await auth();
+  // Une seule requête pour l'identité ET le badge de notifications — la
+  // navbar est rendue à chaque page, chaque aller-retour DB compte.
   const user = session?.user?.id
     ? await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { id: true, name: true, avatarUrl: true, credits: true },
+        select: {
+          id: true,
+          name: true,
+          avatarUrl: true,
+          credits: true,
+          _count: { select: { notifications: { where: { readAt: null } } } },
+        },
       })
     : null;
-  const unread = user
-    ? await prisma.notification.count({ where: { userId: user.id, readAt: null } })
-    : 0;
+  const unread = user?._count.notifications ?? 0;
 
   // Largeur mobile au cordeau (375px) : icônes 32px et pastille compacte
   // sous `sm`, tailles confortables au-dessus.
