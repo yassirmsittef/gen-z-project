@@ -109,30 +109,24 @@ Fonts chargées via `next/font/google` dans `src/app/layout.tsx` : Space Grotesk
   `tremplin:launch`) : la caméra plonge dans le masque (z −5,2, accélération
   pow 2,2 sur 1,5s) qui s'embrase (emissive → 1,3), les anneaux sont aspirés
   (échelle ×0,55, spin ×6) pendant que `.launch-overlay` inonde l'écran + blur
-  16px (ease-in 1,5s) ; navigation à 1,45s. Deux teintes : `aurora` (teal/cyan,
-  le rêve — actions projet : « Lancer le mien » → /projects/new dont l'en-tête
-  se réveille en `.hero-reveal`, « Découvrir les projets » → /projects) et
-  `violet` (**le bleu monte puis vire au violet foncé** via `::after` décalé à
-  45% — identité : Connexion → /login, S'inscrire → /register), portée par un **portail 3D
-  autonome en deux actes** (`launch-scene.tsx`, dynamic import préchargé en
-  idle) : Acte 1 (60% de 1,5s) — le masque canonique traverse l'écran vers
-  l'observateur (z −5 → +2) pendant que TOUTE la lumière (points lights,
-  ambient, emissive, arêtes) lerpe du bleu au violet foncé, deux vortex
-  contre-rotatifs aspirés ; Acte 2 — **il file en toupie (1,5 tour) se ranger
-  en miniature sur le logo navbar** (ancre `data-sigil-dock` déprojetée
-  écran → monde, échelle calée sur les px de l'ancre), vortex estompés. Le
-  relais est pris par le **logo 3D permanent de la navbar**
-  (`navbar-sigil.tsx` via loader dynamic, fallback SVG) : rotation continue
-  0,7 rad/s, **boost au toucher** (+7 rad/s, friction exponentielle),
-  reduced motion = frame statique. Canvas transparent en `z-[1]` au-dessus du
-  ::after ; la teinte violet ne dispatche PAS `tremplin:launch`. L'overlay est
-  rendu en **portal vers body** (obligatoire : le backdrop-filter de la navbar
-  piège sinon le position:fixed) et, la navbar vivant dans le layout qui ne se
-  démonte PAS à la navigation, il est **retiré explicitement en fondu**
-  (`.launch-overlay--out`, 0,55s) dès que le pathname change, avec filet de
-  sécurité temporel — sans ça le voile reste collé à l'écran. Reduced motion :
-  navigation immédiate, aucun effet. Clic modifié (cmd/ctrl…) : comportement
-  natif du lien.
+  16px (ease-in 1,5s) ; navigation à 1,45s. Une seule teinte : `aurora`
+  (teal/cyan, le rêve — actions projet : « Lancer le mien » → /projects/new
+  dont l'en-tête se réveille en `.hero-reveal`, « Découvrir les projets »
+  → /projects). **RETIRÉ le 2026-07-11 (demande utilisateur : « c'est
+  moche ») : le portail violet de Connexion / S'inscrire** (`launch-scene.tsx`
+  supprimé, `.launch-overlay--violet` + keyframes `launch-violet` + ancre
+  `data-sigil-dock` retirés) — ces deux boutons naviguent désormais
+  directement, ne pas réintroduire de transition dessus. Le **logo 3D
+  permanent de la navbar** reste (`navbar-sigil.tsx` via loader dynamic,
+  fallback SVG) : rotation continue 0,7 rad/s, **boost au toucher** (+7 rad/s,
+  friction exponentielle), reduced motion = frame statique. L'overlay aurora
+  est rendu en **portal vers body** (obligatoire : le backdrop-filter de la
+  navbar piège sinon le position:fixed) et, le composant pouvant vivre dans un
+  layout qui ne se démonte PAS à la navigation, il est **retiré explicitement
+  en fondu** (`.launch-overlay--out`, 0,55s) dès que le pathname change, avec
+  filet de sécurité temporel — sans ça le voile reste collé à l'écran. Reduced
+  motion : navigation immédiate, aucun effet. Clic modifié (cmd/ctrl…) :
+  comportement natif du lien.
 - **Labels de données** : `font-mono text-[11px] uppercase tracking-[0.18em]
   text-muted-foreground` (petites capitales espacées).
 - **Jauge orbitale (HUD)** : composant `StatRing` — anneau SVG stroke dégradé
