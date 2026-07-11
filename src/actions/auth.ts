@@ -3,6 +3,7 @@
 import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
 import { signIn, signOut } from "@/auth";
+import { findCity } from "@/lib/cities";
 import { prisma } from "@/lib/prisma";
 import { grantWelcomeCredits } from "@/lib/project-service";
 import { loginSchema, registerSchema } from "@/lib/validation";
@@ -22,11 +23,26 @@ export async function registerAction(
 
   const { name, email, password } = parsed.data;
 
+  // Ville optionnelle : si renseignée, elle doit venir de la liste officielle
+  // (position de la VILLE sur le globe Communauté — modifiable au dashboard).
+  const cityRaw = String(formData.get("city") ?? "").trim();
+  const city = cityRaw ? findCity(cityRaw) : undefined;
+  if (cityRaw && !city) {
+    return { error: "Ville non reconnue — choisis-en une dans la liste, ou laisse vide." };
+  }
+
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return { error: "Un compte existe déjà avec cet email." };
 
   const user = await prisma.user.create({
-    data: { name, email, passwordHash: await bcrypt.hash(password, 10) },
+    data: {
+      name,
+      email,
+      passwordHash: await bcrypt.hash(password, 10),
+      ...(city
+        ? { city: city.name, country: city.country, latitude: city.lat, longitude: city.lng }
+        : {}),
+    },
   });
   await grantWelcomeCredits(user.id);
 

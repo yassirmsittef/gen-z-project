@@ -11,11 +11,21 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Projets" };
 
-function filterUrl(category?: string, status?: string, q?: string) {
+const SORT_LABELS = {
+  recent: "Plus récents",
+  suivis: "Plus suivis",
+  fin: "Bientôt terminés",
+  finances: "Plus financés",
+} as const;
+
+type SortKey = keyof typeof SORT_LABELS;
+
+function filterUrl(category?: string, status?: string, q?: string, sort?: string) {
   const params = new URLSearchParams();
   if (category) params.set("categorie", category);
   if (status) params.set("statut", status);
   if (q) params.set("q", q);
+  if (sort && sort !== "recent") params.set("tri", sort);
   const query = params.toString();
   return query ? `/projects?${query}` : "/projects";
 }
@@ -23,7 +33,7 @@ function filterUrl(category?: string, status?: string, q?: string) {
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ categorie?: string; statut?: string; q?: string }>;
+  searchParams: Promise<{ categorie?: string; statut?: string; q?: string; tri?: string }>;
 }) {
   const params = await searchParams;
 
@@ -34,10 +44,14 @@ export default async function ProjectsPage({
     ? (params.statut as ProjectStatus)
     : undefined;
   const query = (params.q ?? "").trim().slice(0, 80);
+  const sort: SortKey = Object.keys(SORT_LABELS).includes(params.tri ?? "")
+    ? (params.tri as SortKey)
+    : "recent";
 
   const where: Prisma.ProjectWhereInput = {
     ...(category ? { category } : {}),
-    ...(status ? { status } : {}),
+    // « Bientôt terminés » n'a de sens que pour les campagnes en cours.
+    ...(status ? { status } : sort === "fin" ? { status: "ACTIVE" } : {}),
     ...(query
       ? {
           OR: [
@@ -49,9 +63,18 @@ export default async function ProjectsPage({
       : {}),
   };
 
+  const orderBy: Prisma.ProjectOrderByWithRelationInput[] =
+    sort === "suivis"
+      ? [{ follows: { _count: "desc" } }, { createdAt: "desc" }]
+      : sort === "fin"
+        ? [{ deadline: "asc" }]
+        : sort === "finances"
+          ? [{ raised: "desc" }, { createdAt: "desc" }]
+          : [{ createdAt: "desc" }];
+
   const projects = await prisma.project.findMany({
     where,
-    orderBy: [{ createdAt: "desc" }],
+    orderBy,
     include: { owner: true, _count: { select: { contributions: true } } },
   });
 
@@ -68,6 +91,7 @@ export default async function ProjectsPage({
       <form action="/projects" method="get" className="mb-6 flex max-w-xl gap-2">
         {category && <input type="hidden" name="categorie" value={category} />}
         {status && <input type="hidden" name="statut" value={status} />}
+        {sort !== "recent" && <input type="hidden" name="tri" value={sort} />}
         <Input
           type="search"
           name="q"
@@ -85,14 +109,14 @@ export default async function ProjectsPage({
       <div className="mb-8 space-y-3">
         <div className="flex flex-wrap gap-2">
           <FilterChip
-            href={filterUrl(undefined, status, query)}
+            href={filterUrl(undefined, status, query, sort)}
             active={!category}
             label="Toutes catégories"
           />
           {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
             <FilterChip
               key={value}
-              href={filterUrl(value, status, query)}
+              href={filterUrl(value, status, query, sort)}
               active={category === value}
               label={label}
             />
@@ -100,15 +124,27 @@ export default async function ProjectsPage({
         </div>
         <div className="flex flex-wrap gap-2">
           <FilterChip
-            href={filterUrl(category, undefined, query)}
+            href={filterUrl(category, undefined, query, sort)}
             active={!status}
             label="Tous statuts"
           />
           {Object.entries(STATUS_LABELS).map(([value, label]) => (
             <FilterChip
               key={value}
-              href={filterUrl(category, value, query)}
+              href={filterUrl(category, value, query, sort)}
               active={status === value}
+              label={label}
+            />
+          ))}
+        </div>
+        {/* Tri — l'ordre d'affichage, préservé par les autres filtres */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="data-label mr-1">Tri</span>
+          {Object.entries(SORT_LABELS).map(([value, label]) => (
+            <FilterChip
+              key={value}
+              href={filterUrl(category, status, query, value)}
+              active={sort === value}
               label={label}
             />
           ))}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MessagesSquare } from "lucide-react";
+import { MapPin, MessagesSquare } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,17 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
           <h1 className="text-4xl font-semibold tracking-tight">{user.name}</h1>
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <ReputationBadge reputation={user.reputation} />
+            {user.city && (
+              <Link
+                href={`/communaute?ville=${encodeURIComponent(user.city)}`}
+                className="inline-flex items-center gap-1 transition-colors duration-200 hover:text-primary"
+                title="Voir sur le globe Communauté"
+              >
+                <MapPin className="h-3.5 w-3.5 text-primary/70" aria-hidden />
+                {user.city}
+                {user.country ? ` · ${user.country}` : ""}
+              </Link>
+            )}
             <span>Membre depuis {formatDate(user.createdAt)}</span>
           </div>
           {user.skills.length > 0 && (

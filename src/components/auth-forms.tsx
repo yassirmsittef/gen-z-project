@@ -6,6 +6,7 @@ import { loginAction, registerAction, signInWithGoogleAction } from "@/actions/a
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CITIES } from "@/lib/cities";
 
 function GoogleButton() {
   return (
@@ -79,6 +80,29 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
           <Label htmlFor="password">Mot de passe</Label>
           <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={8} />
           <p className="text-xs text-muted-foreground">8 caractères minimum.</p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="city">
+            Ta ville <span className="font-normal text-muted-foreground">(optionnel)</span>
+          </Label>
+          <Input
+            id="city"
+            name="city"
+            list="register-cities"
+            autoComplete="off"
+            placeholder="ex : Lyon — pour apparaître sur le globe"
+          />
+          <datalist id="register-cities">
+            {CITIES.map((city) => (
+              <option key={city.name} value={city.name}>
+                {`${city.name} — ${city.country}`}
+              </option>
+            ))}
+          </datalist>
+          <p className="text-xs text-muted-foreground">
+            Position de la ville sur le globe Communauté, jamais ta position exacte. Modifiable
+            à tout moment.
+          </p>
         </div>
 
         {state?.error && <p role="alert" className="text-sm font-medium text-destructive">{state.error}</p>}
