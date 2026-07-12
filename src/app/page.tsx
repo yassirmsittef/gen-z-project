@@ -153,11 +153,11 @@ export default async function HomePage() {
     .sort((a, b) => b.at.getTime() - a.at.getTime())
     .slice(0, 10);
 
-  const stats = [
+  const counters = [
     { label: "Projets", value: projectCount.toLocaleString("fr-FR") },
     { label: "Membres", value: userCount.toLocaleString("fr-FR") },
-    { label: "Investis (équiv.)", value: formatMoney(contributed._sum.usdCents ?? 0, "usd") },
   ];
+  const invested = formatMoney(contributed._sum.usdCents ?? 0, "usd");
 
   return (
     <div>
@@ -207,16 +207,24 @@ export default async function HomePage() {
               </LaunchLink>
             </span>
           </div>
+          {/* Projets et membres côte à côte ; le montant investi en dessous
+              sur toute la largeur — il peut grandir (10 M+) sans rien casser. */}
           <dl
-            className="hero-reveal mt-4 grid w-full max-w-2xl grid-cols-3 gap-4"
+            className="hero-reveal mt-4 grid w-full max-w-2xl grid-cols-2 gap-4"
             style={{ animationDelay: "3.05s" }}
           >
-            {stats.map((stat) => (
+            {counters.map((stat) => (
               <div key={stat.label} className="glass rounded-2xl p-5">
                 <dd className="font-display text-3xl font-semibold">{stat.value}</dd>
                 <dt className="data-label mt-1">{stat.label}</dt>
               </div>
             ))}
+            <div className="glass col-span-2 rounded-2xl rounded-tr-sm px-5 py-4">
+              <dd className="font-display bg-accent-gradient bg-clip-text text-3xl font-semibold text-transparent [overflow-wrap:anywhere]">
+                {invested}
+              </dd>
+              <dt className="data-label mt-1">Investis (équiv.)</dt>
+            </div>
           </dl>
         </div>
       </section>

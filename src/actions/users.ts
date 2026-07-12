@@ -102,7 +102,7 @@ export async function changePasswordAction(
 
 export type ProfileFormState = { error?: string; success?: boolean } | undefined;
 
-/** Identité publique : pseudo, avatar (URL), courte bio du profil. */
+/** Identité publique (pseudo, avatar, bio) + devise d'affichage du dashboard. */
 export async function updateProfileAction(
   _prev: ProfileFormState,
   formData: FormData
@@ -114,6 +114,7 @@ export async function updateProfileAction(
     name: formData.get("name"),
     avatarUrl: formData.get("avatarUrl"),
     bio: formData.get("bio"),
+    preferredCurrency: formData.get("preferredCurrency"),
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -123,6 +124,7 @@ export async function updateProfileAction(
       name: parsed.data.name,
       avatarUrl: parsed.data.avatarUrl || null,
       bio: parsed.data.bio || null,
+      preferredCurrency: parsed.data.preferredCurrency,
     },
   });
 

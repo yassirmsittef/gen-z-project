@@ -23,6 +23,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { nextReputationTarget } from "@/lib/reputation";
 import { GATE_USD_CENTS } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
+import { convertMinor } from "@/lib/fx";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -120,6 +121,18 @@ export default async function DashboardPage({
     currency,
     ...totals,
   }));
+
+  // « Mes contributions » dans la devise CHOISIE par le membre (conversion
+  // indicative au taux du jour, « ≈ » quand la devise du projet diffère).
+  // La jauge des 50 $ pour poster, elle, reste en dollars : c'est la règle.
+  const displayCurrency = user.preferredCurrency;
+  const contributionsDisplay = await Promise.all(
+    contributions.map(async (c) => {
+      if (c.project.currency === displayCurrency) return { converted: null };
+      const converted = await convertMinor(c.amount, c.project.currency, displayCurrency);
+      return { converted };
+    })
+  );
 
   const failedProjects = myProjects.filter((p) => p.status === "FAILED");
   const nextLevel = nextReputationTarget(user.reputation);
@@ -307,25 +320,37 @@ export default async function DashboardPage({
             ) : (
               <Card>
                 <CardContent className="divide-y divide-white/[0.06] pt-6">
-                  {contributions.map((contribution) => (
-                    <div key={contribution.id} className="flex items-center gap-3 py-3 text-sm">
-                      <div className="min-w-0">
-                        <Link
-                          href={`/projects/${contribution.project.slug}`}
-                          className="block truncate font-medium transition-colors duration-200 hover:text-primary"
-                        >
-                          {contribution.project.title}
-                        </Link>
-                        <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                          {formatDate(contribution.createdAt)}
-                          {contribution.refunded && " · remboursée"}
-                        </p>
+                  {contributions.map((contribution, i) => {
+                    const converted = contributionsDisplay[i].converted;
+                    return (
+                      <div key={contribution.id} className="flex items-center gap-3 py-3 text-sm">
+                        <div className="min-w-0">
+                          <Link
+                            href={`/projects/${contribution.project.slug}`}
+                            className="block truncate font-medium transition-colors duration-200 hover:text-primary"
+                          >
+                            {contribution.project.title}
+                          </Link>
+                          <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                            {formatDate(contribution.createdAt)}
+                            {contribution.refunded && " · remboursée"}
+                          </p>
+                        </div>
+                        <span className="ml-auto shrink-0 text-right font-mono text-sm">
+                          {converted != null ? (
+                            <>
+                              {`≈ ${formatMoney(converted, displayCurrency)}`}
+                              <span className="block text-[10px] text-muted-foreground">
+                                {formatMoney(contribution.amount, contribution.project.currency)}
+                              </span>
+                            </>
+                          ) : (
+                            formatMoney(contribution.amount, contribution.project.currency)
+                          )}
+                        </span>
                       </div>
-                      <span className="ml-auto shrink-0 font-mono text-sm">
-                        {formatMoney(contribution.amount, contribution.project.currency)}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </CardContent>
               </Card>
             )}
@@ -342,6 +367,7 @@ export default async function DashboardPage({
                   initialName={user.name}
                   initialAvatarUrl={user.avatarUrl}
                   initialBio={user.bio}
+                  initialCurrency={user.preferredCurrency}
                 />
               </CardContent>
             </Card>

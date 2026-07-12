@@ -59,3 +59,24 @@ export async function usdCentsFromMinor(
   const major = amountMinor / minorPerMajor(c);
   return Math.round((major / rate) * 100);
 }
+
+/**
+ * Conversion INDICATIVE entre deux devises (via USD, taux du jour) — pour
+ * l'AFFICHAGE dans la devise préférée du membre, jamais pour un paiement.
+ * Devise inconnue → null (l'appelant garde alors le montant d'origine).
+ */
+export async function convertMinor(
+  amountMinor: number,
+  from: string,
+  to: string
+): Promise<number | null> {
+  const f = from.toLowerCase();
+  const t = to.toLowerCase();
+  if (f === t) return amountMinor;
+  const rates = await ratesPerUsd();
+  const rateFrom = rates[f] ?? FALLBACK_PER_USD[f];
+  const rateTo = rates[t] ?? FALLBACK_PER_USD[t];
+  if (!rateFrom || !rateTo) return null;
+  const major = amountMinor / minorPerMajor(f);
+  return Math.round((major / rateFrom) * rateTo * minorPerMajor(t));
+}

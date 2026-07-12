@@ -6,15 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { CURRENCIES } from "@/lib/money";
 
 export function ProfileForm({
   initialName,
   initialAvatarUrl,
   initialBio,
+  initialCurrency,
 }: {
   initialName: string | null;
   initialAvatarUrl: string | null;
   initialBio: string | null;
+  initialCurrency: string;
 }) {
   const [state, formAction, pending] = useActionState(updateProfileAction, undefined);
 
@@ -54,6 +57,27 @@ export function ProfileForm({
         />
         <p className="text-xs text-muted-foreground">
           Affichée sur ton profil public, à côté de ta réputation et de tes projets.
+        </p>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="preferredCurrency">Ma devise</Label>
+        <select
+          id="preferredCurrency"
+          name="preferredCurrency"
+          defaultValue={initialCurrency}
+          className="flex h-11 w-full rounded-xl border border-input bg-background/60 px-3.5 py-2 text-sm transition-colors duration-200 hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          {CURRENCIES.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-muted-foreground">
+          Les montants de ton dashboard s&apos;affichent dans cette devise (conversion
+          indicative au taux du jour). Seule la jauge des 50&nbsp;$ pour poster reste en
+          dollars.
         </p>
       </div>
 

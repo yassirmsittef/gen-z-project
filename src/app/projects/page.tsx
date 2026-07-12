@@ -107,13 +107,19 @@ export default async function ProjectsPage({
       </form>
 
       <div className="mb-8 space-y-3">
-        <div className="flex flex-wrap gap-2">
+        {/* Rail horizontal : toutes les catégories tiennent sur UNE ligne
+            défilante (fondu aux bords) ; la catégorie active est remontée en
+            tête pour rester visible sans JS. */}
+        <ChipRail label="Catégories">
           <FilterChip
             href={filterUrl(undefined, status, query, sort)}
             active={!category}
             label="Toutes catégories"
           />
-          {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+          {[
+            ...(category ? [[category, CATEGORY_LABELS[category]] as const] : []),
+            ...Object.entries(CATEGORY_LABELS).filter(([value]) => value !== category),
+          ].map(([value, label]) => (
             <FilterChip
               key={value}
               href={filterUrl(value, status, query, sort)}
@@ -121,8 +127,9 @@ export default async function ProjectsPage({
               label={label}
             />
           ))}
-        </div>
-        <div className="flex flex-wrap gap-2">
+        </ChipRail>
+        {/* Statuts et tri partagent la seconde ligne. */}
+        <ChipRail label="Statuts et tri">
           <FilterChip
             href={filterUrl(category, undefined, query, sort)}
             active={!status}
@@ -136,10 +143,8 @@ export default async function ProjectsPage({
               label={label}
             />
           ))}
-        </div>
-        {/* Tri — l'ordre d'affichage, préservé par les autres filtres */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="data-label mr-1">Tri</span>
+          <span className="mx-1.5 h-5 w-px shrink-0 self-center bg-white/[0.12]" aria-hidden />
+          <span className="data-label mr-1 self-center">Tri</span>
           {Object.entries(SORT_LABELS).map(([value, label]) => (
             <FilterChip
               key={value}
@@ -148,7 +153,7 @@ export default async function ProjectsPage({
               label={label}
             />
           ))}
-        </div>
+        </ChipRail>
         {category && (
           <p className="max-w-2xl text-sm text-muted-foreground">
             <span className="font-semibold text-foreground">{CATEGORY_LABELS[category]}</span> —{" "}
@@ -181,12 +186,29 @@ export default async function ProjectsPage({
   );
 }
 
+/**
+ * Ligne de chips défilante : une seule hauteur de ligne quel que soit le
+ * nombre de filtres. Fondu aux bords pour suggérer la suite, scrollbar
+ * masquée, padding vertical pour laisser vivre le lift des chips.
+ */
+function ChipRail({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      className="flex gap-2 overflow-x-auto px-4 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,transparent,black_16px,black_calc(100%-24px),transparent)] -mx-4"
+    >
+      {children}
+    </div>
+  );
+}
+
 function FilterChip({ href, active, label }: { href: string; active: boolean; label: string }) {
   return (
     <Link
       href={href}
       className={cn(
-        "rounded-full border px-3.5 py-1 text-sm font-medium transition-all duration-200 ease-out",
+        "shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1 text-sm font-medium transition-all duration-200 ease-out",
         active
           ? "border-primary/40 bg-primary/15 text-primary shadow-glow"
           : "border-white/[0.12] bg-card/60 text-muted-foreground hover:-translate-y-0.5 hover:text-foreground"

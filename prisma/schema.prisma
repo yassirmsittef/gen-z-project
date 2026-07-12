@@ -30,6 +30,10 @@ model User {
   // paiement (non décrémenté par les remboursements) — alimente le gate
   // « 50 $ contribués avant de poster » et les classements inter-devises.
   contributedUsdCents Int    @default(0)
+  // Devise d'AFFICHAGE choisie par le membre : les montants de son dashboard
+  // sont convertis dedans (taux du jour, indicatif). Les paiements et le gate
+  // 50 $ ne changent pas — c'est une préférence de lecture, pas de compte.
+  preferredCurrency   String @default("eur")
   reputation       Int       @default(0)
   skills           String[]  @default([])
   // Localisation déclarative pour le globe Communauté : ville choisie dans la

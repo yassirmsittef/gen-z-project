@@ -80,6 +80,11 @@ export const updateProfileSchema = z.object({
     .optional()
     .or(z.literal("")),
   bio: z.string().trim().max(280, "280 caractères max — va à l'essentiel.").optional(),
+  // Devise d'affichage du dashboard — préférence de lecture, pas de compte.
+  preferredCurrency: z
+    .string()
+    .toLowerCase()
+    .refine((c) => (CURRENCY_CODES as readonly string[]).includes(c), "Devise inconnue."),
 });
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
