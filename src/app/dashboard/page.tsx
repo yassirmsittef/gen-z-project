@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Handshake, Sparkles, Star } from "lucide-react";
+import { Handshake, PenLine, Sparkles, Star } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -152,12 +152,23 @@ export default async function DashboardPage({
           </p>
         )}
         <div className="flex flex-wrap items-center gap-5">
-          <ReputationRing reputation={user.reputation}>
-            <UserAvatar name={user.name} avatarUrl={user.avatarUrl} className="h-16 w-16 border-0 text-xl" />
-          </ReputationRing>
+          {/* La photo mène à la carte « Mon profil » plus bas : le premier
+              réflexe pour changer sa photo est d'appuyer dessus. */}
+          <Link href="#profil" title="Modifier mon profil" className="rounded-full">
+            <ReputationRing reputation={user.reputation}>
+              <UserAvatar name={user.name} avatarUrl={user.avatarUrl} className="h-16 w-16 border-0 text-xl" />
+            </ReputationRing>
+          </Link>
           <div className="space-y-1.5">
             <h1 className="text-4xl font-semibold tracking-tight">Salut {user.name}</h1>
             <p className="data-label">QG personnel · systèmes opérationnels</p>
+            <Link
+              href="#profil"
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors duration-200 hover:text-primary/80"
+            >
+              <PenLine className="h-3.5 w-3.5" aria-hidden />
+              Modifier mon profil
+            </Link>
           </div>
           <ReputationBadge reputation={user.reputation} className="ml-auto" />
         </div>
@@ -358,7 +369,7 @@ export default async function DashboardPage({
 
                   </section>
 
-        <section data-reveal className="grid gap-8 lg:grid-cols-2">
+        <section id="profil" data-reveal className="grid scroll-mt-24 gap-8 lg:grid-cols-2">
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold tracking-tight">Mon profil</h2>
             <Card>

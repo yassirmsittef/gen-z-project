@@ -7,6 +7,7 @@ import {
   Linkedin,
   MapPin,
   MessagesSquare,
+  PenLine,
   Twitter,
   Youtube,
 } from "lucide-react";
@@ -138,6 +139,16 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
             </div>
           )}
         </div>
+        {session?.user?.id === user.id && (
+          <div className="ml-auto">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/dashboard#profil">
+                <PenLine aria-hidden />
+                Modifier mon profil
+              </Link>
+            </Button>
+          </div>
+        )}
         {session?.user?.id && session.user.id !== user.id && (
           <div className="ml-auto flex items-center gap-1.5">
             <Button variant="outline" size="sm" asChild>
