@@ -142,11 +142,12 @@ export default function ConfidentialitePage() {
 
       <h2>Tes droits</h2>
       <p>
-        Tu peux consulter et corriger tes données directement depuis ton tableau de bord, et
-        supprimer ton compte au même endroit. Pour les autres droits prévus par le RGPD (accès,
-        portabilité, limitation, opposition), écris à{" "}
-        <a href="mailto:bonjour@genigain.com">bonjour@genigain.com</a> — réponse sous un mois.
-        Tu peux aussi saisir la CNIL (<a href="https://www.cnil.fr" rel="noopener noreferrer" target="_blank">cnil.fr</a>).
+        Tu peux consulter et corriger tes données directement depuis ton tableau de bord,{" "}
+        <strong>télécharger l’ensemble de tes données</strong> en un clic (carte « Sécurité » →
+        « Télécharger mes données », droit à la portabilité) et supprimer ton compte au même
+        endroit. Pour les autres droits prévus par le RGPD (accès, limitation, opposition),
+        écris à <a href="mailto:bonjour@genigain.com">bonjour@genigain.com</a> — réponse sous un
+        mois. Tu peux aussi saisir la CNIL (<a href="https://www.cnil.fr" rel="noopener noreferrer" target="_blank">cnil.fr</a>).
       </p>
 
       <h2>Cookies</h2>

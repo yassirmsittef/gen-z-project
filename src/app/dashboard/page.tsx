@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Handshake, PenLine, Sparkles, Star } from "lucide-react";
+import { FileDown, Handshake, PenLine, Sparkles, Star } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -412,6 +412,19 @@ export default async function DashboardPage({
             <Card>
               <CardContent className="space-y-6 pt-6">
                 <PasswordForm />
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold">Mes données</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Tout ce que tu as confié à GeniGain (profil, projets, contributions, votes,
+                    messages envoyés…), en un fichier JSON — droit à la portabilité.
+                  </p>
+                  <Button variant="outline" size="sm" asChild>
+                    <a href="/api/me/export" download>
+                      <FileDown aria-hidden />
+                      Télécharger mes données
+                    </a>
+                  </Button>
+                </div>
                 <DeleteAccount />
               </CardContent>
             </Card>
