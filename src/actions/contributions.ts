@@ -42,8 +42,11 @@ export async function contributeAction(
   }
 
   const amountMinor = toMinor(parsed.data.amount, project.currency);
-  // L'équivalent USD (gate des 50 $) est figé MAINTENANT, au taux du jour.
+  // L'équivalent USD (gate) est figé MAINTENANT, au taux du jour.
   const usdCents = await usdCentsFromMinor(amountMinor, project.currency);
+  // Anonymat d'AFFICHAGE choisi au paiement : voyage dans la metadata de la
+  // session Checkout, posé sur la Contribution au webhook.
+  const anonymous = formData.get("anonymous") === "on";
 
   const checkout = await getStripe().checkout.sessions.create({
     mode: "payment",
@@ -65,6 +68,7 @@ export async function contributeAction(
       projectId: project.id,
       userId: session.user.id,
       usdCents: String(usdCents),
+      anonymous: anonymous ? "1" : "0",
     },
     success_url: `${appUrl()}/projects/${project.slug}?contribution=merci`,
     cancel_url: `${appUrl()}/projects/${project.slug}?contribution=annulee`,

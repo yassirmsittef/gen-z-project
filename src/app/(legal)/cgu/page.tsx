@@ -101,7 +101,7 @@ export default function CguPage() {
       <ul>
         <li>
           <strong>Contribue d’abord</strong> : le droit de poster un projet s’ouvre à partir de{" "}
-          <strong>50&nbsp;$ US de contributions cumulées</strong> (tes paiements, convertis au
+          <strong>20&nbsp;$ US de contributions cumulées</strong> (tes paiements, convertis au
           taux du jour de chacun). C’est la règle centrale de la communauté.
         </li>
         <li>
@@ -186,10 +186,11 @@ export default function CguPage() {
 
       <h2>8. Frais</h2>
       <p>
-        GeniGain ne prélève <strong>aucune commission</strong> actuellement. Si une commission
-        est introduite un jour, elle sera annoncée à l’avance, affichée avant chaque paiement et
-        jamais rétroactive. Les frais du prestataire de paiement (Stripe) s’appliquent aux
-        transactions.
+        GeniGain ne prélève <strong>aucune commission</strong>. Les frais du prestataire de
+        paiement (Stripe) sont déduits des versements aux porteurs — le contributeur paie
+        exactement le montant qu’il a choisi, et GeniGain ne garde rien au passage. Si une
+        commission est introduite un jour, elle sera annoncée à l’avance, affichée avant chaque
+        paiement et jamais rétroactive.
       </p>
 
       <h2>9. Contenus et comportements</h2>

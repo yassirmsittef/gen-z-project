@@ -208,6 +208,8 @@ export async function fulfillContribution(input: {
   projectId: string;
   amountMinor: number;
   usdCents: number;
+  /** Anonymat d'affichage : identité masquée partout, y compris au porteur. */
+  anonymous?: boolean;
   stripeSessionId: string;
   stripePaymentIntentId: string | null;
 }): Promise<{ refundNeeded: boolean }> {
@@ -238,6 +240,7 @@ export async function fulfillContribution(input: {
         projectId,
         amount,
         usdCents: input.usdCents,
+        anonymous: input.anonymous ?? false,
         stripeSessionId: input.stripeSessionId,
         stripePaymentIntentId: input.stripePaymentIntentId,
         ...(closed ? { refunded: true, refundDueMinor: amount } : {}),
@@ -287,11 +290,12 @@ export async function fulfillContribution(input: {
       },
     });
 
+    // Contribution anonyme : le porteur lui-même ne voit pas qui a donné.
     await notify(
       {
         userId: project.ownerId,
         type: "CONTRIBUTION",
-        title: `${user.name ?? "Quelqu'un"} a soutenu « ${project.title} » (${formatMoney(amount, project.currency)})`,
+        title: `${input.anonymous ? "Quelqu'un" : (user.name ?? "Quelqu'un")} a soutenu « ${project.title} » (${formatMoney(amount, project.currency)})`,
         href: `/projects/${project.slug}`,
       },
       tx
@@ -570,9 +574,9 @@ async function approveProofTx(
     });
   }
 
-  // Pas de commission pour le moment (décision 2026-07-12) : l'intégralité
-  // part au porteur, par VIREMENT Stripe uniquement — il n'y a plus de
-  // wallet interne à créditer.
+  // Pas de commission (décision 2026-07-12) : la part du porteur part par
+  // VIREMENT Stripe uniquement — il n'y a plus de wallet interne à créditer.
+  // Le virement est net des frais bancaires (cf executeDuePayouts).
   await tx.user.update({
     where: { id: project.ownerId },
     data: { reputation: { increment: REP.MILESTONE_RELEASED } },

@@ -9,9 +9,11 @@ import type { NotificationType, ProjectCategory } from "@prisma/client";
 /**
  * Gate « contribue d'abord » : cumul de contributions (équivalent USD figé
  * au moment de chaque paiement) requis avant de pouvoir poster son projet.
- * Affiché en jauge de progression.
+ * Affiché en jauge de progression. Abaissé 50 → 20 $ le 2026-07-12
+ * (décision fondateur : 50 $ trop haut, surtout hors Europe). Le rôle
+ * ADMIN est exempté (démarrage à froid).
  */
-export const GATE_USD_CENTS = 5000; // 50 $
+export const GATE_USD_CENTS = 2000; // 20 $
 
 /** Contribution minimale, en unités MAJEURES de la devise du projet. */
 export const MIN_CONTRIBUTION_MAJOR = 5;

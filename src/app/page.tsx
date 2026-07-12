@@ -26,7 +26,7 @@ const STEPS = [
     icon: HandCoins,
     chip: "border-primary/30 bg-primary/15 text-primary",
     title: "1. Contribue",
-    text: "Soutiens les projets qui te parlent, par carte, dans leur devise — 50 $ de contributions cumulées débloquent la création du tien.",
+    text: "Soutiens les projets qui te parlent, par carte, dans leur devise — 20 $ de contributions cumulées débloquent la création du tien.",
   },
   {
     icon: Rocket,
@@ -111,7 +111,7 @@ export default async function HomePage() {
       href: `/projects/${c.project.slug}`,
       text: (
         <>
-          <span className="font-semibold">{c.user.name}</span> a soutenu «{" "}
+          <span className="font-semibold">{c.anonymous ? "Quelqu'un" : c.user.name}</span> a soutenu «{" "}
           {c.project.title} »{" "}
           <span className="font-mono text-primary">{formatMoney(c.amount, c.project.currency)}</span>
         </>

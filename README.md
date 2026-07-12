@@ -9,7 +9,7 @@ Connect + relecture légale).
 ## Les mécaniques clés
 
 - **Contribuer avant de poster** — la création de projet est verrouillée tant que tu n'as pas
-  cumulé **50 $ US de contributions** (toutes devises confondues, converties au taux du jour
+  cumulé **20 $ US de contributions** (toutes devises confondues, converties au taux du jour
   du paiement — `GATE_USD_CENTS`), avec une jauge de progression sur la page de création.
 - **Argent réel, une devise par projet** — le porteur choisit la devise de sa campagne
   (toutes les devises Stripe : EUR, USD, CHF, MAD…) ; les contributions se paient par carte
@@ -128,7 +128,7 @@ npm test                    # règles du jeu (12 tests d'intégration, base de d
 
 | Email | Situation |
 | --- | --- |
-| `demo@demo.dev` | Compte vierge, aucune contribution → le gate « 50 $ » et sa jauge sont visibles |
+| `demo@demo.dev` | Compte vierge, aucune contribution → le gate « 20 $ » et sa jauge sont visibles |
 | `lea@demo.dev` | Contributrice active, 2 projets en campagne |
 | `zoe@demo.dev` | Projet financé, preuve d'étape **en cours de vote** |
 | `sam@demo.dev` | Projet financé, étape 1 déjà débloquée |

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Clock, Handshake, Heart, LockOpen, MessagesSquare, PartyPopper, PenLine, Star, Trash2, Users } from "lucide-react";
+import { Clock, EyeOff, Handshake, Heart, LockOpen, MessagesSquare, PartyPopper, PenLine, Star, Trash2, Users } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { deleteCommentAction, deleteUpdateAction } from "@/actions/project-feed";
@@ -94,11 +94,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const isContributor = project.contributions.some((c) => c.userId === viewerId);
 
   // Total par contributeur (une personne peut contribuer plusieurs fois).
+  // Les contributions anonymes sortent du nominatif : un seul agrégat sans
+  // identité — mais elles comptent dans la cagnotte et l'effectif.
   const byContributor = new Map<
     string,
     { name: string | null; avatarUrl: string | null; id: string; total: number }
   >();
+  let anonymousTotal = 0;
   for (const c of project.contributions) {
+    if (c.anonymous) {
+      anonymousTotal += c.amount;
+      continue;
+    }
     const entry =
       byContributor.get(c.userId) ??
       { name: c.user.name, avatarUrl: c.user.avatarUrl, id: c.userId, total: 0 };
@@ -106,6 +113,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     byContributor.set(c.userId, entry);
   }
   const contributors = [...byContributor.values()].sort((a, b) => b.total - a.total);
+  const contributorCount = new Set(project.contributions.map((c) => c.userId)).size;
 
   const percent = progressPercent(project.raised, project.goal);
   const remaining = daysLeft(project.deadline);
@@ -449,7 +457,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <Users className="h-4 w-4" />
-                  {contributors.length} contributeur{contributors.length > 1 ? "s" : ""}
+                  {contributorCount} contributeur{contributorCount > 1 ? "s" : ""}
                 </span>
                 {project.status === "ACTIVE" ? (
                   <span className="inline-flex items-center gap-1">
@@ -504,7 +512,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             />
           )}
 
-          {contributors.length > 0 && (
+          {(contributors.length > 0 || anonymousTotal > 0) && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -528,6 +536,19 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                   <p className="text-xs text-muted-foreground">
                     + {contributors.length - 8} autres
                   </p>
+                )}
+                {anonymousTotal > 0 && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-muted/60">
+                      <EyeOff className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+                    </span>
+                    <span className="truncate font-bold text-muted-foreground">
+                      Contributions anonymes
+                    </span>
+                    <span className="ml-auto font-bold text-muted-foreground">
+                      {formatMoney(anonymousTotal, project.currency)}
+                    </span>
+                  </div>
                 )}
               </CardContent>
             </Card>

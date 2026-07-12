@@ -81,7 +81,8 @@ async function contribute(
   userId: string,
   projectId: string,
   amountMinor: number,
-  paymentIntentId: string | null = null
+  paymentIntentId: string | null = null,
+  anonymous = false
 ) {
   seq += 1;
   return fulfillContribution({
@@ -89,6 +90,7 @@ async function contribute(
     projectId,
     amountMinor,
     usdCents: amountMinor,
+    anonymous,
     stripeSessionId: `cs_test_${RUN}_${seq}`,
     stripePaymentIntentId: paymentIntentId,
   });
@@ -207,6 +209,29 @@ describe("contribution (argent réel)", () => {
     expect(
       await prisma.notification.count({ where: { userId: tardif.id, type: "REFUND" } })
     ).toBe(1);
+  });
+
+  it("une contribution anonyme masque l'identité jusque chez le porteur", async () => {
+    const porteur = await mkUser();
+    const projet = await mkProject(porteur.id);
+    const discret = await mkUser();
+
+    await contribute(discret.id, projet.id, 30, null, true);
+
+    const c = await prisma.contribution.findFirstOrThrow({
+      where: { projectId: projet.id, userId: discret.id },
+    });
+    expect(c.anonymous).toBe(true);
+
+    const notif = await prisma.notification.findFirstOrThrow({
+      where: { userId: porteur.id, type: "CONTRIBUTION" },
+    });
+    expect(notif.title).toContain("Quelqu'un a soutenu");
+    expect(notif.title).not.toContain("Fixture");
+
+    // Le poids de vote et le gate restent intacts (anonymat d'affichage).
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: discret.id } });
+    expect(user.contributedUsdCents).toBe(30);
   });
 
   it("un paiement arrivé après la clôture est enregistré puis fléché remboursement", async () => {

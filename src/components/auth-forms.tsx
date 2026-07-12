@@ -129,7 +129,7 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
           </select>
           <p className="text-xs text-muted-foreground">
             Tes montants s&apos;afficheront dans cette devise. Le droit de poster un projet
-            reste compté en dollars (50&nbsp;$ contribués) : tes contributions y sont
+            reste compté en dollars (20&nbsp;$ contribués) : tes contributions y sont
             converties automatiquement au taux du jour.
           </p>
         </div>

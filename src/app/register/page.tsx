@@ -28,7 +28,7 @@ export default async function RegisterPage() {
             Rejoins la communauté
           </CardTitle>
           <CardDescription>
-            Contribue aux projets de ta génération par carte, dans leur devise — et lance le tien dès 50&nbsp;$ de contributions cumulées.{" "}
+            Contribue aux projets de ta génération par carte, dans leur devise — et lance le tien dès 20&nbsp;$ de contributions cumulées.{" "}
             <Link
               href="/comment-ca-marche"
               className="font-medium text-primary underline-offset-4 hover:underline"

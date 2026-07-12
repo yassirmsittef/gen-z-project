@@ -156,19 +156,21 @@ export async function executeDuePayouts() {
 
       // Un transfer adossé part dans la devise de RÈGLEMENT de la charge
       // (sa balance transaction — ex. CHF pour un compte suisse), pas dans
-      // la devise de présentation du projet. La part est convertie au taux
-      // de règlement EXACT de sa charge (ratio réglé/payé, arrondi bas :
+      // la devise de présentation du projet. La part est convertie au ratio
+      // NET/payé de sa charge (net = réglé moins frais Stripe, arrondi bas :
       // le résidu d'arrondi reste sur le solde plateforme).
+      // Décision fondateur 2026-07-12 (« à l'équilibre des deux côtés ») :
+      // 0 % de commission ET la plateforme n'absorbe pas les frais bancaires
+      // — ils sont déduits des versements ; le contributeur paie pile son
+      // montant. Reste absorbé : les frais des contributions REMBOURSÉES
+      // (Stripe garde sa commission d'origine, le remboursement est intégral).
       const charge = await stripe.charges.retrieve(chargeId, {
         expand: ["balance_transaction"],
       });
       const settled =
         typeof charge.balance_transaction === "object" ? charge.balance_transaction : null;
       if (!settled) continue;
-      const amount =
-        settled.currency === charge.currency
-          ? part.amountMinor
-          : Math.floor((part.amountMinor * settled.amount) / charge.amount);
+      const amount = Math.floor((part.amountMinor * settled.net) / charge.amount);
       if (amount <= 0) continue;
 
       const transfer = await stripe.transfers.create(
@@ -180,9 +182,9 @@ export async function executeDuePayouts() {
           description: `GeniGain — étape ${part.milestone.order} « ${part.milestone.title} » (${part.milestone.project.title})`,
           metadata: { milestoneId: part.milestone.id, contributionId: part.contribution.id },
         },
-        // v2 : le montant/devise de règlement ont changé après la première
-        // itération — une clé v1 échouée reste réservée 24 h chez Stripe.
-        { idempotencyKey: `milestone-payout-v2-${part.id}` }
+        // v3 : le montant est passé au NET des frais Stripe (v2 = brut réglé,
+        // v1 = devise projet) — une clé échouée reste réservée 24 h chez Stripe.
+        { idempotencyKey: `milestone-payout-v3-${part.id}` }
       );
 
       await prisma.milestonePayout.update({

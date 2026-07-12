@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { BadgePercent, ShieldCheck } from "lucide-react";
+import { BadgePercent, EyeOff, ShieldCheck } from "lucide-react";
 import { contributeAction } from "@/actions/contributions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +65,22 @@ export function ContributeForm({
           onChange={(event) => setAmount(Number(event.target.value) || 0)}
         />
       </div>
+
+      <label className="flex items-start gap-2.5 text-xs leading-relaxed text-muted-foreground">
+        <input
+          type="checkbox"
+          name="anonymous"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        />
+        <span className="inline-flex items-start gap-1.5">
+          <EyeOff className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+          <span>
+            <strong className="font-semibold text-foreground">Contribuer anonymement</strong> —
+            ton nom n&apos;apparaîtra ni sur le projet, ni au porteur, ni dans le fil
+            d&apos;activité.
+          </span>
+        </span>
+      </label>
 
       {state?.error && (
         <p role="alert" className="text-sm font-medium text-destructive">

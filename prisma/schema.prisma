@@ -310,6 +310,10 @@ model Contribution {
   stripeSessionId       String? @unique
   stripePaymentIntentId String?
   stripeChargeId        String?
+  // Contribution anonyme (choix au paiement) : l'identité n'apparaît sur
+  // AUCUNE surface publique ni chez le porteur — anonymat d'affichage
+  // seulement, le poids de vote et le remboursement restent inchangés.
+  anonymous Boolean @default(false)
   // Remboursement : montant dû (prorata, unités mineures) posé à l'échec,
   // exécuté chez Stripe après commit — stripeRefundId absent = à rejouer.
   refunded        Boolean @default(false)

@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const { kind, projectId, userId, usdCents } = session.metadata ?? {};
+    const { kind, projectId, userId, usdCents, anonymous } = session.metadata ?? {};
 
     if (
       session.payment_status === "paid" &&
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
         projectId,
         amountMinor: session.amount_total,
         usdCents: Number(usdCents) || 0,
+        anonymous: anonymous === "1",
         stripeSessionId: session.id,
         stripePaymentIntentId:
           typeof session.payment_intent === "string" ? session.payment_intent : null,

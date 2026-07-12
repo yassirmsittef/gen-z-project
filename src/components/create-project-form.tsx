@@ -200,9 +200,9 @@ export function CreateProjectForm() {
               fois financé, tu as {REALIZATION_DAYS} jours pour tout réaliser et faire valider —
               au-delà, le reste du séquestre est remboursé aux contributeurs.{" "}
               <strong className="font-medium text-foreground">
-                0&nbsp;% de commission GeniGain : chaque étape validée te revient en entier
-              </strong>
-              , seuls les frais bancaires s&apos;appliquent.
+                0&nbsp;% de commission GeniGain
+              </strong>{" "}
+              — seuls les frais bancaires sont déduits des versements.
             </p>
           </div>
           <span
