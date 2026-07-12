@@ -164,8 +164,11 @@ proportionnelle — `src/lib/payout-split.ts`) puis chaque part devient un trans
 gardée de bout en bout, et un échec (compte pas encore configuré…) laisse la part due —
 le cron quotidien la rejoue. La répartition proportionnelle garantit qu'en cas d'échec
 ultérieur du projet, chaque charge conserve exactement de quoi rembourser son prorata.
-Les remboursements (échec de campagne, échéance dépassée) repartent vers les cartes via
-`executeDueRefunds`, rejoués par le même cron.
+Les remboursements (échec de campagne, échéance dépassée, arrêt par le porteur) repartent vers
+les cartes via `executeDueRefunds`, **nets des frais Stripe** (ratio net/brut de la charge —
+Stripe ne restitue pas sa commission d'origine, donc la plateforme n'absorbe rien ; symétrique
+des versements), rejoués par le même cron. Seuls les frais de litige (chargeback) restent à la
+charge de la plateforme.
 
 Prérequis une seule fois : **activer Connect** sur le compte Stripe de la plateforme
 ([dashboard.stripe.com/connect](https://dashboard.stripe.com/connect) → Get started),

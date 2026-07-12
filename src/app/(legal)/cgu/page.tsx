@@ -93,7 +93,7 @@ export default function CguPage() {
         </li>
         <li>
           Si un paiement aboutit après la clôture de la campagne, il est enregistré puis
-          remboursé automatiquement.
+          remboursé automatiquement, net des frais de carte (voir section 6).
         </li>
       </ul>
 
@@ -119,7 +119,7 @@ export default function CguPage() {
         </li>
         <li>
           Si l’objectif n’est pas atteint à l’échéance, la campagne n’aboutit pas et tous les
-          contributeurs sont remboursés intégralement.
+          contributeurs sont remboursés (net des frais de carte, voir section 6).
         </li>
       </ul>
 
@@ -153,17 +153,26 @@ export default function CguPage() {
       <h2>6. Remboursements</h2>
       <ul>
         <li>
-          Campagne non aboutie : <strong>remboursement intégral</strong> de chaque contribution.
+          Campagne non aboutie : remboursement de chaque contribution, <strong>net des frais de
+          carte</strong> (voir ci-dessous).
         </li>
         <li>
-          Projet arrêté en cours de réalisation (double refus ou échéance dépassée) :
-          remboursement <strong>au prorata</strong> du séquestre restant — chaque contributeur
-          récupère sa part de ce qui n’a pas été débloqué.
+          Projet arrêté en cours de réalisation (double refus, échéance dépassée, ou arrêt par le
+          porteur) : remboursement <strong>au prorata</strong> du séquestre restant — chaque
+          contributeur récupère sa part de ce qui n’a pas été débloqué, net des frais de carte.
         </li>
         <li>
-          Les remboursements sont automatiques, sans frais ajoutés par GeniGain, vers le moyen
-          de paiement d’origine. En cas d’incident technique, ils sont retentés chaque jour
-          jusqu’à aboutir.
+          <strong>Frais de carte non restitués.</strong> Quand une contribution est remboursée,
+          le prestataire de paiement (Stripe) ne restitue pas la commission de traitement qu’il a
+          prélevée lors du paiement initial. Le remboursement correspond donc au montant
+          réellement encaissé, déduction faite de cette commission. GeniGain n’ajoute aucun frais
+          et n’en conserve aucun : ni le contributeur ni la plateforme ne paie de commission à
+          GeniGain, mais les frais du réseau bancaire restent à la charge du contributeur en cas
+          de remboursement, faute d’être récupérables.
+        </li>
+        <li>
+          Les remboursements sont automatiques, vers le moyen de paiement d’origine. En cas
+          d’incident technique, ils sont retentés chaque jour jusqu’à aboutir.
         </li>
       </ul>
 
@@ -186,11 +195,15 @@ export default function CguPage() {
 
       <h2>8. Frais</h2>
       <p>
-        GeniGain ne prélève <strong>aucune commission</strong>. Les frais du prestataire de
-        paiement (Stripe) sont déduits des versements aux porteurs — le contributeur paie
-        exactement le montant qu’il a choisi, et GeniGain ne garde rien au passage. Si une
-        commission est introduite un jour, elle sera annoncée à l’avance, affichée avant chaque
-        paiement et jamais rétroactive.
+        GeniGain ne prélève <strong>aucune commission</strong> et n’absorbe aucun frais : la
+        plateforme ne gagne ni ne perd d’argent sur les flux. Les seuls frais applicables sont
+        ceux du prestataire de paiement (Stripe), fixés par lui et variables selon la carte et le
+        pays (de l’ordre de 1,5 à 3&nbsp;% en général). Ils sont déduits des versements aux
+        porteurs et, en cas de remboursement, du montant remboursé (section 6) ; le contributeur
+        paie exactement le montant qu’il a choisi. Seuls les éventuels frais de litige
+        (contestation de paiement / chargeback) facturés par Stripe restent à la charge de
+        GeniGain. Si une commission GeniGain est introduite un jour, elle sera annoncée à
+        l’avance, affichée avant chaque paiement et jamais rétroactive.
       </p>
 
       <h2>9. Contenus et comportements</h2>

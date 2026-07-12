@@ -39,8 +39,8 @@ export function CancelProjectButton({
       {armed ? (
         <div className="space-y-3">
           <p className="rounded-xl border border-destructive/30 bg-destructive/[0.07] p-3 text-sm text-foreground/90">
-            En confirmant, le projet passe définitivement <strong>« non abouti »</strong> et{" "}
-            <strong>{refundLabel}</strong> repart vers{" "}
+            En confirmant, le projet passe définitivement <strong>« non abouti »</strong> et
+            jusqu&apos;à <strong>{refundLabel}</strong> repart vers{" "}
             {contributorCount > 0 ? (
               <>
                 {contributorCount} contributeur{contributorCount > 1 ? "s" : ""}
@@ -48,7 +48,8 @@ export function CancelProjectButton({
             ) : (
               <>les contributeurs</>
             )}{" "}
-            (quelques jours selon leur banque). Il n&apos;y a pas de retour en arrière.
+            (net des frais de carte, quelques jours selon leur banque). Il n&apos;y a pas de retour
+            en arrière.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" variant="destructive" size="sm" disabled={pending}>

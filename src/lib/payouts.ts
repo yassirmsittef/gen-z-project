@@ -48,6 +48,16 @@ export async function getConnectStatus(accountId: string): Promise<ConnectStatus
  * une transaction — et rejoué par le cron : idempotent par clé Stripe, un
  * échec réseau laisse `stripeRefundId` vide pour la prochaine passe. Les
  * contributions sans payment_intent (données de démo) sont ignorées.
+ *
+ * Décision fondateur 2026-07-12 (« ne pas absorber un centime, remboursements
+ * inclus ») : le remboursement est NET des frais Stripe, comme les versements.
+ * Stripe ne rend JAMAIS la commission de traitement d'origine sur un
+ * remboursement — la rembourser en brut ferait perdre cette commission à la
+ * plateforme. On applique donc le ratio net/brut EXACT de la charge (sa
+ * balance transaction) au montant dû : le contributeur récupère ce qui avait
+ * réellement été encaissé, la plateforme finit à zéro. Divulgué avant paiement
+ * (formulaire de contribution + CGU). Reste inévitablement absorbé : les frais
+ * de LITIGE (chargeback), que Stripe facture sans contrepartie récupérable.
  */
 export async function executeDueRefunds() {
   if (!stripeEnabled) return;
@@ -59,16 +69,52 @@ export async function executeDueRefunds() {
       stripeRefundId: null,
       stripePaymentIntentId: { not: null },
     },
-    select: { id: true, refundDueMinor: true, stripePaymentIntentId: true },
+    select: {
+      id: true,
+      refundDueMinor: true,
+      stripePaymentIntentId: true,
+      stripeChargeId: true,
+    },
     take: 50, // le cron quotidien draine le reste si gros volume
   });
 
   const stripe = getStripe();
   for (const c of due) {
     try {
+      // La charge à rembourser : cachée sur la contribution, sinon résolue
+      // depuis le payment_intent (comme les versements).
+      let chargeId = c.stripeChargeId;
+      if (!chargeId) {
+        const pi = await stripe.paymentIntents.retrieve(c.stripePaymentIntentId!);
+        chargeId =
+          typeof pi.latest_charge === "string"
+            ? pi.latest_charge
+            : (pi.latest_charge?.id ?? null);
+        if (!chargeId) continue;
+        await prisma.contribution.update({
+          where: { id: c.id },
+          data: { stripeChargeId: chargeId },
+        });
+      }
+
+      // Ratio net/brut EXACT de la charge (frais Stripe déduits) appliqué au
+      // montant dû, dans la devise de la charge (arrondi bas : le résidu reste
+      // sur le solde plateforme). Si le règlement n'est pas encore connu, le
+      // cron rejouera.
+      const charge = await stripe.charges.retrieve(chargeId, {
+        expand: ["balance_transaction"],
+      });
+      const settled =
+        typeof charge.balance_transaction === "object" ? charge.balance_transaction : null;
+      if (!settled || settled.amount <= 0) continue;
+      const netRefund = Math.floor((c.refundDueMinor * settled.net) / settled.amount);
+      if (netRefund <= 0) continue;
+
       const refund = await stripe.refunds.create(
-        { payment_intent: c.stripePaymentIntentId!, amount: c.refundDueMinor },
-        { idempotencyKey: `refund-${c.id}` }
+        { payment_intent: c.stripePaymentIntentId!, amount: netRefund },
+        // v2 : le montant est passé au NET des frais Stripe — une clé v1
+        // (montant brut) échouée reste réservée 24 h chez Stripe.
+        { idempotencyKey: `refund-v2-${c.id}` }
       );
       await prisma.contribution.update({
         where: { id: c.id },
@@ -161,9 +207,9 @@ export async function executeDuePayouts() {
       // le résidu d'arrondi reste sur le solde plateforme).
       // Décision fondateur 2026-07-12 (« à l'équilibre des deux côtés ») :
       // 0 % de commission ET la plateforme n'absorbe pas les frais bancaires
-      // — ils sont déduits des versements ; le contributeur paie pile son
-      // montant. Reste absorbé : les frais des contributions REMBOURSÉES
-      // (Stripe garde sa commission d'origine, le remboursement est intégral).
+      // — ils sont déduits des versements ET des remboursements (cf
+      // executeDueRefunds) ; le contributeur paie pile son montant. Seul reste
+      // inévitablement absorbé : les frais de litige (chargeback).
       const charge = await stripe.charges.retrieve(chargeId, {
         expand: ["balance_transaction"],
       });

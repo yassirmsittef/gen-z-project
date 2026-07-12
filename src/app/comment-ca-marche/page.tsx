@@ -43,8 +43,8 @@ const STAGES = [
   },
   {
     title: "La communauté finance",
-    chips: ["séquestre", "remboursement intégral si raté"],
-    body: "Pendant la campagne, les contributions s'accumulent sous séquestre : ni toi ni personne n'y touche. Objectif atteint — la collecte s'arrête et l'aventure commence. Objectif manqué à l'échéance — chaque contributeur est remboursé intégralement, automatiquement, sur sa carte.",
+    chips: ["séquestre", "remboursement si raté"],
+    body: "Pendant la campagne, les contributions s'accumulent sous séquestre : ni toi ni personne n'y touche. Objectif atteint — la collecte s'arrête et l'aventure commence. Objectif manqué à l'échéance — chaque contributeur est remboursé automatiquement sur sa carte, net des frais de carte que la banque ne restitue pas (GeniGain n'en garde aucun).",
   },
   {
     title: "Prouve, la communauté vote",
@@ -58,7 +58,7 @@ const STAGES = [
   },
 ];
 
-const FAQ = [
+const FAQ: { q: string; a: string; anchor?: string }[] = [
   {
     q: "C'est un investissement ?",
     a: "Non. Une contribution est un soutien : elle ne donne ni part du projet, ni intérêt, ni rendement financier. Ce que tu y gagnes est ailleurs : tu fais naître des projets que tu as choisis parce qu'ils te parlent ou te seront utiles — l'app, le produit, le lieu ou le service que tu aimerais voir exister et dont tu profiteras une fois là. Tu gardes un droit de vote sur leurs étapes, tu construis ta réputation dans la communauté, et tu débloques le droit de lancer le tien.",
@@ -66,6 +66,11 @@ const FAQ = [
   {
     q: "Ça coûte combien ?",
     a: "0 % de commission GeniGain. Le contributeur paie exactement le montant qu'il a choisi ; les frais bancaires (Stripe) sont déduits des versements au porteur, comme sur toute plateforme — GeniGain ne garde rien au passage. Si une commission arrive un jour, elle sera annoncée à l'avance, affichée avant chaque paiement et jamais rétroactive.",
+    anchor: "frais",
+  },
+  {
+    q: "Qui paie les frais de carte, exactement ?",
+    a: "Les frais de traitement sont fixés par Stripe (le prestataire de paiement) et varient selon ta carte et ton pays — en général de l'ordre de 1,5 à 3 %. GeniGain ne les fixe pas, ne les voit pas et n'en ajoute aucun. Concrètement : quand tu contribues, tu paies exactement ton montant ; les frais sont prélevés par Stripe et déduits de ce que le porteur reçoit. Si le projet échoue et que tu es remboursé, Stripe ne rend pas la commission qu'il a prélevée au départ — ton remboursement est donc net de ces frais, et là encore GeniGain n'en garde aucun. C'est le seul « coût » d'une contribution, et il ne va jamais dans la poche de la plateforme.",
   },
   {
     q: "Qui peut participer ?",
@@ -73,7 +78,7 @@ const FAQ = [
   },
   {
     q: "Et si le porteur disparaît dans la nature ?",
-    a: `C'est exactement ce que le séquestre empêche : les fonds non débloqués ne sont jamais entre ses mains. Sans preuve validée, rien ne bouge — et au bout de ${REALIZATION_DAYS} jours, tout ce qui n'a pas été débloqué par un vote repart automatiquement vers les contributeurs.`,
+    a: `C'est exactement ce que le séquestre empêche : les fonds non débloqués ne sont jamais entre ses mains. Sans preuve validée, rien ne bouge — et au bout de ${REALIZATION_DAYS} jours, tout ce qui n'a pas été débloqué par un vote repart automatiquement vers les contributeurs (net des frais de carte, non restitués par la banque).`,
   },
   {
     q: "Comment je reçois mes fonds en tant que porteur ?",
@@ -127,7 +132,11 @@ export default function CommentCaMarchePage() {
         </h2>
         <div className="mt-6 space-y-3">
           {FAQ.map((item) => (
-            <details key={item.q} className="glass group rounded-2xl rounded-tr-sm px-5 py-4">
+            <details
+              key={item.q}
+              id={item.anchor}
+              className="glass group scroll-mt-24 rounded-2xl rounded-tr-sm px-5 py-4"
+            >
               <summary className="cursor-pointer list-none text-sm font-semibold marker:hidden [&::-webkit-details-marker]:hidden">
                 <span className="flex items-center justify-between gap-3">
                   {item.q}

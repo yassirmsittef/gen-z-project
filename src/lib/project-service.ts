@@ -254,7 +254,7 @@ export async function fulfillContribution(input: {
           userId,
           type: "REFUND",
           title: `Ta contribution à « ${project.title} » arrive après la clôture`,
-          body: `La campagne s'est terminée entre-temps : ${formatMoney(amount, project.currency)} repartent vers ta carte.`,
+          body: `La campagne s'est terminée entre-temps : ta contribution repart vers ta carte, nette des frais de carte que la banque ne restitue pas (GeniGain n'en garde aucun).`,
           href: `/projects/${project.slug}`,
         },
         tx
@@ -703,7 +703,7 @@ async function failProjectTx(tx: Tx, projectId: string, reason: string) {
         userId: c.userId,
         type: "REFUND" as const,
         title: `Remboursement de ${formatMoney(refund, project.currency)} — « ${project.title} »`,
-        body: "La campagne n'a pas abouti : ta part du séquestre restant repart vers ta carte (quelques jours selon ta banque).",
+        body: "La campagne n'a pas abouti : ta part du séquestre restant repart vers ta carte (quelques jours selon ta banque), nette des frais de carte que la banque ne restitue pas — GeniGain n'en garde aucun.",
         href: `/projects/${project.slug}`,
       });
     }
@@ -756,7 +756,7 @@ export async function failProject(projectId: string, reason: string) {
  * survivre (exécution Stripe + comptabilité). Le projet passe donc en FAILED
  * et le séquestre restant (raised − released) repart au prorata vers les
  * contributeurs — même mécanique éprouvée que l'échec de campagne. Une
- * campagne ACTIVE sans étape libérée = remboursement intégral ; un projet
+ * campagne ACTIVE sans étape libérée = tout le séquestre remboursé ; un projet
  * FUNDED = remboursement de la part non encore débloquée par les votes.
  */
 export async function cancelProjectByOwner(userId: string, projectId: string) {

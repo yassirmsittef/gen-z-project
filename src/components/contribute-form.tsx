@@ -97,13 +97,26 @@ export function ContributeForm({
         <BadgePercent className="h-3.5 w-3.5 shrink-0 text-primary/70" aria-hidden />
         <span>
           <strong className="font-semibold text-foreground">0&nbsp;% de commission GeniGain</strong>{" "}
-          — seuls les frais bancaires s&apos;appliquent.
+          — seuls les frais de carte (fixés par Stripe, ni vus ni touchés par GeniGain)
+          s&apos;appliquent.
         </span>
       </p>
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary/70" aria-hidden />
-        Paiement sécurisé Stripe. Fonds sous séquestre, débloqués étape par étape par le vote
-        des contributeurs — remboursés si la campagne n&apos;aboutit pas.
+        <span>
+          Paiement sécurisé Stripe. Fonds sous séquestre, débloqués étape par étape par le vote
+          des contributeurs. Si la campagne n&apos;aboutit pas, tu es remboursé
+          <strong className="text-foreground"> net des frais de carte</strong> : Stripe ne les
+          restitue pas, GeniGain n&apos;en garde aucun.{" "}
+          <a
+            href="/comment-ca-marche#frais"
+            target="_blank"
+            className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+          >
+            Détail des frais
+          </a>
+          .
+        </span>
       </p>
     </form>
   );
