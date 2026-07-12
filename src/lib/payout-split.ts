@@ -72,12 +72,17 @@ export function splitMilestonePayout(params: {
       }
     }
   } else if (assigned > release) {
-    // Rattrapage d'étapes passées sous-versées (parts non versables) : on ne
-    // verse jamais plus que le montant débloqué par l'étape courante.
-    const byAmount = [...shares].sort(
-      (a, b) => b.amount - a.amount || a.c.id.localeCompare(b.c.id)
+    // On ne verse jamais plus que le montant débloqué par l'étape courante.
+    // L'écrêtage frappe D'ABORD les parts sans charge (jamais émises — de
+    // simples quotas comptables), pour ne jamais amputer un vrai versement
+    // à leur place.
+    const trimOrder = [...shares].sort(
+      (a, b) =>
+        Number(a.c.hasCharge) - Number(b.c.hasCharge) ||
+        b.amount - a.amount ||
+        a.c.id.localeCompare(b.c.id)
     );
-    for (const s of byAmount) {
+    for (const s of trimOrder) {
       if (assigned <= release) break;
       const trim = Math.min(s.amount, assigned - release);
       s.amount -= trim;

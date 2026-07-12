@@ -532,7 +532,13 @@ async function approveProofTx(
       amount: c.amount,
       refunded: c.refunded,
       hasCharge: Boolean(c.stripePaymentIntentId),
-      alreadyPaidMinor: paidByContribution.get(c.id) ?? 0,
+      // Les contributions sans charge n'émettent jamais de part : leur quota
+      // des étapes passées est réputé consommé (théorique), sinon elles le
+      // « réclament » à chaque étape et l'écrêtage ampute les vraies parts.
+      alreadyPaidMinor: Math.max(
+        paidByContribution.get(c.id) ?? 0,
+        project.raised > 0 ? Math.floor((c.amount * project.released) / project.raised) : 0
+      ),
     })),
   });
   if (shares.length > 0) {

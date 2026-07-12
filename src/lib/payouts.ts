@@ -154,16 +154,35 @@ export async function executeDuePayouts() {
         });
       }
 
+      // Un transfer adossé part dans la devise de RÈGLEMENT de la charge
+      // (sa balance transaction — ex. CHF pour un compte suisse), pas dans
+      // la devise de présentation du projet. La part est convertie au taux
+      // de règlement EXACT de sa charge (ratio réglé/payé, arrondi bas :
+      // le résidu d'arrondi reste sur le solde plateforme).
+      const charge = await stripe.charges.retrieve(chargeId, {
+        expand: ["balance_transaction"],
+      });
+      const settled =
+        typeof charge.balance_transaction === "object" ? charge.balance_transaction : null;
+      if (!settled) continue;
+      const amount =
+        settled.currency === charge.currency
+          ? part.amountMinor
+          : Math.floor((part.amountMinor * settled.amount) / charge.amount);
+      if (amount <= 0) continue;
+
       const transfer = await stripe.transfers.create(
         {
-          amount: part.amountMinor,
-          currency: part.milestone.project.currency,
+          amount,
+          currency: settled.currency,
           destination: accountId,
           source_transaction: chargeId,
           description: `GeniGain — étape ${part.milestone.order} « ${part.milestone.title} » (${part.milestone.project.title})`,
           metadata: { milestoneId: part.milestone.id, contributionId: part.contribution.id },
         },
-        { idempotencyKey: `milestone-payout-${part.id}` }
+        // v2 : le montant/devise de règlement ont changé après la première
+        // itération — une clé v1 échouée reste réservée 24 h chez Stripe.
+        { idempotencyKey: `milestone-payout-v2-${part.id}` }
       );
 
       await prisma.milestonePayout.update({

@@ -328,6 +328,42 @@ describe("versements aux porteurs (parts adossées aux charges)", () => {
     expect((await projectState(projet.id)).status).toBe("COMPLETED");
   });
 
+  it("les quotas de démo n'amputent jamais les vraies parts d'une étape à l'autre", async () => {
+    // Mix réel/démo sur DEUX étapes : sans le quota théorique passé des
+    // contributions de démo, l'étape 2 écrêtait la plus grosse vraie part.
+    const porteur = await mkUser();
+    const projet = await mkProject(porteur.id); // objectif 100, étapes 60/40
+    const a = await mkUser();
+    const b = await mkUser();
+    await contribute(a.id, projet.id, 30, `pi_${RUN}_mix_a`);
+    await contribute(b.id, projet.id, 30, `pi_${RUN}_mix_b`);
+    const c = await mkUser();
+    await contribute(c.id, projet.id, 40); // démo, sans charge
+
+    for (const order of [1, 2] as const) {
+      await submitMilestoneProof(porteur.id, {
+        milestoneId: projet.milestones[order - 1].id,
+        content: "Preuve de test suffisamment longue.",
+      });
+      const preuve = await prisma.proof.findFirstOrThrow({
+        where: { milestoneId: projet.milestones[order - 1].id, status: "PENDING" },
+      });
+      await castVote(a.id, preuve.id, "APPROVE"); // 30 ≤ 50 : pas de majorité
+      await castVote(b.id, preuve.id, "APPROVE"); // 60 > 50 : étape libérée
+    }
+
+    const contribA = await prisma.contribution.findFirstOrThrow({
+      where: { projectId: projet.id, userId: a.id },
+    });
+    const parts = await prisma.milestonePayout.findMany({
+      where: { contributionId: contribA.id },
+      orderBy: { amountMinor: "asc" },
+    });
+    // Étape 1 : 30 × 60 % = 18. Étape 2 : cumul 30 − 18 = 12 — la part de
+    // démo (40 %) ne vole rien. Cumul = la contribution entière × released.
+    expect(parts.map((p) => p.amountMinor)).toEqual([12, 18]);
+  });
+
   it("borne le remboursement d'échec à ce qui reste sur chaque charge après versements", async () => {
     const { projet } = await financeEtLibereÉtape1(`pi_${RUN}_borne`);
 

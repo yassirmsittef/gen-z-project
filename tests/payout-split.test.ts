@@ -125,6 +125,26 @@ describe("splitMilestonePayout", () => {
     expect(bornées).toEqual([{ contributionId: "a", amountMinor: 20 }]);
   });
 
+  it("écrête d'abord les parts sans charge — jamais un vrai versement à leur place", () => {
+    // Étape 2 d'un mix : les quotas dépassent le release (rattrapage), mais
+    // l'excédent doit être repris aux parts fantômes, pas aux réelles.
+    const shares = splitMilestonePayout({
+      release: 70,
+      raised: 100,
+      releasedBefore: 30,
+      contributions: [
+        c("a-réelle", 40, { alreadyPaidMinor: 12 }),
+        c("b-réelle", 30, { alreadyPaidMinor: 9 }),
+        c("c-démo", 20, { hasCharge: false }), // quota passé jamais consommé
+        c("d-démo", 10, { hasCharge: false }),
+      ],
+    });
+    expect(shares).toEqual([
+      { contributionId: "a-réelle", amountMinor: 28 },
+      { contributionId: "b-réelle", amountMinor: 21 },
+    ]);
+  });
+
   it("rend une liste vide sans release ou sans collecte", () => {
     expect(
       splitMilestonePayout({ release: 0, raised: 100, releasedBefore: 0, contributions: [c("a", 100)] })
