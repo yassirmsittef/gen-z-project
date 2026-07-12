@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   Activity,
+  ArrowRight,
   Flame,
   HandCoins,
   Heart,
@@ -251,6 +252,15 @@ export default async function HomePage() {
             </Card>
           ))}
         </div>
+        <p className="mt-8 text-center">
+          <Link
+            href="/comment-ca-marche"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Le fonctionnement en détail — séquestre, votes, remboursements
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        </p>
       </section>
 
       {featured.length > 0 && (
