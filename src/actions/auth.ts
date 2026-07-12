@@ -21,6 +21,12 @@ export async function registerAction(
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
+  // Consentement CGU + confidentialité : la case est `required` côté client,
+  // mais un POST forgé sans elle ne doit pas créer de compte.
+  if (formData.get("cgu") !== "on") {
+    return { error: "Tu dois accepter les conditions d'utilisation pour créer un compte." };
+  }
+
   const { name, email, password } = parsed.data;
 
   // Ville optionnelle : si renseignée, elle doit venir de la liste officielle

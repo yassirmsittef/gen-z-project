@@ -134,6 +134,30 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
           </p>
         </div>
 
+        <label className="flex items-start gap-2.5 text-xs leading-relaxed text-muted-foreground">
+          <input
+            type="checkbox"
+            name="cgu"
+            required
+            className="mt-0.5 h-4 w-4 shrink-0 rounded accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          />
+          <span>
+            J&apos;accepte les{" "}
+            <Link href="/cgu" target="_blank" className="font-medium text-primary hover:underline">
+              conditions d&apos;utilisation
+            </Link>{" "}
+            et la{" "}
+            <Link
+              href="/confidentialite"
+              target="_blank"
+              className="font-medium text-primary hover:underline"
+            >
+              politique de confidentialité
+            </Link>
+            .
+          </span>
+        </label>
+
         {state?.error && <p role="alert" className="text-sm font-medium text-destructive">{state.error}</p>}
 
         <Button type="submit" className="w-full" disabled={pending}>
@@ -141,7 +165,22 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
         </Button>
       </form>
 
-      {googleEnabled && <GoogleButton />}
+      {googleEnabled && (
+        <>
+          <GoogleButton />
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            En continuant avec Google, tu acceptes les{" "}
+            <Link href="/cgu" className="text-primary hover:underline">
+              conditions d&apos;utilisation
+            </Link>{" "}
+            et la{" "}
+            <Link href="/confidentialite" className="text-primary hover:underline">
+              politique de confidentialité
+            </Link>
+            .
+          </p>
+        </>
+      )}
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
         Déjà un compte ?{" "}

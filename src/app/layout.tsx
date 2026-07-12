@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Link from "next/link";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
@@ -75,10 +76,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <PageTransition>{children}</PageTransition>
         </main>
         <footer className="border-t border-white/[0.08] py-6">
-          <p className="container text-center text-sm text-muted-foreground">
-            GeniGain · Phase 1 — paiements Stripe en mode test, aucun vrai débit. On teste les
-            mécaniques communautaires.
-          </p>
+          <div className="container flex flex-col items-center gap-2 text-center text-sm text-muted-foreground">
+            <nav aria-label="Liens légaux" className="flex flex-wrap justify-center gap-x-5 gap-y-1">
+              <Link href="/cgu" className="transition-colors duration-200 hover:text-foreground">
+                Conditions d&apos;utilisation
+              </Link>
+              <Link
+                href="/confidentialite"
+                className="transition-colors duration-200 hover:text-foreground"
+              >
+                Confidentialité
+              </Link>
+              <Link
+                href="/mentions-legales"
+                className="transition-colors duration-200 hover:text-foreground"
+              >
+                Mentions légales
+              </Link>
+            </nav>
+            <p>
+              GeniGain · Phase 1 — paiements Stripe en mode test, aucun vrai débit. On teste les
+              mécaniques communautaires.
+            </p>
+          </div>
         </footer>
         <ScrollReveal />
         <PointerFx />

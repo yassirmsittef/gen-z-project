@@ -22,8 +22,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/register",
   ].map((path) => ({ url: `${SITE_URL}${path}`, changeFrequency: "daily" as const }));
 
+  const legalRoutes: MetadataRoute.Sitemap = ["/cgu", "/confidentialite", "/mentions-legales"].map(
+    (path) => ({ url: `${SITE_URL}${path}`, changeFrequency: "monthly" as const })
+  );
+
   return [
     ...staticRoutes,
+    ...legalRoutes,
     ...projects.map((project) => ({
       url: `${SITE_URL}/projects/${project.slug}`,
       lastModified: project.createdAt,

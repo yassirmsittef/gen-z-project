@@ -101,6 +101,37 @@
     @apply font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground;
   }
 
+  /* Prose des pages légales (CGU, confidentialité, mentions) : les pages
+     restent en HTML sémantique nu, la mise en forme vit ici. */
+  .legal-prose h1 {
+    @apply font-display text-3xl font-semibold tracking-tight text-foreground;
+  }
+  .legal-prose h2 {
+    @apply mt-10 font-display text-xl font-semibold tracking-tight text-foreground;
+  }
+  .legal-prose h3 {
+    @apply mt-6 text-base font-semibold text-foreground;
+  }
+  .legal-prose p {
+    @apply mt-3 text-sm leading-relaxed text-muted-foreground;
+  }
+  .legal-prose ul {
+    @apply mt-3 space-y-1.5 text-sm leading-relaxed text-muted-foreground;
+  }
+  .legal-prose li {
+    @apply relative pl-4;
+  }
+  .legal-prose li::before {
+    content: "";
+    @apply absolute left-0 top-[0.55em] h-1 w-1 rounded-full bg-gradient-to-r from-teal-300 to-sky-400;
+  }
+  .legal-prose strong {
+    @apply font-medium text-foreground;
+  }
+  .legal-prose a {
+    @apply font-medium text-primary underline-offset-4 hover:underline;
+  }
+
   /* Lien « aller au contenu » : caché hors focus, révélé au clavier. */
   .skip-link {
     position: fixed;
