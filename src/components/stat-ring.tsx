@@ -58,8 +58,24 @@ export function StatRing({
             style={{ filter: `drop-shadow(0 0 6px ${colors[1]}66)` }}
           />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-display text-xl font-semibold">{value}</span>
+        <div className="absolute inset-0 flex items-center justify-center px-3.5">
+          {/* La valeur ne doit jamais déborder de l'anneau : la taille de
+              police descend par paliers selon la longueur (devises longues
+              type « 1 599 MAD », gros montants…). */}
+          <span
+            className={cn(
+              "font-display font-semibold leading-tight",
+              value.length <= 6
+                ? "text-xl"
+                : value.length <= 9
+                  ? "text-base"
+                  : value.length <= 12
+                    ? "text-[13px]"
+                    : "text-[11px]"
+            )}
+          >
+            {value}
+          </span>
         </div>
       </div>
       <p className="data-label">{label}</p>

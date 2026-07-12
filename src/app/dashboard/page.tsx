@@ -22,7 +22,7 @@ import { StatRing } from "@/components/stat-ring";
 import { UserAvatar } from "@/components/user-avatar";
 import { nextReputationTarget } from "@/lib/reputation";
 import { GATE_USD_CENTS } from "@/lib/constants";
-import { formatMoney } from "@/lib/money";
+import { formatMoney, formatMoneyRounded } from "@/lib/money";
 import { convertMinor } from "@/lib/fx";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -206,7 +206,7 @@ export default async function DashboardPage({
               }
             />
             <StatRing
-              value={formatMoney(user.contributedUsdCents, "usd")}
+              value={formatMoneyRounded(user.contributedUsdCents, "usd")}
               percent={Math.min(1, user.contributedUsdCents / GATE_USD_CENTS)}
               label="Vers ton projet"
               sublabel={

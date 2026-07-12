@@ -58,3 +58,15 @@ export function formatMoney(minor: number, currency: string): string {
     trailingZeroDisplay: "stripIfInteger",
   }).format(toMajor(minor, currency));
 }
+
+/**
+ * Montant arrondi à l'unité (« 405 $US ») — pour les jauges et espaces
+ * étroits où les centimes n'apportent rien. Jamais pour un paiement.
+ */
+export function formatMoneyRounded(minor: number, currency: string): string {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+    maximumFractionDigits: 0,
+  }).format(toMajor(minor, currency));
+}
