@@ -76,8 +76,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
         <footer className="border-t border-white/[0.08] py-6">
           <p className="container text-center text-sm text-muted-foreground">
-            Tremplin · Phase 1 — 1 token = 1 $ · paiements Stripe en mode test, aucun vrai débit.
-            On teste les mécaniques communautaires.
+            Tremplin · Phase 1 — paiements Stripe en mode test, aucun vrai débit. On teste les
+            mécaniques communautaires.
           </p>
         </footer>
         <ScrollReveal />

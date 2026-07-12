@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { executeDuePayouts, executeDueRefunds } from "@/lib/payouts";
 import { failExpiredProjects, failOverdueRealizations } from "@/lib/project-service";
 
 /**
@@ -24,5 +25,9 @@ export async function GET(request: Request) {
 
   await failExpiredProjects();
   await failOverdueRealizations();
+  // Rejeu des mouvements Stripe manqués (réseau, compte Connect configuré
+  // après coup…) : idempotents, sans effet s'il n'y a rien de dû.
+  await executeDueRefunds();
+  await executeDuePayouts();
   return NextResponse.json({ ok: true, ranAt: new Date().toISOString() });
 }

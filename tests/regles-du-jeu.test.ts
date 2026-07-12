@@ -71,10 +71,18 @@ function mkProject(
 
 /**
  * Contribution PAYÉE (chemin réel du webhook) — USD : usdCents = montant.
- * payment_intent volontairement absent : l'exécuteur de remboursements
- * Stripe ignore ces fixtures (pas d'appel réseau dans la suite).
+ * payment_intent absent par défaut : les exécuteurs Stripe (remboursements,
+ * versements) ignorent ces fixtures, aucun appel réseau dans la suite. Un PI
+ * fictif peut être posé pour tester la RÉPARTITION des versements — les
+ * porteurs fixtures n'ont pas de compte Connect, l'exécuteur s'arrête avant
+ * tout appel réseau et les parts restent dues.
  */
-async function contribute(userId: string, projectId: string, amountMinor: number) {
+async function contribute(
+  userId: string,
+  projectId: string,
+  amountMinor: number,
+  paymentIntentId: string | null = null
+) {
   seq += 1;
   return fulfillContribution({
     userId,
@@ -82,7 +90,7 @@ async function contribute(userId: string, projectId: string, amountMinor: number
     amountMinor,
     usdCents: amountMinor,
     stripeSessionId: `cs_test_${RUN}_${seq}`,
-    stripePaymentIntentId: null,
+    stripePaymentIntentId: paymentIntentId,
   });
 }
 
@@ -266,6 +274,75 @@ describe("vote pondéré", () => {
     });
     expect(étape1.status).toBe("AWAITING_PROOF"); // 2e tentative possible
     expect(étape1.rejectionCount).toBe(1);
+  });
+});
+
+describe("versements aux porteurs (parts adossées aux charges)", () => {
+  async function financeEtLibereÉtape1(pi: string) {
+    const porteur = await mkUser();
+    const projet = await mkProject(porteur.id); // objectif 100, étapes 60/40
+    const a = await mkUser();
+    const b = await mkUser();
+    await contribute(a.id, projet.id, 60, pi); // charge réelle
+    await contribute(b.id, projet.id, 40); // fixture de démo, sans charge
+    await submitMilestoneProof(porteur.id, {
+      milestoneId: projet.milestones[0].id,
+      content: "Preuve de test suffisamment longue.",
+    });
+    const preuve = await prisma.proof.findFirstOrThrow({
+      where: { milestoneId: projet.milestones[0].id, status: "PENDING" },
+    });
+    await castVote(a.id, preuve.id, "APPROVE"); // 60 > 50 : étape 1 libérée
+    return { porteur, projet, a, b };
+  }
+
+  it("fige les parts au prorata sur les seules charges réelles, étape après étape", async () => {
+    const { porteur, projet, a } = await financeEtLibereÉtape1(`pi_${RUN}_parts`);
+
+    const contribA = await prisma.contribution.findFirstOrThrow({
+      where: { projectId: projet.id, userId: a.id },
+    });
+    let parts = await prisma.milestonePayout.findMany({
+      where: { milestone: { projectId: projet.id } },
+    });
+    // Une seule part : la contribution de démo (40) n'a pas d'argent réel à
+    // adosser et n'absorbe pas le prorata de la charge réelle.
+    expect(parts).toHaveLength(1);
+    expect(parts[0].contributionId).toBe(contribA.id);
+    expect(parts[0].amountMinor).toBe(36); // 60 × (60 / 100)
+    // Porteur sans compte Connect : la part reste due, le cron la rejouera.
+    expect(parts[0].stripeTransferId).toBeNull();
+
+    // Dernière étape : le cumul vide la charge au centime près.
+    await submitMilestoneProof(porteur.id, {
+      milestoneId: projet.milestones[1].id,
+      content: "Preuve de test suffisamment longue.",
+    });
+    const preuve2 = await prisma.proof.findFirstOrThrow({
+      where: { milestoneId: projet.milestones[1].id, status: "PENDING" },
+    });
+    await castVote(a.id, preuve2.id, "APPROVE");
+
+    parts = await prisma.milestonePayout.findMany({ where: { contributionId: contribA.id } });
+    expect(parts.map((p) => p.amountMinor).sort((x, y) => x - y)).toEqual([24, 36]); // Σ = 60
+    expect((await projectState(projet.id)).status).toBe("COMPLETED");
+  });
+
+  it("borne le remboursement d'échec à ce qui reste sur chaque charge après versements", async () => {
+    const { projet } = await financeEtLibereÉtape1(`pi_${RUN}_borne`);
+
+    // Échéance de réalisation dépassée sans preuve en cours → échec du reste.
+    await prisma.project.update({
+      where: { id: projet.id },
+      data: { realizationDeadline: new Date(Date.now() - 1000) },
+    });
+    await failOverdueRealizations();
+
+    expect((await projectState(projet.id)).status).toBe("FAILED");
+    const refunds = await refundsOf(projet.id); // tri par montant décroissant
+    // Charge réelle : min(prorata 24, 60 − 36 déjà versés) ; démo : prorata.
+    expect(refunds[0]).toMatchObject({ amount: 60, refunded: true, refundDueMinor: 24 });
+    expect(refunds[1]).toMatchObject({ amount: 40, refunded: true, refundDueMinor: 16 });
   });
 });
 

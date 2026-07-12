@@ -4,6 +4,7 @@ import { GATE_USD_CENTS, MAX_PROOF_ATTEMPTS, REALIZATION_DAYS, REP } from "@/lib
 import type { City } from "@/lib/cities";
 import { formatMoney, toMinor } from "@/lib/money";
 import { notify, notifyMany } from "@/lib/notifications";
+import { splitMilestonePayout } from "@/lib/payout-split";
 import type { CreateProjectInput, UpdateProjectInput } from "@/lib/validation";
 
 /** Erreur métier : son message est affichable tel quel à l'utilisateur. */
@@ -474,9 +475,9 @@ export async function castVote(userId: string, proofId: string, decision: VoteDe
     return null;
   });
 
-  const { attemptMilestonePayout, executeDueRefunds } = await import("@/lib/payouts");
+  const { executeDuePayouts, executeDueRefunds } = await import("@/lib/payouts");
   if (released) {
-    await attemptMilestonePayout(released.milestoneId, released.amount);
+    await executeDuePayouts();
   }
   // Un 2e refus pendant ce vote a pu faire échouer le projet : les
   // remboursements fléchés partent maintenant, hors transaction.
@@ -506,6 +507,43 @@ async function approveProofTx(
   const release = next
     ? Math.min(milestone.amount, project.raised - project.released)
     : project.raised - project.released;
+
+  // Le versement est figé ICI, réparti en parts adossées aux charges des
+  // contributions (voir payout-split) ; les transfers Stripe partent après
+  // le commit (executeDuePayouts) et le cron rejoue les manqués.
+  const contributions = await tx.contribution.findMany({
+    where: { projectId: project.id },
+    select: { id: true, amount: true, refunded: true, stripePaymentIntentId: true },
+  });
+  const alreadyPaid = await tx.milestonePayout.groupBy({
+    by: ["contributionId"],
+    where: { contribution: { projectId: project.id } },
+    _sum: { amountMinor: true },
+  });
+  const paidByContribution = new Map(
+    alreadyPaid.map((p) => [p.contributionId, p._sum.amountMinor ?? 0])
+  );
+  const shares = splitMilestonePayout({
+    release,
+    raised: project.raised,
+    releasedBefore: project.released,
+    contributions: contributions.map((c) => ({
+      id: c.id,
+      amount: c.amount,
+      refunded: c.refunded,
+      hasCharge: Boolean(c.stripePaymentIntentId),
+      alreadyPaidMinor: paidByContribution.get(c.id) ?? 0,
+    })),
+  });
+  if (shares.length > 0) {
+    await tx.milestonePayout.createMany({
+      data: shares.map((s) => ({
+        milestoneId: milestone.id,
+        contributionId: s.contributionId,
+        amountMinor: s.amountMinor,
+      })),
+    });
+  }
 
   // Pas de commission pour le moment (décision 2026-07-12) : l'intégralité
   // part au porteur, par VIREMENT Stripe uniquement — il n'y a plus de
@@ -614,11 +652,23 @@ async function failProjectTx(tx: Tx, projectId: string, reason: string) {
 
   // Remboursement au prorata du séquestre restant (raised − released) :
   // le montant dû est FIGÉ ici (refundDueMinor), l'appel Stripe part APRÈS
-  // le commit (executeDueRefunds) et le cron rejoue les manqués.
+  // le commit (executeDueRefunds) et le cron rejoue les manqués. Chaque
+  // remboursement est borné par ce qui reste sur la charge après les parts
+  // de versement déjà figées (la répartition proportionnelle garantit le
+  // prorata à l'arrondi près — le min absorbe cet arrondi).
   const remaining = project.raised - project.released;
+  const alreadyPaid = await tx.milestonePayout.groupBy({
+    by: ["contributionId"],
+    where: { contribution: { projectId: project.id } },
+    _sum: { amountMinor: true },
+  });
+  const paidByContribution = new Map(
+    alreadyPaid.map((p) => [p.contributionId, p._sum.amountMinor ?? 0])
+  );
   const refundNotifications = [];
   for (const c of project.contributions) {
-    const refund = project.raised > 0 ? Math.floor((c.amount * remaining) / project.raised) : 0;
+    const prorata = project.raised > 0 ? Math.floor((c.amount * remaining) / project.raised) : 0;
+    const refund = Math.min(prorata, c.amount - (paidByContribution.get(c.id) ?? 0));
     if (refund > 0) {
       refundNotifications.push({
         userId: c.userId,
@@ -747,8 +797,8 @@ export async function failOverdueRealizations() {
     });
 
     if (released) {
-      const { attemptMilestonePayout } = await import("@/lib/payouts");
-      await attemptMilestonePayout(released.milestoneId, released.amount);
+      const { executeDuePayouts } = await import("@/lib/payouts");
+      await executeDuePayouts();
     }
   }
   if (overdue.length > 0) {

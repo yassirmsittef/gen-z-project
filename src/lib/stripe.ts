@@ -1,9 +1,9 @@
 import Stripe from "stripe";
 
 /**
- * Client Stripe (recharges en argent réel — 1 token = 1 $).
- * Si les clés ne sont pas configurées, la plateforme retombe sur la
- * recharge fictive de démo (voir rechargeAction).
+ * Client Stripe (paiements réels : contributions, remboursements, versements).
+ * Si les clés ne sont pas configurées, les paiements sont désactivés
+ * (`stripeEnabled`) et les surfaces concernées l'affichent honnêtement.
  */
 
 export const stripeEnabled = Boolean(process.env.STRIPE_SECRET_KEY);

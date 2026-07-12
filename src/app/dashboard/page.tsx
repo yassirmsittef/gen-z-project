@@ -61,6 +61,7 @@ export default async function DashboardPage({
     reputationEvents,
     pendingPartnerships,
     followedProjects,
+    payoutParts,
   ] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),
     prisma.contribution.findMany({
@@ -90,12 +91,35 @@ export default async function DashboardPage({
         },
       },
     }),
+    // Parts de versement des étapes débloquées de MES projets (dues + versées).
+    prisma.milestonePayout.findMany({
+      where: { milestone: { project: { ownerId: session.user.id } } },
+      select: {
+        amountMinor: true,
+        stripeTransferId: true,
+        milestone: { select: { project: { select: { currency: true } } } },
+      },
+    }),
   ]);
   if (!user) redirect("/login");
 
   // État Connect : un seul appel Stripe, uniquement si un compte existe déjà.
   const connectStatus =
     stripeEnabled && user.stripeAccountId ? await getConnectStatus(user.stripeAccountId) : null;
+
+  // Totaux des versements par devise de projet (en attente / déjà virés).
+  const payoutTotals = new Map<string, { dueMinor: number; sentMinor: number }>();
+  for (const part of payoutParts) {
+    const currency = part.milestone.project.currency;
+    const totals = payoutTotals.get(currency) ?? { dueMinor: 0, sentMinor: 0 };
+    if (part.stripeTransferId) totals.sentMinor += part.amountMinor;
+    else totals.dueMinor += part.amountMinor;
+    payoutTotals.set(currency, totals);
+  }
+  const payoutSummary = [...payoutTotals.entries()].map(([currency, totals]) => ({
+    currency,
+    ...totals,
+  }));
 
   const failedProjects = myProjects.filter((p) => p.status === "FAILED");
   const nextLevel = nextReputationTarget(user.reputation);
@@ -342,7 +366,11 @@ export default async function DashboardPage({
             <h2 className="text-2xl font-semibold tracking-tight">Mes versements</h2>
             <Card>
               <CardContent className="pt-6">
-                <ConnectForm stripeEnabled={stripeEnabled} status={connectStatus} />
+                <ConnectForm
+                  stripeEnabled={stripeEnabled}
+                  status={connectStatus}
+                  payouts={payoutSummary}
+                />
               </CardContent>
             </Card>
           </div>

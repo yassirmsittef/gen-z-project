@@ -2,19 +2,22 @@ import { prisma } from "@/lib/prisma";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
 
 /**
- * Versements réels aux porteurs (Stripe Connect, Phase 2 — mode test).
+ * Versements réels aux porteurs (Stripe Connect, mode test).
  *
- * Quand une étape est débloquée par le vote, on tente de reverser son montant
- * (1 token = 1 unité de la devise de la plateforme) vers le compte Express du
- * porteur. Le ledger interne en tokens reste la source de vérité : un échec de
- * transfert (compte non configuré, solde plateforme insuffisant...) ne bloque
- * JAMAIS le déblocage — on pourra rejouer le versement plus tard.
+ * Quand une étape est débloquée par le vote, son montant est réparti en
+ * parts (`MilestonePayout`) adossées aux charges Stripe des contributions du
+ * projet, figées en transaction. Chaque part devient un transfer
+ * `source_transaction` vers le compte Express du porteur : aucun solde
+ * plateforme n'est requis (le compte règle en CHF, les projets sont dans
+ * leur propre devise — un transfer standalone échouerait toujours) et la
+ * devise du projet est gardée de bout en bout. Un échec (compte non
+ * configuré, onboarding incomplet…) ne bloque JAMAIS le déblocage : la part
+ * reste due et le cron quotidien la rejoue.
  *
  * ⚠️ Cadre réglementaire avant tout lancement réel en UE : encaisser pour
  * compte de tiers exige un agrément (établissement de paiement) ou un
- * partenaire séquestre type Mangopay / Lemonway / Stripe Connect « destination
- * charges ». Le montage actuel (transfers depuis le solde plateforme) est un
- * prototype de test, pas un montage conforme.
+ * partenaire séquestre type Mangopay / Lemonway. Le montage actuel est un
+ * prototype de test, pas un montage conforme (voir docs/sequestre-ue.md).
  */
 
 /** État du compte Connect d'un porteur, pour l'affichage dashboard. */
@@ -78,55 +81,99 @@ export async function executeDueRefunds() {
 }
 
 /**
- * Transfert du montant débloqué d'une étape vers le compte Connect du porteur.
- * Idempotent (clé Stripe + stripeTransferId en base) et silencieux en échec.
+ * Exécute les parts de versement dues (étapes débloquées pas encore
+ * transférées). Appelé APRÈS les commits — jamais dans une transaction — et
+ * rejoué par le cron : idempotent par clé Stripe, un échec laisse
+ * `stripeTransferId` vide pour la prochaine passe. Les parts sans
+ * payment_intent n'existent pas (filtrées à la répartition).
  */
-export async function attemptMilestonePayout(milestoneId: string, amount: number) {
-  if (!stripeEnabled || amount <= 0) return;
+export async function executeDuePayouts() {
+  if (!stripeEnabled) return;
 
-  const milestone = await prisma.milestone.findUnique({
-    where: { id: milestoneId },
+  const due = await prisma.milestonePayout.findMany({
+    where: { stripeTransferId: null },
     include: {
-      project: {
+      contribution: {
+        select: { id: true, stripePaymentIntentId: true, stripeChargeId: true },
+      },
+      milestone: {
         select: {
           id: true,
+          order: true,
           title: true,
-          currency: true,
-          owner: { select: { id: true, stripeAccountId: true } },
+          project: {
+            select: {
+              title: true,
+              currency: true,
+              owner: { select: { stripeAccountId: true } },
+            },
+          },
         },
       },
     },
+    take: 50, // le cron quotidien draine le reste si gros volume
   });
-  if (!milestone || milestone.status !== "RELEASED" || milestone.stripeTransferId) return;
-
-  const accountId = milestone.project.owner.stripeAccountId;
-  if (!accountId) return;
+  if (due.length === 0) return;
 
   const stripe = getStripe();
-  try {
-    const account = await stripe.accounts.retrieve(accountId);
-    if (!account.payouts_enabled) return;
+  // Un même porteur revient sur plusieurs parts : chaque compte Connect
+  // n'est vérifié qu'une fois par passe.
+  const accountReady = new Map<string, boolean>();
 
-    // Le virement part dans la DEVISE DU PROJET, montant déjà en unités
-    // mineures — les contributions ont alimenté le solde dans cette devise.
-    const transfer = await stripe.transfers.create(
-      {
-        amount,
-        currency: milestone.project.currency,
-        destination: accountId,
-        description: `Tremplin — étape ${milestone.order} « ${milestone.title} » (${milestone.project.title})`,
-        metadata: { milestoneId, projectId: milestone.project.id },
-      },
-      { idempotencyKey: `milestone-payout-${milestoneId}` }
-    );
+  for (const part of due) {
+    // Le porteur n'a pas (fini de) configurer ses versements : la part
+    // reste due, le cron la rejouera après son onboarding.
+    const accountId = part.milestone.project.owner.stripeAccountId;
+    if (!accountId) continue;
 
-    await prisma.milestone.update({
-      where: { id: milestoneId },
-      data: { stripeTransferId: transfer.id },
-    });
-  } catch (error) {
-    // Solde de test insuffisant, compte restreint... : le déblocage interne
-    // reste acquis, le versement pourra être rejoué manuellement.
-    console.error(`[payout] transfert Connect impossible pour l'étape ${milestoneId} :`, error);
+    try {
+      let ready = accountReady.get(accountId);
+      if (ready === undefined) {
+        const account = await stripe.accounts.retrieve(accountId);
+        ready = Boolean(account.payouts_enabled);
+        accountReady.set(accountId, ready);
+      }
+      if (!ready) continue;
+
+      // La charge à adosser : cachée sur la contribution, sinon résolue une
+      // fois pour toutes depuis le payment_intent.
+      let chargeId = part.contribution.stripeChargeId;
+      if (!chargeId) {
+        if (!part.contribution.stripePaymentIntentId) continue;
+        const pi = await stripe.paymentIntents.retrieve(
+          part.contribution.stripePaymentIntentId
+        );
+        chargeId =
+          typeof pi.latest_charge === "string"
+            ? pi.latest_charge
+            : (pi.latest_charge?.id ?? null);
+        if (!chargeId) continue;
+        await prisma.contribution.update({
+          where: { id: part.contribution.id },
+          data: { stripeChargeId: chargeId },
+        });
+      }
+
+      const transfer = await stripe.transfers.create(
+        {
+          amount: part.amountMinor,
+          currency: part.milestone.project.currency,
+          destination: accountId,
+          source_transaction: chargeId,
+          description: `Tremplin — étape ${part.milestone.order} « ${part.milestone.title} » (${part.milestone.project.title})`,
+          metadata: { milestoneId: part.milestone.id, contributionId: part.contribution.id },
+        },
+        { idempotencyKey: `milestone-payout-${part.id}` }
+      );
+
+      await prisma.milestonePayout.update({
+        where: { id: part.id },
+        data: { stripeTransferId: transfer.id },
+      });
+    } catch (error) {
+      // Compte restreint, charge remboursée entre-temps… : le déblocage
+      // interne reste acquis, la part sera rejouée à la prochaine passe.
+      console.error(`[payout] transfert impossible pour la part ${part.id} :`, error);
+    }
   }
 }

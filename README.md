@@ -156,11 +156,16 @@ et `NEXT_PUBLIC_APP_URL` sur ton domaine.
 ### Stripe Connect — versements aux porteurs (mode test)
 
 Les porteurs configurent leurs versements depuis le dashboard (« Mes versements » →
-onboarding Express). Quand la communauté valide une étape, son montant est transféré
-depuis le solde de la plateforme vers le compte du porteur
-(`src/lib/payouts.ts`, idempotent via `Milestone.stripeTransferId`, dans la devise du
-projet) ; tout échec est silencieux et rejouable. Les remboursements (échec de campagne,
-échéance dépassée) repartent vers les cartes via `executeDueRefunds`, rejoués par le cron.
+onboarding Express). Quand la communauté valide une étape, son montant est figé en
+parts adossées aux charges des contributions (`MilestonePayout`, répartition
+proportionnelle — `src/lib/payout-split.ts`) puis chaque part devient un transfer
+`source_transaction` vers le compte du porteur (`executeDuePayouts`,
+`src/lib/payouts.ts`) : aucun solde plateforme n'est requis, la devise du projet est
+gardée de bout en bout, et un échec (compte pas encore configuré…) laisse la part due —
+le cron quotidien la rejoue. La répartition proportionnelle garantit qu'en cas d'échec
+ultérieur du projet, chaque charge conserve exactement de quoi rembourser son prorata.
+Les remboursements (échec de campagne, échéance dépassée) repartent vers les cartes via
+`executeDueRefunds`, rejoués par le même cron.
 
 Prérequis une seule fois : **activer Connect** sur le compte Stripe de la plateforme
 ([dashboard.stripe.com/connect](https://dashboard.stripe.com/connect) → Get started),
@@ -168,9 +173,9 @@ sinon la création de comptes renvoie « You can only create new accounts if you
 signed up for Connect ».
 
 ⚠️ **Avant tout lancement réel en UE** : encaisser pour compte de tiers exige un agrément
-d'établissement de paiement ou un partenaire régulé (Mangopay, Lemonway, ou le montage
-Stripe « destination charges »). Le montage actuel (transfers depuis le solde plateforme)
-est un prototype de test, pas un montage conforme.
+d'établissement de paiement ou un partenaire régulé (Mangopay, Lemonway). Le montage
+actuel (charges plateforme + transfers adossés) est un prototype de test, pas un montage
+conforme.
 
 ### Google OAuth (optionnel)
 

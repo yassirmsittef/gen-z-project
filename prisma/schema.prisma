@@ -216,16 +216,38 @@ model Milestone {
   order            Int
   title            String
   description      String
-  amount           Int // montant en crédits débloqué par cette étape (somme = objectif)
+  amount           Int // montant débloqué par cette étape, unités mineures (somme = objectif)
   status           MilestoneStatus @default(LOCKED)
   rejectionCount   Int             @default(0)
-  // Transfert Stripe Connect du versement réel (null = pas encore versé).
-  stripeTransferId String?
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   proofs  Proof[]
+  payouts MilestonePayout[]
 
   @@unique([projectId, order])
+}
+
+/// Part du versement d'une étape débloquée, adossée à la charge Stripe d'une
+/// contribution (transfer `source_transaction` : aucun solde plateforme requis,
+/// la devise du projet est gardée de bout en bout). La répartition entre
+/// contributions est proportionnelle pour que chaque charge conserve de quoi
+/// rembourser son prorata si le projet échoue ensuite. Les montants sont figés
+/// en transaction à la libération ; stripeTransferId absent = à rejouer
+/// (exécution après commit + cron quotidien, comme les remboursements).
+model MilestonePayout {
+  id               String   @id @default(cuid())
+  milestoneId      String
+  contributionId   String
+  // Montant en unités mineures de la devise du projet.
+  amountMinor      Int
+  stripeTransferId String?
+  createdAt        DateTime @default(now())
+
+  milestone    Milestone    @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  contribution Contribution @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+
+  @@unique([milestoneId, contributionId])
+  @@index([contributionId])
 }
 
 enum ProofStatus {
@@ -276,10 +298,12 @@ model Contribution {
   amount    Int
   // Équivalent en cents US au taux du jour du paiement (gate + classements).
   usdCents  Int      @default(0)
-  // Références Stripe : la session (idempotence du webhook) et le
-  // payment_intent (support des remboursements réels).
+  // Références Stripe : la session (idempotence du webhook), le
+  // payment_intent (remboursements réels) et la charge (versements adossés
+  // par source_transaction — résolue depuis le PI puis cachée ici).
   stripeSessionId       String? @unique
   stripePaymentIntentId String?
+  stripeChargeId        String?
   // Remboursement : montant dû (prorata, unités mineures) posé à l'échec,
   // exécuté chez Stripe après commit — stripeRefundId absent = à rejouer.
   refunded        Boolean @default(false)
@@ -287,8 +311,9 @@ model Contribution {
   stripeRefundId  String?
   createdAt DateTime @default(now())
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  payouts MilestonePayout[]
 
   @@index([projectId])
   @@index([userId])
