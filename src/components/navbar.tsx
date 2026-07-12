@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Globe2, LogOut, MessagesSquare, ShieldAlert } from "lucide-react";
+import { LogOut, MessagesSquare, ShieldAlert } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { signOutAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/command-palette";
 import { NavbarBell } from "@/components/navbar-bell";
+import { NavbarGlobe } from "@/components/navbar-globe";
 import { NavbarSigilLoader } from "@/components/navbar-sigil-loader";
 import { UserAvatar } from "@/components/user-avatar";
 
@@ -60,7 +61,8 @@ export async function Navbar() {
             className={iconButton}
           >
             <Link href="/communaute">
-              <Globe2 aria-hidden />
+              {/* La Terre miniature qui tourne — écho du globe Communauté */}
+              <NavbarGlobe />
               <span className="sr-only">Communauté</span>
             </Link>
           </Button>
