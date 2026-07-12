@@ -102,11 +102,26 @@ export function ProfileForm({
       <div className="space-y-1.5">
         <Label htmlFor="avatarFile">Photo de profil</Label>
         <div className="flex items-center gap-4">
-          <UserAvatar
-            name={initialName}
-            avatarUrl={shownAvatar}
-            className="h-16 w-16 border-0 text-xl"
-          />
+          {/* La photo elle-même est le bouton : le geste que tout le monde
+              tente en premier. Voile caméra au survol et au focus clavier. */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            aria-label={shownAvatar ? "Changer la photo de profil" : "Ajouter une photo de profil"}
+            className="group relative shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <UserAvatar
+              name={initialName}
+              avatarUrl={shownAvatar}
+              className="h-16 w-16 border-0 text-xl"
+            />
+            <span
+              className="absolute inset-0 flex items-center justify-center rounded-full bg-background/65 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
+              aria-hidden
+            >
+              <Camera className="h-5 w-5 text-foreground" />
+            </span>
+          </button>
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
