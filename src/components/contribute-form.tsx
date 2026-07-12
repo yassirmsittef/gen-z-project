@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { ShieldCheck } from "lucide-react";
+import { BadgePercent, ShieldCheck } from "lucide-react";
 import { contributeAction } from "@/actions/contributions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,6 +77,13 @@ export function ContributeForm({
           ? "Redirection vers le paiement…"
           : `Contribuer ${formatMoney(toMinor(amount || 0, currency), currency)}`}
       </Button>
+      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <BadgePercent className="h-3.5 w-3.5 shrink-0 text-primary/70" aria-hidden />
+        <span>
+          <strong className="font-semibold text-foreground">0&nbsp;% de commission GeniGain</strong>{" "}
+          — seuls les frais bancaires s&apos;appliquent.
+        </span>
+      </p>
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary/70" aria-hidden />
         Paiement sécurisé Stripe. Fonds sous séquestre, débloqués étape par étape par le vote

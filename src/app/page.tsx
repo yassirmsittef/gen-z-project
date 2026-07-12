@@ -175,7 +175,7 @@ export default async function HomePage() {
             className="hero-reveal data-label rounded-full border border-white/[0.12] bg-card/60 px-4 py-1.5 backdrop-blur-md"
             style={{ animationDelay: "1.7s" }}
           >
-            Bêta · paiements Stripe en mode test · vraies mécaniques
+            Bêta · 0&nbsp;% de commission · paiements Stripe en mode test
           </span>
           <h1
             className="hero-reveal max-w-4xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl"

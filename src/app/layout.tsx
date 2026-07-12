@@ -95,8 +95,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
             </nav>
             <p>
-              GeniGain · Phase 1 — paiements Stripe en mode test, aucun vrai débit. On teste les
-              mécaniques communautaires.
+              GeniGain · Phase 1 — paiements Stripe en mode test, aucun vrai débit · 0&nbsp;% de
+              commission, seuls les frais bancaires s&apos;appliquent.
             </p>
           </div>
         </footer>

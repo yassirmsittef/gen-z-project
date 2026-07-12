@@ -198,7 +198,11 @@ export function CreateProjectForm() {
               Chaque étape débloque un montant en {currency.toUpperCase()}, sur preuve validée
               par le vote pondéré de tes contributeurs. La somme doit égaler ton objectif. Une
               fois financé, tu as {REALIZATION_DAYS} jours pour tout réaliser et faire valider —
-              au-delà, le reste du séquestre est remboursé aux contributeurs.
+              au-delà, le reste du séquestre est remboursé aux contributeurs.{" "}
+              <strong className="font-medium text-foreground">
+                0&nbsp;% de commission GeniGain : chaque étape validée te revient en entier
+              </strong>
+              , seuls les frais bancaires s&apos;appliquent.
             </p>
           </div>
           <span

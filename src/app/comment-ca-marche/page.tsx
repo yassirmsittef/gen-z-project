@@ -53,7 +53,7 @@ const STAGES = [
   },
   {
     title: "Encaisse — ou rebondis",
-    chips: ["versement par étape", "prorata remboursé"],
+    chips: ["versement par étape", "0 % de commission", "prorata remboursé"],
     body: "Chaque étape validée part vers ton compte de versement Stripe, dans la devise du projet. Et si le projet s'arrête en route ? Ce que la communauté a validé te reste acquis, tout le séquestre restant repart au prorata vers les contributeurs — et la communauté t'aide à rebondir sur la suite.",
   },
 ];
@@ -65,7 +65,7 @@ const FAQ = [
   },
   {
     q: "Ça coûte combien ?",
-    a: "GeniGain ne prend aucune commission actuellement. Les frais du prestataire de paiement (Stripe) s'appliquent aux transactions, comme partout. Si une commission arrive un jour, elle sera annoncée à l'avance et jamais rétroactive.",
+    a: "0 % de commission GeniGain — seuls les frais bancaires (Stripe) s'appliquent aux transactions, comme partout. Si une commission arrive un jour, elle sera annoncée à l'avance, affichée avant chaque paiement et jamais rétroactive.",
   },
   {
     q: "Qui peut participer ?",
