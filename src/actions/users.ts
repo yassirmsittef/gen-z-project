@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { del, put } from "@vercel/blob";
 import { auth } from "@/auth";
 import { findCity } from "@/lib/cities";
 import { prisma } from "@/lib/prisma";
@@ -102,7 +103,15 @@ export async function changePasswordAction(
 
 export type ProfileFormState = { error?: string; success?: boolean } | undefined;
 
-/** Identité publique (pseudo, avatar, bio) + devise d'affichage du dashboard. */
+/** Un avatar hébergé par NOUS (remplaçable/supprimable), pas un lien externe. */
+const isOwnBlob = (url: string | null): url is string =>
+  Boolean(url?.includes(".blob.vercel-storage.com/"));
+
+/**
+ * Identité publique (pseudo, photo, bio, liens) + devise d'affichage.
+ * La photo arrive déjà recadrée/compressée par le client (webp ≤ 512 px) ;
+ * on la stocke sur Vercel Blob et on efface l'ancienne si on l'hébergeait.
+ */
 export async function updateProfileAction(
   _prev: ProfileFormState,
   formData: FormData
@@ -112,21 +121,64 @@ export async function updateProfileAction(
 
   const parsed = updateProfileSchema.safeParse({
     name: formData.get("name"),
-    avatarUrl: formData.get("avatarUrl"),
     bio: formData.get("bio"),
     preferredCurrency: formData.get("preferredCurrency"),
+    links: formData
+      .getAll("links")
+      .map((l) => String(l).trim())
+      .filter(Boolean),
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
+
+  const current = await prisma.user.findUniqueOrThrow({
+    where: { id: session.user.id },
+    select: { avatarUrl: true },
+  });
+
+  // Photo : nouveau fichier > suppression demandée > inchangée.
+  let avatarUrl = current.avatarUrl;
+  const file = formData.get("avatarFile");
+  const removeAvatar = formData.get("removeAvatar") === "1";
+
+  if (file instanceof File && file.size > 0) {
+    if (!file.type.startsWith("image/")) {
+      return { error: "La photo doit être une image." };
+    }
+    if (file.size > 1_500_000) {
+      return { error: "Photo trop lourde — réessaie avec une image plus petite." };
+    }
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return { error: "Le stockage des photos n'est pas configuré sur cet environnement." };
+    }
+    const blob = await put(`avatars/${session.user.id}.webp`, file, {
+      access: "public",
+      addRandomSuffix: true, // URL nouvelle à chaque photo : jamais de cache périmé
+      contentType: file.type,
+    });
+    avatarUrl = blob.url;
+  } else if (removeAvatar) {
+    avatarUrl = null;
+  }
 
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
       name: parsed.data.name,
-      avatarUrl: parsed.data.avatarUrl || null,
+      avatarUrl,
       bio: parsed.data.bio || null,
       preferredCurrency: parsed.data.preferredCurrency,
+      links: parsed.data.links,
     },
   });
+
+  // L'ancienne photo hébergée chez nous ne sert plus : suppression best effort.
+  if (isOwnBlob(current.avatarUrl) && current.avatarUrl !== avatarUrl) {
+    try {
+      await del(current.avatarUrl);
+    } catch (error) {
+      console.error("[avatar] suppression de l'ancien blob impossible :", error);
+    }
+  }
 
   revalidatePath("/", "layout");
   return { success: true };

@@ -362,29 +362,25 @@ export default async function DashboardPage({
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold tracking-tight">Mon profil</h2>
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="space-y-6 pt-6">
                 <ProfileForm
                   initialName={user.name}
                   initialAvatarUrl={user.avatarUrl}
                   initialBio={user.bio}
                   initialCurrency={user.preferredCurrency}
+                  initialLinks={user.links}
                 />
-              </CardContent>
-            </Card>
-          </div>
-                    <div className="space-y-4">
-            <h2 className="text-2xl font-semibold tracking-tight">Mes compétences</h2>
-            <Card>
-              <CardContent className="pt-6">
-                <SkillsForm initialSkills={user.skills} />
+                <div className="border-t border-white/[0.06] pt-6">
+                  <LocationForm initialCity={user.city} />
+                </div>
               </CardContent>
             </Card>
           </div>
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold tracking-tight">Ma ville</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">Mes compétences</h2>
             <Card>
               <CardContent className="pt-6">
-                <LocationForm initialCity={user.city} />
+                <SkillsForm initialSkills={user.skills} />
               </CardContent>
             </Card>
           </div>

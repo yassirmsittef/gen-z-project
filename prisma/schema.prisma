@@ -34,6 +34,8 @@ model User {
   // sont convertis dedans (taux du jour, indicatif). Les paiements et le gate
   // 50 $ ne changent pas — c'est une préférence de lecture, pas de compte.
   preferredCurrency   String @default("eur")
+  // Liens publics du profil (site, réseaux…) — 3 max, https uniquement.
+  links               String[] @default([])
   reputation       Int       @default(0)
   skills           String[]  @default([])
   // Localisation déclarative pour le globe Communauté : ville choisie dans la

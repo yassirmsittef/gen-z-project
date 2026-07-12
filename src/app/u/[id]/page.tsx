@@ -1,6 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, MessagesSquare } from "lucide-react";
+import {
+  Github,
+  Globe,
+  Instagram,
+  Linkedin,
+  MapPin,
+  MessagesSquare,
+  Twitter,
+  Youtube,
+} from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
@@ -32,6 +41,31 @@ export async function generateMetadata({
       user.bio ??
       `${user.name} sur Tremplin${user.city ? ` — ${user.city}` : ""} : réputation, projets et compétences.`,
   };
+}
+
+/** Icône et libellé court d'un lien public (plateformes connues → leur icône). */
+function linkMeta(url: string) {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, "");
+    const Icon = host.includes("instagram.")
+      ? Instagram
+      : host.includes("youtube.") || host === "youtu.be"
+        ? Youtube
+        : host.includes("github.")
+          ? Github
+          : host.includes("twitter.") || host === "x.com"
+            ? Twitter
+            : host.includes("linkedin.")
+              ? Linkedin
+              : Globe;
+    // Le pseudo (« @toi », « /toi ») est plus parlant que le domaine seul.
+    const segment = parsed.pathname.split("/").filter(Boolean)[0];
+    const label = segment ? `${host}/${segment}` : host;
+    return { Icon, label: label.length > 40 ? `${label.slice(0, 37)}…` : label };
+  } catch {
+    return { Icon: Globe, label: url };
+  }
 }
 
 export default async function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -76,6 +110,25 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
           </div>
           {user.bio && (
             <p className="max-w-xl text-sm leading-relaxed text-foreground/85">{user.bio}</p>
+          )}
+          {user.links.length > 0 && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1 pt-0.5">
+              {user.links.map((link) => {
+                const { Icon, label } = linkMeta(link);
+                return (
+                  <a
+                    key={link}
+                    href={link}
+                    target="_blank"
+                    rel="noopener nofollow"
+                    className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-primary"
+                  >
+                    <Icon className="h-3.5 w-3.5 text-primary/70" aria-hidden />
+                    {label}
+                  </a>
+                );
+              })}
+            </div>
           )}
           {user.skills.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pt-1">

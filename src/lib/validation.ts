@@ -74,17 +74,23 @@ export const updateProfileSchema = z.object({
     .trim()
     .min(2, "Ton pseudo doit faire au moins 2 caractères.")
     .max(50, "50 caractères max."),
-  avatarUrl: z
-    .string()
-    .url("Lien d'avatar invalide (URL complète attendue).")
-    .optional()
-    .or(z.literal("")),
   bio: z.string().trim().max(280, "280 caractères max — va à l'essentiel.").optional(),
   // Devise d'affichage du dashboard — préférence de lecture, pas de compte.
   preferredCurrency: z
     .string()
     .toLowerCase()
     .refine((c) => (CURRENCY_CODES as readonly string[]).includes(c), "Devise inconnue."),
+  // Liens publics (site, réseaux) : https uniquement, 3 max.
+  links: z
+    .array(
+      z
+        .string()
+        .trim()
+        .max(200, "Lien trop long (200 caractères max).")
+        .url("Lien invalide (URL complète attendue).")
+        .startsWith("https://", "Liens en https:// uniquement.")
+    )
+    .max(3, "3 liens maximum."),
 });
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
