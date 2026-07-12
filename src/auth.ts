@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import type { Adapter, AdapterUser } from "next-auth/adapters";
 import type { Provider } from "next-auth/providers";
 import Credentials from "next-auth/providers/credentials";
@@ -6,7 +6,17 @@ import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import {
+  clearLoginFailures,
+  isLoginLocked,
+  recordLoginFailure,
+} from "@/lib/login-rate-limit";
 import { loginSchema } from "@/lib/validation";
+
+/** Trop d'échecs récents : le code traverse Auth.js jusqu'à loginAction. */
+class LoginRateLimited extends CredentialsSignin {
+  code = "rate-limited";
+}
 
 const providers: Provider[] = [
   Credentials({
@@ -17,13 +27,25 @@ const providers: Provider[] = [
     async authorize(credentials) {
       const parsed = loginSchema.safeParse(credentials);
       if (!parsed.success) return null;
+      const { email, password } = parsed.data;
 
-      const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-      if (!user?.passwordHash) return null;
+      // Anti brute-force : vérifié AVANT bcrypt, même pour un email inconnu
+      // (coût identique pour l'attaquant, existence du compte jamais révélée).
+      if (await isLoginLocked(email)) throw new LoginRateLimited();
 
-      const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
-      if (!valid) return null;
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user?.passwordHash) {
+        await recordLoginFailure(email);
+        return null;
+      }
 
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) {
+        await recordLoginFailure(email);
+        return null;
+      }
+
+      await clearLoginFailures(email);
       return { id: user.id, name: user.name, email: user.email, image: user.avatarUrl };
     },
   }),

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { purgeStaleLoginAttempts } from "@/lib/login-rate-limit";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { executeDuePayouts, executeDueRefunds } from "@/lib/payouts";
 import { failExpiredProjects, failOverdueRealizations } from "@/lib/project-service";
@@ -32,5 +33,7 @@ export async function GET(request: Request) {
   await executeDuePayouts();
   // Filet des emails de notifications majeures manqués aux points chauds.
   await sendPendingNotificationEmails();
+  // Ménage anti brute-force : les échecs sortis de la fenêtre ne servent plus.
+  await purgeStaleLoginAttempts();
   return NextResponse.json({ ok: true, ranAt: new Date().toISOString() });
 }

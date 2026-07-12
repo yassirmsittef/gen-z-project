@@ -386,6 +386,18 @@ model PasswordResetToken {
   @@index([userId, createdAt])
 }
 
+// Échecs de connexion récents — anti brute-force du login (src/lib/login-rate-limit.ts).
+// Une ligne par tentative ratée, comptées sur une fenêtre glissante ; vidées au
+// succès, purgées par le cron. Email en clé (minuscules) : couvre aussi les
+// adresses sans compte, sans révéler leur existence.
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+}
+
 // ---------- Signalements (modération) ----------
 
 enum ReportTargetType {

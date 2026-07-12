@@ -78,6 +78,16 @@ export async function loginAction(
     return undefined;
   } catch (error) {
     if (error instanceof AuthError) {
+      // Le code posé par LoginRateLimited (src/auth.ts) arrive soit sur
+      // l'erreur elle-même, soit enveloppé dans sa cause selon le chemin.
+      const code =
+        (error as { code?: string }).code ??
+        ((error.cause as { err?: { code?: string } } | undefined)?.err?.code);
+      if (code === "rate-limited") {
+        return {
+          error: "Trop de tentatives pour ce compte — attends quelques minutes avant de réessayer.",
+        };
+      }
       return { error: "Email ou mot de passe incorrect." };
     }
     throw error; // NEXT_REDIRECT inclus
