@@ -136,7 +136,9 @@ export default async function DashboardPage({
 
   const failedProjects = myProjects.filter((p) => p.status === "FAILED");
   const nextLevel = nextReputationTarget(user.reputation);
-  const gateReached = user.contributedUsdCents >= GATE_USD_CENTS;
+  // Le rôle ADMIN poste sans le gate (démarrage à froid, décision fondateur).
+  const gateExempt = user.role === "ADMIN";
+  const gateReached = gateExempt || user.contributedUsdCents >= GATE_USD_CENTS;
   // Trajectoire : du plus ancien au plus récent, gauche → droite.
   const trajectory = [...reputationEvents].reverse();
 
@@ -207,12 +209,14 @@ export default async function DashboardPage({
             />
             <StatRing
               value={formatMoneyRounded(user.contributedUsdCents, "usd")}
-              percent={Math.min(1, user.contributedUsdCents / GATE_USD_CENTS)}
+              percent={gateExempt ? 1 : Math.min(1, user.contributedUsdCents / GATE_USD_CENTS)}
               label="Vers ton projet"
               sublabel={
-                gateReached
-                  ? "Gate débloqué — tu peux poster"
-                  : `${formatMoney(GATE_USD_CENTS - user.contributedUsdCents, "usd")} avant de pouvoir poster`
+                gateExempt
+                  ? "Fondateur — tu postes sans le gate"
+                  : gateReached
+                    ? "Gate débloqué — tu peux poster"
+                    : `${formatMoney(GATE_USD_CENTS - user.contributedUsdCents, "usd")} avant de pouvoir poster`
               }
             />
             <StatRing

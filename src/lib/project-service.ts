@@ -48,14 +48,19 @@ export function skillMatchScore(userSkills: string[], neededSkills: string[]): n
 export async function gateProgress(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { contributedUsdCents: true },
+    select: { contributedUsdCents: true, role: true },
   });
   const cents = user?.contributedUsdCents ?? 0;
+  // Décision fondateur 2026-07-12 : le rôle ADMIN poste sans le gate — il
+  // faut bien des premiers projets pour que les autres puissent contribuer
+  // (démarrage à froid). La règle communautaire reste entière pour les membres.
+  const exempt = user?.role === "ADMIN";
   return {
     cents,
     requiredCents: GATE_USD_CENTS,
-    percent: Math.min(Math.floor((cents / GATE_USD_CENTS) * 100), 100),
-    reached: cents >= GATE_USD_CENTS,
+    percent: exempt ? 100 : Math.min(Math.floor((cents / GATE_USD_CENTS) * 100), 100),
+    reached: exempt || cents >= GATE_USD_CENTS,
+    exempt,
   };
 }
 

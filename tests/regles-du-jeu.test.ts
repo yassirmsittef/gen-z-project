@@ -236,6 +236,21 @@ describe("gate « 50 $ contribués avant de poster »", () => {
     expect(progress.percent).toBe(99);
     expect(progress.reached).toBe(false);
   });
+
+  it("le rôle ADMIN poste sans le gate (démarrage à froid, décision fondateur)", async () => {
+    const fondateur = await mkUser(0);
+    await prisma.user.update({ where: { id: fondateur.id }, data: { role: "ADMIN" } });
+
+    expect(await canCreateProject(fondateur.id)).toBe(true);
+    const gate = await gateProgress(fondateur.id);
+    expect(gate.exempt).toBe(true);
+    expect(gate.percent).toBe(100);
+
+    // La règle communautaire ne bouge pas pour les membres.
+    const membre = await mkUser(0);
+    expect(await canCreateProject(membre.id)).toBe(false);
+    expect((await gateProgress(membre.id)).exempt).toBe(false);
+  });
 });
 
 describe("vote pondéré", () => {
