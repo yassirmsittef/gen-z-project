@@ -4,6 +4,7 @@ import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
 import { signIn, signOut } from "@/auth";
 import { findCity } from "@/lib/cities";
+import { CURRENCY_CODES } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { loginSchema, registerSchema } from "@/lib/validation";
 
@@ -30,6 +31,12 @@ export async function registerAction(
     return { error: "Ville non reconnue — choisis-en une dans la liste, ou laisse vide." };
   }
 
+  // Devise d'AFFICHAGE (modifiable au profil). Le droit de poster reste
+  // compté en dollars (gate 50 $, usdCents figé à chaque paiement) : ce
+  // choix ne change que la lecture, jamais la règle.
+  const currencyRaw = String(formData.get("preferredCurrency") ?? "eur").toLowerCase();
+  const preferredCurrency = CURRENCY_CODES.includes(currencyRaw) ? currencyRaw : "eur";
+
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return { error: "Un compte existe déjà avec cet email." };
 
@@ -38,6 +45,7 @@ export async function registerAction(
       name,
       email,
       passwordHash: await bcrypt.hash(password, 10),
+      preferredCurrency,
       ...(city
         ? { city: city.name, country: city.country, latitude: city.lat, longitude: city.lng }
         : {}),

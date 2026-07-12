@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CITIES } from "@/lib/cities";
+import { CURRENCIES } from "@/lib/money";
 
 function GoogleButton() {
   return (
@@ -110,6 +111,26 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
           <p className="text-xs text-muted-foreground">
             Position de la ville sur le globe Communauté, jamais ta position exacte. Modifiable
             à tout moment.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="preferredCurrency">Ta devise</Label>
+          <select
+            id="preferredCurrency"
+            name="preferredCurrency"
+            defaultValue="eur"
+            className="flex h-11 w-full rounded-xl border border-input bg-background/60 px-3.5 py-2 text-sm transition-colors duration-200 hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            {CURRENCIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            Tes montants s&apos;afficheront dans cette devise. Le droit de poster un projet
+            reste compté en dollars (50&nbsp;$ contribués) : tes contributions y sont
+            converties automatiquement au taux du jour.
           </p>
         </div>
 
