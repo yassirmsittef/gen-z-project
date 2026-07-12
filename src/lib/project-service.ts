@@ -751,6 +751,35 @@ export async function failProject(projectId: string, reason: string) {
 }
 
 /**
+ * Arrêt VOLONTAIRE par le porteur d'un projet en cours (ACTIVE ou FUNDED).
+ * Ce n'est PAS une suppression : les contributions et remboursements doivent
+ * survivre (exécution Stripe + comptabilité). Le projet passe donc en FAILED
+ * et le séquestre restant (raised − released) repart au prorata vers les
+ * contributeurs — même mécanique éprouvée que l'échec de campagne. Une
+ * campagne ACTIVE sans étape libérée = remboursement intégral ; un projet
+ * FUNDED = remboursement de la part non encore débloquée par les votes.
+ */
+export async function cancelProjectByOwner(userId: string, projectId: string) {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { ownerId: true, status: true },
+  });
+  if (!project) throw new DomainError("Projet introuvable.");
+  if (project.ownerId !== userId) {
+    throw new DomainError("Seul le porteur peut arrêter ce projet.");
+  }
+  if (project.status !== "ACTIVE" && project.status !== "FUNDED") {
+    throw new DomainError("Ce projet n'est plus en cours : il ne peut plus être arrêté.");
+  }
+
+  await prisma.$transaction(async (tx) =>
+    failProjectTx(tx, projectId, "Projet arrêté par son porteur.")
+  );
+  const { executeDueRefunds } = await import("@/lib/payouts");
+  await executeDueRefunds();
+}
+
+/**
  * Fait expirer les campagnes dont la deadline est passée sans financement.
  * Appelé paresseusement en tête des pages qui listent/affichent des projets
  * (pas de cron en Phase 1).

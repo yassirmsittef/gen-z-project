@@ -2,7 +2,13 @@
 
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { createProject, deleteProject, DomainError, updateProject } from "@/lib/project-service";
+import {
+  cancelProjectByOwner,
+  createProject,
+  deleteProject,
+  DomainError,
+  updateProject,
+} from "@/lib/project-service";
 import { createProjectSchema, parseList, updateProjectSchema } from "@/lib/validation";
 
 export type CreateProjectState = { error?: string } | undefined;
@@ -92,4 +98,28 @@ export async function deleteProjectAction(
   }
 
   redirect("/dashboard");
+}
+
+export type CancelProjectState = { error?: string } | undefined;
+
+/**
+ * Arrêt volontaire d'un projet en cours par son porteur : les contributeurs
+ * sont remboursés du séquestre restant (le projet passe « non abouti »).
+ */
+export async function cancelProjectAction(
+  _prev: CancelProjectState,
+  formData: FormData
+): Promise<CancelProjectState> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  const slug = String(formData.get("slug") ?? "");
+  try {
+    await cancelProjectByOwner(session.user.id, String(formData.get("projectId")));
+  } catch (error) {
+    if (error instanceof DomainError) return { error: error.message };
+    throw error;
+  }
+
+  redirect(slug ? `/projects/${slug}` : "/dashboard");
 }

@@ -5,6 +5,7 @@ import { ArrowLeft, Lock, PenLine } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { DeleteProjectButton } from "@/components/delete-project-button";
+import { CancelProjectButton } from "@/components/cancel-project-button";
 import { EditProjectForm } from "@/components/edit-project-form";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
@@ -28,6 +29,7 @@ export default async function EditProjectPage({
     where: { slug },
     include: {
       milestones: { orderBy: { order: "asc" }, select: { order: true, title: true, amount: true } },
+      contributions: { select: { userId: true } },
       _count: { select: { contributions: true } },
     },
   });
@@ -36,6 +38,14 @@ export default async function EditProjectPage({
 
   const editable = project.status === "ACTIVE";
   const deletable = project._count.contributions === 0;
+  // Arrêt volontaire : possible tant que le projet est en cours (ACTIVE/FUNDED)
+  // et qu'au moins un membre a contribué (sinon, c'est un simple retrait).
+  const cancellable =
+    project._count.contributions > 0 &&
+    (project.status === "ACTIVE" || project.status === "FUNDED");
+  // Séquestre restant (raised − released) = ce qui repart aux contributeurs.
+  const refundRemaining = project.raised - project.released;
+  const distinctContributors = new Set(project.contributions.map((c) => c.userId)).size;
 
   return (
     <div className="container max-w-3xl space-y-8 py-10">
@@ -102,10 +112,34 @@ export default async function EditProjectPage({
             </p>
             <DeleteProjectButton projectId={project.id} />
           </>
+        ) : cancellable ? (
+          <>
+            <p className="text-sm text-muted-foreground">
+              {project._count.contributions} membre
+              {project._count.contributions > 1 ? "s ont" : " a"} contribué. Tu ne peux plus le
+              retirer purement, mais tu peux l&apos;<strong>arrêter</strong> : il passera « non
+              abouti » et <strong>{formatMoney(refundRemaining, project.currency)}</strong> —
+              le séquestre restant — {refundRemaining > 0 ? "seront remboursés" : "seraient remboursés"}{" "}
+              aux contributeurs.
+              {project.released > 0 && (
+                <>
+                  {" "}
+                  Les {formatMoney(project.released, project.currency)} déjà débloqués par les
+                  votes ne sont pas concernés.
+                </>
+              )}
+            </p>
+            <CancelProjectButton
+              projectId={project.id}
+              slug={slug}
+              refundLabel={formatMoney(refundRemaining, project.currency)}
+              contributorCount={distinctContributors}
+            />
+          </>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Des membres ont déjà contribué ({project._count.contributions}) : le projet ne peut
-            plus être retiré, il vivra son cycle jusqu&apos;au bout — c&apos;est la règle du jeu.
+            Ce projet a terminé son cycle : il reste consultable par la communauté, avec son
+            historique.
           </p>
         )}
       </section>

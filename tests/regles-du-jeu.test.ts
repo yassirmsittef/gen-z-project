@@ -9,6 +9,7 @@ import {
   assertCanContribute,
   canCreateProject,
   castVote,
+  cancelProjectByOwner,
   deleteProject,
   DomainError,
   failExpiredProjects,
@@ -766,5 +767,30 @@ describe("édition et retrait de projet", () => {
     const vierge = await mkProject(porteur.id);
     await deleteProject(porteur.id, vierge.id);
     expect(await prisma.project.findUnique({ where: { id: vierge.id } })).toBeNull();
+  });
+
+  it("l'arrêt volontaire par le porteur rembourse le séquestre restant et passe le projet en échec", async () => {
+    const porteur = await mkUser();
+    const projet = await mkProject(porteur.id);
+    const a = await mkUser();
+    const b = await mkUser();
+    await contribute(a.id, projet.id, 40);
+    await contribute(b.id, projet.id, 30);
+
+    // Non-porteur refusé ; le porteur peut arrêter une campagne ACTIVE soutenue.
+    await expect(cancelProjectByOwner(a.id, projet.id)).rejects.toThrow(DomainError);
+    await cancelProjectByOwner(porteur.id, projet.id);
+
+    const after = await projectState(projet.id);
+    expect(after.status).toBe("FAILED");
+    expect(after.failureReason).toContain("arrêté par son porteur");
+
+    // Rien n'était débloqué : remboursement intégral figé pour les deux.
+    const refunds = await refundsOf(projet.id);
+    expect(refunds.every((c) => c.refunded)).toBe(true);
+    expect(refunds.map((c) => c.refundDueMinor).sort((x, y) => x - y)).toEqual([30, 40]);
+
+    // Un projet déjà arrêté ne peut plus l'être.
+    await expect(cancelProjectByOwner(porteur.id, projet.id)).rejects.toThrow(DomainError);
   });
 });
