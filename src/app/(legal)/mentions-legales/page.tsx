@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { stripeLive } from "@/lib/stripe-mode";
 
 export const metadata: Metadata = {
   title: "Mentions légales",
@@ -15,8 +16,10 @@ export default function MentionsLegalesPage() {
       <h2>Éditeur</h2>
       <p>
         GeniGain — <a href="https://genigain.com">genigain.com</a> — est une plateforme
-        communautaire de financement de projets, actuellement en phase de test (paiements Stripe
-        en mode test, aucun débit réel).
+        communautaire de financement de projets
+        {stripeLive
+          ? ". Les paiements sont opérés par Stripe."
+          : ", actuellement en phase de test (paiements Stripe en mode test, aucun débit réel)."}
       </p>
       <p>
         Directeur de la publication : Yassir Msittef. Contact :{" "}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { stripeLive } from "@/lib/stripe-mode";
 
 export const metadata: Metadata = {
   title: "Conditions d’utilisation",
@@ -25,14 +26,16 @@ export default function CguPage() {
         petites lignes surprises : tout ce qui est écrit ici est ce que fait la plateforme.
       </p>
 
-      <div className="glass mt-6 rounded-2xl rounded-tr-sm p-4">
-        <p className="mt-0 text-sm leading-relaxed text-muted-foreground">
-          <strong>Phase de test.</strong> GeniGain fonctionne actuellement avec des paiements
-          Stripe en <strong>mode test</strong> : aucune carte n’est réellement débitée. Les
-          présentes conditions décrivent le fonctionnement cible de la plateforme ; l’ouverture
-          des paiements réels sera annoncée clairement sur le site.
-        </p>
-      </div>
+      {!stripeLive && (
+        <div className="glass mt-6 rounded-2xl rounded-tr-sm p-4">
+          <p className="mt-0 text-sm leading-relaxed text-muted-foreground">
+            <strong>Phase de test.</strong> GeniGain fonctionne actuellement avec des paiements
+            Stripe en <strong>mode test</strong> : aucune carte n’est réellement débitée. Les
+            présentes conditions décrivent le fonctionnement cible de la plateforme ; l’ouverture
+            des paiements réels sera annoncée clairement sur le site.
+          </p>
+        </div>
+      )}
 
       <h2>1. Ce qu’est GeniGain (et ce que ce n’est pas)</h2>
       <p>

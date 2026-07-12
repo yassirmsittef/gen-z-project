@@ -5,6 +5,7 @@ import { Landmark } from "lucide-react";
 import { connectOnboardingAction } from "@/actions/connect";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/money";
+import { stripeLive } from "@/lib/stripe-mode";
 import type { ConnectStatus } from "@/lib/payouts";
 
 export type PayoutSummary = { currency: string; dueMinor: number; sentMinor: number };
@@ -83,7 +84,10 @@ export function ConnectForm({
         </p>
         <p className="text-xs text-muted-foreground">
           Quand la communauté valide une étape d&apos;un de tes projets, son montant est viré
-          vers ton compte Stripe (mode test pour l&apos;instant — aucun vrai argent ne circule).
+          vers ton compte Stripe
+          {stripeLive
+            ? ", net des frais de carte."
+            : " (mode test pour l'instant — aucun vrai argent ne circule)."}
         </p>
         <PayoutTotals payouts={payouts} active />
       </div>
@@ -95,7 +99,7 @@ export function ConnectForm({
       <p className="text-sm text-muted-foreground">
         {status
           ? "Ta configuration Stripe est incomplète — finis-la pour recevoir les fonds de tes étapes validées."
-          : "Configure ton compte Stripe pour recevoir les fonds de tes étapes validées (mode test, 2 minutes)."}
+          : `Configure ton compte Stripe pour recevoir les fonds de tes étapes validées${stripeLive ? " (2 minutes)" : " (mode test, 2 minutes)"}.`}
       </p>
 
       {state?.error && (

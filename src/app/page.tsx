@@ -18,6 +18,7 @@ import { HeroSceneLoader } from "@/components/hero-scene-loader";
 import { LaunchLink } from "@/components/launch-button";
 import { ProjectCard } from "@/components/project-card";
 import { prisma } from "@/lib/prisma";
+import { stripeLive } from "@/lib/stripe-mode";
 import { formatRelative } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
 
@@ -175,7 +176,9 @@ export default async function HomePage() {
             className="hero-reveal data-label rounded-full border border-white/[0.12] bg-card/60 px-4 py-1.5 backdrop-blur-md"
             style={{ animationDelay: "1.7s" }}
           >
-            Bêta · 0&nbsp;% de commission · paiements Stripe en mode test
+            {stripeLive
+              ? "0 % de commission · paiements sécurisés par Stripe"
+              : "Bêta · 0 % de commission · paiements Stripe en mode test"}
           </span>
           <h1
             className="hero-reveal max-w-4xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl"

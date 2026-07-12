@@ -15,6 +15,7 @@ import {
   REALIZATION_DAYS,
 } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
+import { stripeLive } from "@/lib/stripe-mode";
 
 export const metadata: Metadata = {
   title: "Comment ça marche",
@@ -86,7 +87,9 @@ const FAQ: { q: string; a: string; anchor?: string }[] = [
   },
   {
     q: "C'est du vrai argent ?",
-    a: "La mécanique est réelle de bout en bout, mais la plateforme est en phase de test : les paiements Stripe tournent en mode test, aucune carte n'est réellement débitée. L'ouverture des paiements réels sera annoncée clairement.",
+    a: stripeLive
+      ? "Oui. Les paiements sont réels et sécurisés par Stripe : ta contribution est réellement débitée, placée sous séquestre, et débloquée au porteur étape par étape selon le vote des contributeurs. GeniGain ne voit ni ne stocke jamais ton numéro de carte."
+      : "La mécanique est réelle de bout en bout, mais la plateforme est en phase de test : les paiements Stripe tournent en mode test, aucune carte n'est réellement débitée. L'ouverture des paiements réels sera annoncée clairement.",
   },
 ];
 

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
+import { stripeLive } from "@/lib/stripe-mode";
 import { Atmosphere } from "@/components/atmosphere";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { PointerFx } from "@/components/pointer-fx";
@@ -95,8 +96,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
             </nav>
             <p>
-              GeniGain · Phase 1 — paiements Stripe en mode test, aucun vrai débit · 0&nbsp;% de
-              commission, seuls les frais bancaires s&apos;appliquent.
+              {stripeLive
+                ? "GeniGain · 0 % de commission, seuls les frais bancaires s'appliquent · paiements sécurisés par Stripe."
+                : "GeniGain · Phase 1 — paiements Stripe en mode test, aucun vrai débit · 0 % de commission, seuls les frais bancaires s'appliquent."}
             </p>
           </div>
         </footer>

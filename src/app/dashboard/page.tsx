@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectCard } from "@/components/project-card";
 import { stripeEnabled } from "@/lib/stripe";
+import { stripeLive } from "@/lib/stripe-mode";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
 import { ConnectForm } from "@/components/connect-form";
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
 const CONNECT_BANNERS = {
   done: {
     tone: "text-success border-success/30 bg-success/10",
-    text: "Configuration transmise à Stripe — tes versements s'activent dès validation (souvent immédiat en mode test).",
+    text: `Configuration transmise à Stripe — tes versements s'activent dès validation${stripeLive ? "." : " (souvent immédiat en mode test)."}`,
   },
   refresh: {
     tone: "text-muted-foreground border-white/[0.12] bg-card/60",
