@@ -96,10 +96,10 @@ export async function Navbar() {
                   variant="ghost"
                   size="icon"
                   asChild
-                  title="Modération — signalements"
+                  title="Cockpit admin"
                   className={`relative ${iconButton}`}
                 >
-                  <Link href="/admin/signalements">
+                  <Link href="/admin">
                     <ShieldAlert aria-hidden />
                     {openReports > 0 && (
                       <span
@@ -110,7 +110,7 @@ export async function Navbar() {
                       </span>
                     )}
                     <span className="sr-only">
-                      Modération{openReports > 0 ? ` (${openReports} signalements ouverts)` : ""}
+                      Cockpit admin{openReports > 0 ? ` (${openReports} signalements ouverts)` : ""}
                     </span>
                   </Link>
                 </Button>
