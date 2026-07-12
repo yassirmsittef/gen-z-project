@@ -26,8 +26,11 @@ export default function ConfidentialitePage() {
 
       <h2>Qui est responsable</h2>
       <p>
-        Le responsable du traitement est GeniGain, plateforme éditée par Yassir Msittef. Pour
-        toute question ou demande liée à tes données :{" "}
+        Le responsable du traitement est GeniGain, plateforme éditée par Yassir Msittef, établie
+        en <strong>Suisse</strong>. GeniGain est ouverte à l’international : le traitement de tes
+        données est soumis à la <strong>loi suisse sur la protection des données (nLPD)</strong>{" "}
+        et, si tu résides dans l’Union européenne, au <strong>RGPD</strong>, qui s’applique aux
+        services qui te sont proposés. Pour toute question ou demande liée à tes données :{" "}
         <a href="mailto:bonjour@genigain.com">bonjour@genigain.com</a>.
       </p>
 
@@ -119,9 +122,10 @@ export default function ConfidentialitePage() {
         </li>
       </ul>
       <p>
-        Certains de ces prestataires sont établis aux États-Unis : les transferts sont encadrés
-        par les mécanismes prévus par le RGPD (clauses contractuelles types, EU-U.S. Data
-        Privacy Framework). Aucune donnée n’est vendue ni transmise à des annonceurs.
+        Certains de ces prestataires sont établis aux États-Unis : les transferts hors de Suisse
+        et de l’Union européenne sont encadrés par les mécanismes prévus par la loi suisse (nLPD)
+        et le RGPD (clauses contractuelles types, décisions d’adéquation, Data Privacy
+        Framework). Aucune donnée n’est vendue ni transmise à des annonceurs.
       </p>
 
       <h2>Combien de temps</h2>
@@ -145,9 +149,14 @@ export default function ConfidentialitePage() {
         Tu peux consulter et corriger tes données directement depuis ton tableau de bord,{" "}
         <strong>télécharger l’ensemble de tes données</strong> en un clic (carte « Sécurité » →
         « Télécharger mes données », droit à la portabilité) et supprimer ton compte au même
-        endroit. Pour les autres droits prévus par le RGPD (accès, limitation, opposition),
-        écris à <a href="mailto:bonjour@genigain.com">bonjour@genigain.com</a> — réponse sous un
-        mois. Tu peux aussi saisir la CNIL (<a href="https://www.cnil.fr" rel="noopener noreferrer" target="_blank">cnil.fr</a>).
+        endroit. Pour les autres droits prévus par la loi suisse (nLPD) et le RGPD (accès,
+        rectification, limitation, opposition), écris à{" "}
+        <a href="mailto:bonjour@genigain.com">bonjour@genigain.com</a> — réponse dans les
+        meilleurs délais. Tu peux aussi saisir une autorité de contrôle : en Suisse, le{" "}
+        <a href="https://www.edoeb.admin.ch" rel="noopener noreferrer" target="_blank">
+          Préposé fédéral à la protection des données (PFPDT)
+        </a>{" "}
+        ; dans l’Union européenne, l’autorité de protection des données de ton pays.
       </p>
 
       <h2>Cookies</h2>
@@ -159,9 +168,12 @@ export default function ConfidentialitePage() {
 
       <h2>Âge minimum</h2>
       <p>
-        GeniGain est réservé aux personnes de 15 ans et plus, l’âge du consentement numérique en
-        France. Voir aussi les <Link href="/cgu">conditions d’utilisation</Link> pour les
-        conditions liées aux paiements.
+        GeniGain est réservé aux personnes de <strong>16 ans et plus</strong> (seuil retenu pour
+        s’aligner sur le standard européen le plus courant, valable aussi en Suisse). Selon ton
+        pays de résidence, un âge différent peut s’appliquer. Voir aussi les{" "}
+        <Link href="/cgu">conditions d’utilisation</Link> pour les conditions liées aux
+        paiements, réservés aux personnes majeures ou disposant de l’accord de leur représentant
+        légal.
       </p>
 
       <h2>Évolutions</h2>

@@ -22,12 +22,16 @@ export default function MentionsLegalesPage() {
           : ", actuellement en phase de test (paiements Stripe en mode test, aucun débit réel)."}
       </p>
       <p>
-        Directeur de la publication : Yassir Msittef. Contact :{" "}
+        Éditeur et directeur de la publication : Yassir Msittef, établi en{" "}
+        <strong>Suisse</strong>. Contact :{" "}
         <a href="mailto:bonjour@genigain.com">bonjour@genigain.com</a>.
       </p>
       <p>
-        La structure juridique d’exploitation (forme sociale, immatriculation, siège) sera
-        renseignée sur cette page avant l’ouverture des paiements réels.
+        GeniGain est une plateforme suisse, ouverte à l’international. La structure juridique
+        d’exploitation (forme sociale, numéro d’identification des entreprises IDE, siège cantonal)
+        sera renseignée sur cette page avant l’ouverture des paiements réels. Les présentes
+        mentions et l’usage du service sont régis par le <strong>droit suisse</strong> (voir les{" "}
+        <Link href="/cgu">conditions d’utilisation</Link>).
       </p>
 
       <h2>Hébergement et prestataires techniques</h2>

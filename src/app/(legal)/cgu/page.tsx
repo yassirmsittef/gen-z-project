@@ -62,7 +62,7 @@ export default function CguPage() {
 
       <h2>2. Ton compte</h2>
       <ul>
-        <li>Il faut avoir <strong>au moins 15 ans</strong> pour créer un compte.</li>
+        <li>Il faut avoir <strong>au moins 16 ans</strong> pour créer un compte.</li>
         <li>
           Pour contribuer par carte ou lancer une campagne, il faut être{" "}
           <strong>majeur·e</strong> ou avoir l’accord de ton représentant légal.
@@ -280,13 +280,21 @@ export default function CguPage() {
         fait foi. Continuer à utiliser GeniGain après un changement vaut acceptation.
       </p>
 
-      <h2>15. Droit applicable</h2>
+      <h2>15. Droit applicable et for</h2>
       <p>
-        Ces conditions sont soumises au <strong>droit français</strong>. En cas de litige, une
-        solution amiable sera recherchée d’abord — écris-nous à{" "}
-        <a href="mailto:bonjour@genigain.com">bonjour@genigain.com</a>. À défaut, les tribunaux
-        français sont compétents. Un dispositif de médiation de la consommation sera mis en
-        place avant l’ouverture des paiements réels.
+        GeniGain est éditée depuis la <strong>Suisse</strong>. Ces conditions sont soumises au{" "}
+        <strong>droit suisse</strong>, à l’exclusion des règles de conflit de lois. En cas de
+        litige, une solution amiable sera recherchée d’abord — écris-nous à{" "}
+        <a href="mailto:bonjour@genigain.com">bonjour@genigain.com</a>. À défaut, le for est au
+        siège de GeniGain en Suisse (le canton exact sera précisé dès l’enregistrement de la
+        structure).
+      </p>
+      <p>
+        <strong>Utilisateurs à l’international.</strong> GeniGain est ouverte au-delà de la
+        Suisse. Si tu es un consommateur résidant dans l’Union européenne ou dans un autre pays,
+        le choix du droit suisse ne te prive pas des <strong>protections impératives</strong>{" "}
+        que la loi de ton pays de résidence t’accorde (droit de la consommation, protection des
+        données) : elles continuent de s’appliquer en ta faveur.
       </p>
     </>
   );
