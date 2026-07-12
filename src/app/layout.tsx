@@ -35,13 +35,13 @@ const SITE_URL = process.env.NEXT_PUBLIC_APP_URL
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Tremplin — La communauté qui finance ta génération",
-    template: "%s · Tremplin",
+    default: "GeniGain — La communauté qui finance ta génération",
+    template: "%s · GeniGain",
   },
   description:
     "Lance ton projet, fais-le financer par la communauté, débloque les fonds étape par étape. Contribue avant de poster — et si ça rate, rebondis.",
   openGraph: {
-    siteName: "Tremplin",
+    siteName: "GeniGain",
     locale: "fr_FR",
     type: "website",
   },
@@ -76,7 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
         <footer className="border-t border-white/[0.08] py-6">
           <p className="container text-center text-sm text-muted-foreground">
-            Tremplin · Phase 1 — paiements Stripe en mode test, aucun vrai débit. On teste les
+            GeniGain · Phase 1 — paiements Stripe en mode test, aucun vrai débit. On teste les
             mécaniques communautaires.
           </p>
         </footer>

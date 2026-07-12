@@ -39,7 +39,7 @@ export async function generateMetadata({
     title: user.name ?? "Profil",
     description:
       user.bio ??
-      `${user.name} sur Tremplin${user.city ? ` — ${user.city}` : ""} : réputation, projets et compétences.`,
+      `${user.name} sur GeniGain${user.city ? ` — ${user.city}` : ""} : réputation, projets et compétences.`,
   };
 }
 

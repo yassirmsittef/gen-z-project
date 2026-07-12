@@ -145,7 +145,7 @@ export default async function HomePage() {
       href: `/u/${m.id}`,
       text: (
         <>
-          <span className="font-semibold">{m.name}</span> a rejoint Tremplin
+          <span className="font-semibold">{m.name}</span> a rejoint GeniGain
         </>
       ),
     })),
@@ -280,7 +280,7 @@ export default async function HomePage() {
               className="mb-2 flex items-center justify-center gap-3 text-3xl font-semibold tracking-tight sm:text-4xl"
             >
               <Activity className="h-8 w-8 text-primary" aria-hidden />
-              Le pouls de Tremplin
+              Le pouls de GeniGain
             </h2>
             <p data-reveal className="data-label mb-8 text-center">
               Ce qui vient de se passer sur la plateforme

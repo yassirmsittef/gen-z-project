@@ -43,7 +43,7 @@ export async function Navbar() {
             <NavbarSigilLoader />
           </span>
           <span className="hidden font-display text-lg font-semibold tracking-tight min-[420px]:inline">
-            Tremplin
+            GeniGain
           </span>
         </Link>
 

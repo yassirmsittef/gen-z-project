@@ -9,7 +9,7 @@ import { CATEGORY_LABELS, STATUS_LABELS } from "@/lib/constants";
  */
 
 export const runtime = "nodejs";
-export const alt = "Projet Tremplin";
+export const alt = "Projet GeniGain";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -62,7 +62,7 @@ export default async function ProjectOgImage({ params }: { params: Promise<{ slu
             fontFamily: "sans-serif",
           }}
         >
-          Tremplin
+          GeniGain
         </div>
       ),
       size
@@ -160,7 +160,7 @@ export default async function ProjectOgImage({ params }: { params: Promise<{ slu
               <svg width="42" height="48" viewBox="-1.9 -2.1 3.8 4.5">
                 <path d={SIGIL_PATH} fill="#38BDF8" fillRule="evenodd" />
               </svg>
-              <div style={{ display: "flex", fontSize: 34, fontWeight: 700 }}>Tremplin</div>
+              <div style={{ display: "flex", fontSize: 34, fontWeight: 700 }}>GeniGain</div>
             </div>
           </div>
         </div>

@@ -106,7 +106,7 @@ Fonts chargées via `next/font/google` dans `src/app/layout.tsx` : Space Grotesk
   inline 1,7 → 3,05s). Reduced motion : intro sautée (état final) + délais CSS
   annulés. Ne pas rallonger au-delà de ~4,5s.
 - **Transition « lancement »** (`LaunchLink` dans launch-button.tsx + événement
-  `tremplin:launch`) : la caméra plonge dans le masque (z −5,2, accélération
+  `genigain:launch`) : la caméra plonge dans le masque (z −5,2, accélération
   pow 2,2 sur 1,5s) qui s'embrase (emissive → 1,3), les anneaux sont aspirés
   (échelle ×0,55, spin ×6) pendant que `.launch-overlay` inonde l'écran + blur
   16px (ease-in 1,5s) ; navigation à 1,45s. Une seule teinte : `aurora`

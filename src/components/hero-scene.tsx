@@ -296,7 +296,7 @@ export default function HeroScene() {
     const onLaunch = () => {
       if (launchElapsed < 0) launchElapsed = 0;
     };
-    window.addEventListener("tremplin:launch", onLaunch);
+    window.addEventListener("genigain:launch", onLaunch);
 
     const renderFrame = () => {
       timer.update();
@@ -402,7 +402,7 @@ export default function HeroScene() {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("tremplin:launch", onLaunch);
+      window.removeEventListener("genigain:launch", onLaunch);
       for (const dispose of disposers) dispose();
       renderer.dispose();
       // Libère le contexte WebGL immédiatement (le pool du navigateur est

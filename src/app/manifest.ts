@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
 
-/** PWA installable : « Ajouter à l'écran d'accueil » aux couleurs de Tremplin. */
+/** PWA installable : « Ajouter à l'écran d'accueil » aux couleurs de GeniGain. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Tremplin — la communauté qui finance ta génération",
-    short_name: "Tremplin",
+    name: "GeniGain — la communauté qui finance ta génération",
+    short_name: "GeniGain",
     description:
       "Contribue aux projets de ta génération, vote les preuves d'avancement, débloque les fonds étape par étape.",
     start_url: "/",

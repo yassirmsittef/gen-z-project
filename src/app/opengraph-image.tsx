@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 /** Carte de partage par défaut du site — nuit, sigil, dégradé aurora. */
 
-export const alt = "Tremplin — La communauté qui finance ta génération";
+export const alt = "GeniGain — La communauté qui finance ta génération";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -38,7 +38,7 @@ export default function OpengraphImage() {
           <path d={SIGIL_PATH} fill="url(#aurora)" fillRule="evenodd" />
         </svg>
         <div style={{ display: "flex", fontSize: 96, fontWeight: 700, letterSpacing: -3 }}>
-          Tremplin
+          GeniGain
         </div>
         <div style={{ display: "flex", fontSize: 34, color: "#94A3B8" }}>
           La communauté qui finance ta génération

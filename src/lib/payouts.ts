@@ -160,7 +160,7 @@ export async function executeDuePayouts() {
           currency: part.milestone.project.currency,
           destination: accountId,
           source_transaction: chargeId,
-          description: `Tremplin — étape ${part.milestone.order} « ${part.milestone.title} » (${part.milestone.project.title})`,
+          description: `GeniGain — étape ${part.milestone.order} « ${part.milestone.title} » (${part.milestone.project.title})`,
           metadata: { milestoneId: part.milestone.id, contributionId: part.contribution.id },
         },
         { idempotencyKey: `milestone-payout-${part.id}` }

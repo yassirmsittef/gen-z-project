@@ -55,7 +55,7 @@ export async function contributeAction(
           unit_amount: amountMinor,
           product_data: {
             name: `Contribution — ${project.title}`,
-            description: `Séquestre communautaire Tremplin (${formatMoney(amountMinor, project.currency)})`,
+            description: `Séquestre communautaire GeniGain (${formatMoney(amountMinor, project.currency)})`,
           },
         },
       },

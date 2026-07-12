@@ -17,7 +17,7 @@ type LaunchPhase = "idle" | "launching" | "fading";
 
 /**
  * Lien à transition « lancement » (teal → cyan, le rêve — boutons du hero) :
- * la scène 3D de l'accueil plonge dans le masque (événement `tremplin:launch`)
+ * la scène 3D de l'accueil plonge dans le masque (événement `genigain:launch`)
  * sous un voile de lumière.
  *
  * (La variante « portail violet » de Connexion / S'inscrire a été retirée le
@@ -62,7 +62,7 @@ export function LaunchLink({
 
     originRef.current = pathname;
     setPhase("launching");
-    window.dispatchEvent(new CustomEvent("tremplin:launch"));
+    window.dispatchEvent(new CustomEvent("genigain:launch"));
     window.setTimeout(() => router.push(href), LAUNCH_MS);
   }
 

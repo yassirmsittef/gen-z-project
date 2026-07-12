@@ -61,19 +61,19 @@ export async function requestPasswordReset(email: string): Promise<void> {
 
   await sendEmail({
     to: user.email,
-    subject: "Réinitialise ton mot de passe Tremplin",
-    text: `Salut ${user.name ?? ""},\n\nQuelqu'un (toi, normalement) a demandé à réinitialiser ton mot de passe Tremplin.\n\nLe lien est valable 1 heure et ne sert qu'une fois :\n${link}\n\nSi ce n'était pas toi, ignore cet email — ton mot de passe reste inchangé.\n\n— Tremplin, la communauté qui finance ta génération`,
+    subject: "Réinitialise ton mot de passe GeniGain",
+    text: `Salut ${user.name ?? ""},\n\nQuelqu'un (toi, normalement) a demandé à réinitialiser ton mot de passe GeniGain.\n\nLe lien est valable 1 heure et ne sert qu'une fois :\n${link}\n\nSi ce n'était pas toi, ignore cet email — ton mot de passe reste inchangé.\n\n— GeniGain, la communauté qui finance ta génération`,
     html: `<!doctype html><html><body style="margin:0;padding:0;background-color:#0B0E14;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0B0E14;padding:32px 16px;"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#131826;border:1px solid rgba(255,255,255,0.08);border-radius:16px;">
 <tr><td style="padding:32px;">
-<p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#94A3B8;font-family:'SF Mono',Menlo,Consolas,monospace;">Tremplin</p>
+<p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#94A3B8;font-family:'SF Mono',Menlo,Consolas,monospace;">GeniGain</p>
 <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#F1F5F9;">Réinitialise ton mot de passe</h1>
 <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#94A3B8;">Salut ${user.name ?? ""} — quelqu'un (toi, normalement) a demandé à réinitialiser ton mot de passe. Le lien est valable <strong style="color:#F1F5F9;">1&nbsp;heure</strong> et ne sert qu'une fois.</p>
 <p style="margin:0 0 24px;"><a href="${link}" style="display:inline-block;padding:12px 24px;background:linear-gradient(120deg,#5EEAD4,#38BDF8);color:#0B0E14;font-weight:600;font-size:14px;text-decoration:none;border-radius:12px;">Choisir un nouveau mot de passe</a></p>
 <p style="margin:0;font-size:12px;line-height:1.6;color:#64748B;">Si ce n'était pas toi, ignore cet email — ton mot de passe reste inchangé.</p>
 </td></tr></table>
-<p style="margin:16px 0 0;font-size:11px;color:#64748B;">Tremplin — la communauté qui finance ta génération</p>
+<p style="margin:16px 0 0;font-size:11px;color:#64748B;">GeniGain — la communauté qui finance ta génération</p>
 </td></tr></table></body></html>`,
   });
 }

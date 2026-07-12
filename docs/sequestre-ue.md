@@ -19,10 +19,10 @@ marqués ⚖️ sont à valider par un avocat en droit financier avant tout lanc
 
 ## TL;DR
 
-- Le modèle Tremplin (don avec récompense) **échappe à l'agrément européen PSFP/ECSP**,
+- Le modèle GeniGain (don avec récompense) **échappe à l'agrément européen PSFP/ECSP**,
   réservé au crowdfunding de prêt et d'investissement.
 - En revanche, **encaisser l'argent des contributeurs pour le reverser aux porteurs est
-  un service de paiement** : il faut un prestataire agréé dans la boucle — Tremplin ne
+  un service de paiement** : il faut un prestataire agréé dans la boucle — GeniGain ne
   doit jamais détenir les fonds sur ses propres comptes.
 - Le système actuel de **tokens prépayés rechargeables serait, en vrai argent, de
   l'émission de monnaie électronique** (agrément EME) : il doit disparaître ou être
@@ -43,7 +43,7 @@ Le règlement (UE) [2020/1503](https://eur-lex.europa.eu/legal-content/EN/TXT/?u
 (« ECSP ») impose un agrément PSFP, délivré en France par l'AMF, aux plateformes de
 **prêt et d'investissement**. Les **dons, avec ou sans contrepartie, sont exclus du
 périmètre** (article 1er § 2) — c'est le régime d'Ulule ou KissKissBankBank, et celui de
-Tremplin (contribution contre récompense symbolique / suivi du projet, sans rendement
+GeniGain (contribution contre récompense symbolique / suivi du projet, sans rendement
 financier). ⚖️ Confirmer avec l'AMF que nos « récompenses » restent hors champ.
 
 Sources : [CCI Paris — harmonisation européenne du crowdfunding](https://www.cci-paris-idf.fr/fr/prospective/creda/harmonisation-europeenne-crowdfunding),
@@ -96,7 +96,7 @@ Infrastructure de paiement pour plateformes, pensée pour le crowdfunding :
 | Références crowdfunding | Nombreuses plateformes UE | ~200 plateformes de crowdfunding, leader zone euro sur le segment |
 | Modèle technique | Wallets par utilisateur + par projet, PayIn / Transfer / PayOut, KYC intégré | Équivalent (comptes de paiement par membre/projet) |
 
-Flux cible pour Tremplin :
+Flux cible pour GeniGain :
 
 ```
 Contributeur ──PayIn carte──▶ Wallet membre ──Transfer──▶ Wallet projet (séquestre)

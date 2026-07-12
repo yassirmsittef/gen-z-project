@@ -46,7 +46,7 @@ export async function eraseAccount(userId: string) {
       where: { id: userId },
       data: {
         name: "Membre retiré",
-        email: `retire-${userId}@compte-supprime.tremplin.invalid`,
+        email: `retire-${userId}@compte-supprime.genigain.invalid`,
         passwordHash: null,
         avatarUrl: null,
         bio: null,

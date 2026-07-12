@@ -1,4 +1,4 @@
-# Tremplin ⚡ — Plateforme communautaire de financement participatif
+# GeniGain ⚡ — Plateforme communautaire de financement participatif
 
 **Bêta** : la Gen Z et les créateurs lancent leurs projets et se font financer par la
 communauté — **en argent réel, chacun dans sa devise** (architecture complète branchée sur

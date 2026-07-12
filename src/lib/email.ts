@@ -11,7 +11,7 @@
 
 export const emailEnabled = Boolean(process.env.RESEND_API_KEY);
 
-const FROM = process.env.EMAIL_FROM ?? "Tremplin <onboarding@resend.dev>";
+const FROM = process.env.EMAIL_FROM ?? "GeniGain <onboarding@resend.dev>";
 
 export async function sendEmail(input: {
   to: string;

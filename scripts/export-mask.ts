@@ -25,7 +25,7 @@ function toPath(points: Array<[number, number]>): string {
 
 const svgPath = [toPath(MASK_OUTLINE), ...MASK_EYES.map(toPath)].join(" ");
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1.72 -1.9 3.44 4.15">
-  <!-- Sigil Tremplin — masque médecin de la peste (source : src/lib/mask-sigil.ts) -->
+  <!-- Sigil GeniGain — masque médecin de la peste (source : src/lib/mask-sigil.ts) -->
   <path d="${svgPath}" fill="#F1F5F9" fill-rule="evenodd"/>
 </svg>
 `;
@@ -37,7 +37,7 @@ geometry.translate(0, 0, -(MASK_EXTRUDE.depth ?? 0.34) / 2);
 
 const position = geometry.getAttribute("position");
 const lines: string[] = [
-  "# Sigil Tremplin — masque médecin de la peste",
+  "# Sigil GeniGain — masque médecin de la peste",
   "# Source canonique : src/lib/mask-sigil.ts",
   "o mask_sigil",
 ];
