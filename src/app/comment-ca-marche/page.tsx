@@ -61,7 +61,7 @@ const STAGES = [
 const FAQ = [
   {
     q: "C'est un investissement ?",
-    a: "Non. Une contribution est un soutien : elle ne donne ni part du projet, ni intérêt, ni rendement. Ce que tu y gagnes : voir naître des projets que tu as choisis, un droit de vote sur leurs étapes, de la réputation dans la communauté — et le droit de lancer le tien.",
+    a: "Non. Une contribution est un soutien : elle ne donne ni part du projet, ni intérêt, ni rendement financier. Ce que tu y gagnes est ailleurs : tu fais naître des projets que tu as choisis parce qu'ils te parlent ou te seront utiles — l'app, le produit, le lieu ou le service que tu aimerais voir exister et dont tu profiteras une fois là. Tu gardes un droit de vote sur leurs étapes, tu construis ta réputation dans la communauté, et tu débloques le droit de lancer le tien.",
   },
   {
     q: "Ça coûte combien ?",
