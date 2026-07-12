@@ -146,6 +146,7 @@ export const REPORT_REASONS = [
 
 export const NOTIFICATION_TYPE_LABELS = {
   CONTRIBUTION: "Contribution reçue sur mes projets",
+  CONTRIBUTION_CONFIRMED: "Confirmation de mes contributions",
   PROJECT_FUNDED: "Objectif atteint",
   PROJECT_FAILED: "Campagne non aboutie",
   REFUND: "Remboursements",

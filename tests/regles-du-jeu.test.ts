@@ -179,6 +179,36 @@ describe("contribution (argent réel)", () => {
     expect((await projectState(projet.id)).raised).toBe(30);
   });
 
+  it("envoie un reçu au contributeur — mais pas pour un paiement après clôture", async () => {
+    const porteur = await mkUser();
+    const projet = await mkProject(porteur.id);
+    const contrib = await mkUser();
+
+    await contribute(contrib.id, projet.id, 40);
+
+    const reçu = await prisma.notification.findFirst({
+      where: { userId: contrib.id, type: "CONTRIBUTION_CONFIRMED" },
+    });
+    expect(reçu?.title).toContain("est confirmée");
+    expect(reçu?.href).toBe(`/projects/${projet.slug}`);
+    expect(
+      await prisma.notification.count({ where: { userId: porteur.id, type: "CONTRIBUTION" } })
+    ).toBe(1);
+
+    // Après la clôture, le paiement est fléché remboursement : REFUND, pas de reçu.
+    const clos = await mkProject(porteur.id, { status: "FAILED" });
+    const tardif = await mkUser();
+    await contribute(tardif.id, clos.id, 25);
+    expect(
+      await prisma.notification.count({
+        where: { userId: tardif.id, type: "CONTRIBUTION_CONFIRMED" },
+      })
+    ).toBe(0);
+    expect(
+      await prisma.notification.count({ where: { userId: tardif.id, type: "REFUND" } })
+    ).toBe(1);
+  });
+
   it("un paiement arrivé après la clôture est enregistré puis fléché remboursement", async () => {
     const porteur = await mkUser();
     const projet = await mkProject(porteur.id, { status: "FAILED" });

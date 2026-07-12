@@ -17,6 +17,7 @@ import { appUrl } from "@/lib/stripe";
 
 /** Les types relayés par email — volontairement peu nombreux (pas de spam). */
 export const EMAILED_TYPES: NotificationType[] = [
+  "CONTRIBUTION_CONFIRMED",
   "PROJECT_FUNDED",
   "PROJECT_FAILED",
   "REFUND",

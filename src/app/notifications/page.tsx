@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import {
+  BadgeCheck,
   Bell,
   Handshake,
   Heart,
@@ -31,6 +32,7 @@ export const metadata: Metadata = {
 /** Icône + teinte par type — la couleur n'est jamais seule porteuse (icône dédiée). */
 const TYPE_STYLES: Record<NotificationType, { Icon: LucideIcon; tone: string }> = {
   CONTRIBUTION: { Icon: Heart, tone: "text-primary" },
+  CONTRIBUTION_CONFIRMED: { Icon: BadgeCheck, tone: "text-success" },
   PROJECT_FUNDED: { Icon: PartyPopper, tone: "text-success" },
   PROJECT_FAILED: { Icon: LifeBuoy, tone: "text-destructive" },
   REFUND: { Icon: Undo2, tone: "text-success" },

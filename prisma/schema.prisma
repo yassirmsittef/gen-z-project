@@ -441,6 +441,7 @@ model Message {
 
 enum NotificationType {
   CONTRIBUTION // quelqu'un a soutenu ton projet
+  CONTRIBUTION_CONFIRMED // ton paiement est enregistré, fonds au séquestre
   PROJECT_FUNDED // objectif atteint
   PROJECT_FAILED // campagne non aboutie
   REFUND // contribution remboursée

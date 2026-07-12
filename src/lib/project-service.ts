@@ -292,6 +292,20 @@ export async function fulfillContribution(input: {
       tx
     );
 
+    // Reçu côté contributeur : moment d'argent réel → relayé par email
+    // (EMAILED_TYPES), avec le rappel des règles du séquestre.
+    await notify(
+      {
+        userId,
+        type: "CONTRIBUTION_CONFIRMED",
+        title: `Ta contribution de ${formatMoney(amount, project.currency)} à « ${project.title} » est confirmée`,
+        body:
+          "Les fonds rejoignent le séquestre du projet : ils seront débloqués étape par étape, sous le contrôle du vote des contributeurs — dont le tien. Si le projet n'aboutit pas, la part non débloquée revient automatiquement sur ta carte.",
+        href: `/projects/${project.slug}`,
+      },
+      tx
+    );
+
     // Objectif atteint : la collecte s'arrête, l'étape 1 attend sa preuve.
     if (funded) {
       const first = await tx.milestone.findFirst({ where: { projectId, order: 1 } });
