@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { executeDuePayouts, executeDueRefunds } from "@/lib/payouts";
 import { failExpiredProjects, failOverdueRealizations } from "@/lib/project-service";
 
@@ -29,5 +30,7 @@ export async function GET(request: Request) {
   // après coup…) : idempotents, sans effet s'il n'y a rien de dû.
   await executeDueRefunds();
   await executeDuePayouts();
+  // Filet des emails de notifications majeures manqués aux points chauds.
+  await sendPendingNotificationEmails();
   return NextResponse.json({ ok: true, ranAt: new Date().toISOString() });
 }

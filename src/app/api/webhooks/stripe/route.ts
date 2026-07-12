@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { fulfillContribution } from "@/lib/project-service";
+import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { executeDueRefunds } from "@/lib/payouts";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
 
@@ -55,6 +56,8 @@ export async function POST(request: Request) {
       });
       // Paiement arrivé après la clôture : le remboursement part tout de suite.
       if (refundNeeded) await executeDueRefunds();
+      // « Projet financé », « contribution remboursée »… : emails majeurs.
+      await sendPendingNotificationEmails();
     }
   }
 

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { VoteDecision } from "@prisma/client";
 import { auth } from "@/auth";
+import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { castVote, DomainError, submitMilestoneProof } from "@/lib/project-service";
 import { parseList, submitProofSchema } from "@/lib/validation";
 
@@ -31,6 +32,9 @@ export async function submitProofAction(
     throw error;
   }
 
+  // « Une preuve attend ton vote » part aussi par email (hors transaction).
+  await sendPendingNotificationEmails();
+
   revalidatePath("/", "layout");
   return { success: true };
 }
@@ -49,6 +53,10 @@ export async function voteProofAction(proofId: string, decision: VoteDecision) {
   } catch (error) {
     if (!(error instanceof DomainError)) throw error;
   }
+
+  // Étape validée, remboursements, échec… : les emails majeurs partent
+  // maintenant que tout est commité.
+  await sendPendingNotificationEmails();
 
   revalidatePath("/", "layout");
 }

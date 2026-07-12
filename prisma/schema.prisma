@@ -461,6 +461,9 @@ model Notification {
   body      String?
   href      String // destination du clic
   readAt    DateTime?
+  // Relais email des types majeurs : posé quand l'email est parti (envoi
+  // post-commit, rejoué par le cron — même pattern que les mouvements Stripe).
+  emailedAt DateTime?
   createdAt DateTime         @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
