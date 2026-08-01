@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ChatSidebar } from "@/components/chat-sidebar";
@@ -22,10 +23,12 @@ export const metadata: Metadata = {
 
 export default async function ChatThreadPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ userId: string }>;
+  searchParams: Promise<{ avant?: string }>;
 }) {
-  const { userId: partnerId } = await params;
+  const [{ userId: partnerId }, { avant }] = await Promise.all([params, searchParams]);
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   if (partnerId === session.user.id) redirect("/chat");
@@ -36,11 +39,12 @@ export default async function ChatThreadPage({
   });
   if (!partner) notFound();
 
-  const [conversations, groups, thread] = await Promise.all([
+  const [conversations, groups, fil] = await Promise.all([
     getConversations(session.user.id),
     getMyGroups(session.user.id),
-    getThread(session.user.id, partnerId),
+    getThread(session.user.id, partnerId, avant),
   ]);
+  const { messages: thread, hasOlder, isHistory } = fil;
 
   return (
     <div className="container py-10">
@@ -76,6 +80,17 @@ export default async function ChatThreadPage({
           </div>
 
           <div className="flex-1 space-y-3 overflow-y-auto p-4">
+            {hasOlder && thread.length > 0 && (
+              <p className="text-center">
+                <Link
+                  href={`/chat/${partner.id}?avant=${thread[0].id}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.12] bg-card/60 px-3.5 py-1 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground"
+                >
+                  <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+                  Messages plus anciens
+                </Link>
+              </p>
+            )}
             {thread.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">
                 Démarre la conversation — propose un coup de main, une collab, un échange de
@@ -103,7 +118,18 @@ export default async function ChatThreadPage({
                 );
               })
             )}
-            <ThreadAutoScroll count={thread.length} />
+            {isHistory && (
+              <p className="text-center">
+                <Link
+                  href={`/chat/${partner.id}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-sm font-medium text-primary transition-colors duration-200 hover:bg-primary/20"
+                >
+                  <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+                  Revenir aux derniers messages
+                </Link>
+              </p>
+            )}
+            {!isHistory && <ThreadAutoScroll count={thread.length} />}
           </div>
 
           <div className="border-t border-white/[0.06] p-4">
