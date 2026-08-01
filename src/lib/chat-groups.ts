@@ -133,10 +133,13 @@ export async function getGroupBySlug(slug: string, userId: string) {
   });
   if (!group) return null;
 
-  const membership = await prisma.chatGroupMember.findUnique({
-    where: { groupId_userId: { groupId: group.id, userId } },
-    select: { joinedAt: true },
-  });
+  const [membership, powers] = await Promise.all([
+    prisma.chatGroupMember.findUnique({
+      where: { groupId_userId: { groupId: group.id, userId } },
+      select: { joinedAt: true, manager: true },
+    }),
+    groupPowers(group, userId),
+  ]);
 
   return {
     id: group.id,
@@ -148,12 +151,40 @@ export async function getGroupBySlug(slug: string, userId: string) {
     createdAt: group.createdAt,
     owner: group.owner,
     isOwner: group.ownerId === userId,
+    isManager: membership?.manager ?? false,
+    // Ce que le visiteur a le droit de faire (ADMIN plateforme compris).
+    canManage: powers.owner,
+    canModerate: powers.manager,
     isMember: membership !== null,
     memberCount: group._count.members,
     messageCount: group._count.messages,
     full: group._count.members >= MAX_GROUP_MEMBERS,
     memberPreview: group.members.map((m) => m.user),
   };
+}
+
+/**
+ * Le trombinoscope d'un salon : tout le monde voit qui est là et qui anime
+ * (c'est une place publique), mais la liste des exclus ne regarde que
+ * l'animation.
+ */
+export async function getGroupMembers(groupId: string, canModerate: boolean) {
+  const [members, bans] = await Promise.all([
+    prisma.chatGroupMember.findMany({
+      where: { groupId },
+      orderBy: [{ manager: "desc" }, { joinedAt: "asc" }],
+      take: 200,
+      select: { manager: true, joinedAt: true, user: { select: senderSelect } },
+    }),
+    canModerate
+      ? prisma.chatGroupBan.findMany({
+          where: { groupId },
+          orderBy: { createdAt: "desc" },
+          select: { createdAt: true, user: { select: senderSelect } },
+        })
+      : Promise.resolve([]),
+  ]);
+  return { members, bans };
 }
 
 /** Le fil du groupe, du plus ancien au plus récent (réservé aux membres). */
@@ -168,6 +199,36 @@ export async function getGroupThread(groupId: string) {
 }
 
 // ---------- Écritures ----------
+
+/**
+ * Qui commande dans un salon, du plus fort au plus faible :
+ *
+ * - l'ANIMATEUR (owner) : nomme et démet les gérant·es, exclut n'importe qui,
+ *   dissout le salon ;
+ * - un·e GÉRANT·E : exclut des membres ordinaires et réadmet, mais ne touche
+ *   ni à l'animateur ni aux autres gérant·es, et ne nomme personne — sans
+ *   quoi deux gérant·es pourraient se destituer l'un l'autre, ou destituer
+ *   celui qui les a nommés ;
+ * - un ADMIN de la plateforme a les droits de l'animateur (modération).
+ *
+ * Une exclusion retire la personne ET l'empêche de revenir ; ses messages
+ * restent (retirer un propos est un geste distinct, qui passe par les
+ * signalements). Elle n'est jamais annoncée dans le fil : on n'humilie
+ * personne en public.
+ */
+type GroupAuthority = { ownerId: string; id: string };
+
+async function groupPowers(group: GroupAuthority, userId: string) {
+  const [membership, admin] = await Promise.all([
+    prisma.chatGroupMember.findUnique({
+      where: { groupId_userId: { groupId: group.id, userId } },
+      select: { manager: true },
+    }),
+    isAdmin(userId),
+  ]);
+  const owner = group.ownerId === userId || admin;
+  return { owner, manager: owner || (membership?.manager ?? false) };
+}
 
 async function requireMembership(groupId: string, userId: string) {
   const membership = await prisma.chatGroupMember.findUnique({
@@ -270,15 +331,22 @@ export async function joinGroup(userId: string, slug: string): Promise<string> {
   });
   if (!group) throw new DomainError("Groupe introuvable.");
 
-  const [already, joined] = await Promise.all([
+  const [already, joined, exclu] = await Promise.all([
     prisma.chatGroupMember.findUnique({
       where: { groupId_userId: { groupId: group.id, userId } },
       select: { userId: true },
     }),
     prisma.chatGroupMember.count({ where: { userId } }),
+    prisma.chatGroupBan.findUnique({
+      where: { groupId_userId: { groupId: group.id, userId } },
+      select: { userId: true },
+    }),
   ]);
   // Déjà là : pas de seconde ligne d'accueil (double clic, deux onglets).
   if (already) return group.id;
+  if (exclu) {
+    throw new DomainError("L'animation de ce salon t'en a retiré — tu ne peux pas y revenir.");
+  }
 
   if (group._count.members >= MAX_GROUP_MEMBERS) {
     throw new DomainError(
@@ -338,9 +406,11 @@ export async function leaveGroup(userId: string, slug: string): Promise<boolean>
     if (!membership) throw new DomainError("Tu ne fais pas partie de ce groupe.");
 
     if (group.ownerId === userId) {
+      // La main passe d'abord au gérant le plus ancien — il modère déjà —
+      // puis, faute de gérant, au membre le plus ancien.
       const heir = await tx.chatGroupMember.findFirst({
         where: { groupId: group.id, userId: { not: userId } },
-        orderBy: { joinedAt: "asc" },
+        orderBy: [{ manager: "desc" }, { joinedAt: "asc" }],
         select: { userId: true },
       });
       if (!heir) {
@@ -355,6 +425,94 @@ export async function leaveGroup(userId: string, slug: string): Promise<boolean>
     });
     return false;
   });
+}
+
+/** Nommer ou démettre un·e gérant·e — l'animateur seul (ou un ADMIN). */
+export async function setGroupManager(
+  actorId: string,
+  slug: string,
+  targetId: string,
+  manager: boolean
+) {
+  const group = await prisma.chatGroup.findUnique({
+    where: { slug },
+    select: { id: true, ownerId: true },
+  });
+  if (!group) throw new DomainError("Groupe introuvable.");
+
+  const powers = await groupPowers(group, actorId);
+  if (!powers.owner) {
+    throw new DomainError("Seule l'animation du salon nomme les gérant·es.");
+  }
+  if (targetId === group.ownerId) {
+    throw new DomainError("L'animateur du salon a déjà tous les droits.");
+  }
+
+  const changed = await prisma.chatGroupMember.updateMany({
+    where: { groupId: group.id, userId: targetId },
+    data: { manager },
+  });
+  if (changed.count === 0) throw new DomainError("Cette personne n'est pas dans le salon.");
+}
+
+/**
+ * Exclure quelqu'un : il sort du salon et ne peut plus y revenir tant que
+ * l'animation ne le réadmet pas.
+ */
+export async function excludeFromGroup(actorId: string, slug: string, targetId: string) {
+  const group = await prisma.chatGroup.findUnique({
+    where: { slug },
+    select: { id: true, ownerId: true },
+  });
+  if (!group) throw new DomainError("Groupe introuvable.");
+  if (targetId === actorId) {
+    throw new DomainError("Pour partir toi-même, quitte le salon.");
+  }
+
+  const [powers, cible] = await Promise.all([
+    groupPowers(group, actorId),
+    prisma.chatGroupMember.findUnique({
+      where: { groupId_userId: { groupId: group.id, userId: targetId } },
+      select: { manager: true },
+    }),
+  ]);
+  if (!powers.manager) throw new DomainError("Réservé à l'animation du salon.");
+  if (!cible) throw new DomainError("Cette personne n'est pas dans le salon.");
+  if (targetId === group.ownerId) {
+    throw new DomainError("L'animateur du salon ne peut pas en être exclu.");
+  }
+  // Un·e gérant·e ne destitue pas ses pairs : il faut l'animateur pour ça.
+  if (cible.manager && !powers.owner) {
+    throw new DomainError("Seul l'animateur peut exclure un·e gérant·e.");
+  }
+
+  await prisma.$transaction([
+    prisma.chatGroupMember.delete({
+      where: { groupId_userId: { groupId: group.id, userId: targetId } },
+    }),
+    prisma.chatGroupBan.upsert({
+      where: { groupId_userId: { groupId: group.id, userId: targetId } },
+      create: { groupId: group.id, userId: targetId, byId: actorId },
+      update: { byId: actorId, createdAt: new Date() },
+    }),
+  ]);
+}
+
+/** Lever une exclusion : la personne peut rejoindre à nouveau. */
+export async function readmitToGroup(actorId: string, slug: string, targetId: string) {
+  const group = await prisma.chatGroup.findUnique({
+    where: { slug },
+    select: { id: true, ownerId: true },
+  });
+  if (!group) throw new DomainError("Groupe introuvable.");
+
+  const powers = await groupPowers(group, actorId);
+  if (!powers.manager) throw new DomainError("Réservé à l'animation du salon.");
+
+  const lifted = await prisma.chatGroupBan.deleteMany({
+    where: { groupId: group.id, userId: targetId },
+  });
+  if (lifted.count === 0) throw new DomainError("Cette personne n'est pas exclue du salon.");
 }
 
 /** Dissoudre un groupe — son animateur, ou un ADMIN (modération). */

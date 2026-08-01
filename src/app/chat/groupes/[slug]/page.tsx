@@ -24,6 +24,31 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/** Les cinq premiers visages du salon, puis le compte des autres. */
+function MemberStack({
+  group,
+}: {
+  group: NonNullable<Awaited<ReturnType<typeof getGroupBySlug>>>;
+}) {
+  return (
+    <>
+      {group.memberPreview.slice(0, 5).map((member) => (
+        <UserAvatar
+          key={member.id}
+          name={member.name}
+          avatarUrl={member.avatarUrl}
+          className="h-8 w-8 ring-1 ring-background"
+        />
+      ))}
+      {group.memberCount > 5 && (
+        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.12] bg-card/80 font-mono text-[10px] text-muted-foreground ring-1 ring-background">
+          +{group.memberCount - 5}
+        </span>
+      )}
+    </>
+  );
+}
+
 export default async function GroupThreadPage({
   params,
 }: {
@@ -107,21 +132,21 @@ export default async function GroupThreadPage({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex -space-x-2" aria-label={`${group.memberCount} membres`}>
-                {group.memberPreview.slice(0, 5).map((member) => (
-                  <UserAvatar
-                    key={member.id}
-                    name={member.name}
-                    avatarUrl={member.avatarUrl}
-                    className="h-8 w-8 ring-1 ring-background"
-                  />
-                ))}
-                {group.memberCount > 5 && (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.12] bg-card/80 font-mono text-[10px] text-muted-foreground ring-1 ring-background">
-                    +{group.memberCount - 5}
-                  </span>
-                )}
-              </div>
+              {/* La pile d'avatars mène au trombinoscope : c'est de là que
+                  l'animation nomme les gérant·es et exclut. */}
+              {group.isMember || group.canModerate ? (
+                <Link
+                  href={`/chat/groupes/${group.slug}/membres`}
+                  className="flex -space-x-2 rounded-full transition-transform duration-200 hover:-translate-y-0.5"
+                  title={`Voir les ${group.memberCount} membres`}
+                >
+                  <MemberStack group={group} />
+                </Link>
+              ) : (
+                <div className="flex -space-x-2" aria-label={`${group.memberCount} membres`}>
+                  <MemberStack group={group} />
+                </div>
+              )}
               {group.isMember && (
                 <>
                   {group.isOwner ? (

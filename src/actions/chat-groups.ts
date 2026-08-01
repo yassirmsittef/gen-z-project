@@ -6,10 +6,13 @@ import { auth } from "@/auth";
 import {
   createGroup,
   dissolveGroup,
+  excludeFromGroup,
   joinGroup,
   leaveGroup,
   openLanguageRooms,
   postGroupMessage,
+  readmitToGroup,
+  setGroupManager,
 } from "@/lib/chat-groups";
 import { DomainError } from "@/lib/project-service";
 import { createGroupSchema, groupMessageSchema } from "@/lib/validation";
@@ -119,6 +122,39 @@ export async function dissolveGroupAction(
 
   revalidatePath("/chat", "layout");
   redirect("/chat/groupes");
+}
+
+export type GroupModerationState = { error?: string; done?: number } | undefined;
+
+/**
+ * Gestes d'animation d'un salon : nommer/démettre un·e gérant·e, exclure,
+ * réadmettre. Un seul point d'entrée, la garde des droits vit dans le
+ * service. `done` change à chaque succès pour rafraîchir l'écran.
+ */
+export async function groupModerationAction(
+  _prev: GroupModerationState,
+  formData: FormData
+): Promise<GroupModerationState> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  const slug = String(formData.get("slug") ?? "");
+  const targetId = String(formData.get("targetId") ?? "");
+  const geste = String(formData.get("geste") ?? "");
+
+  try {
+    if (geste === "nommer") await setGroupManager(session.user.id, slug, targetId, true);
+    else if (geste === "demettre") await setGroupManager(session.user.id, slug, targetId, false);
+    else if (geste === "exclure") await excludeFromGroup(session.user.id, slug, targetId);
+    else if (geste === "readmettre") await readmitToGroup(session.user.id, slug, targetId);
+    else return { error: "Geste inconnu." };
+  } catch (error) {
+    if (error instanceof DomainError) return { error: error.message };
+    throw error;
+  }
+
+  revalidatePath("/chat", "layout");
+  return { done: Date.now() };
 }
 
 export type GroupMessageState = { error?: string; sentAt?: number } | undefined;

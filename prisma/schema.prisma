@@ -63,6 +63,8 @@ model User {
   groupsOwned      ChatGroup[]         @relation("GroupsOwned")
   groupMemberships ChatGroupMember[]
   groupMessages    GroupMessage[]      @relation("GroupMessagesSent")
+  groupBans        ChatGroupBan[]      @relation("GroupBans")
+  groupBansIssued  ChatGroupBan[]      @relation("GroupBansIssued")
   notifications    Notification[]
   comments         Comment[]
   follows          Follow[]
@@ -477,6 +479,7 @@ model ChatGroup {
   owner    User              @relation("GroupsOwned", fields: [ownerId], references: [id], onDelete: Cascade)
   members  ChatGroupMember[]
   messages GroupMessage[]
+  bans     ChatGroupBan[]
 
   @@index([category, createdAt])
   @@index([official, createdAt])
@@ -486,6 +489,9 @@ model ChatGroup {
 model ChatGroupMember {
   groupId String
   userId  String
+  // Gérant·e : partage la modération avec l'animateur (exclure un membre),
+  // sans pouvoir nommer d'autres gérant·es ni toucher à l'animation.
+  manager Boolean @default(false)
   // Dernier passage dans le fil : alimente la pastille « non lus ».
   lastReadAt DateTime @default(now())
   joinedAt   DateTime @default(now())
@@ -495,6 +501,24 @@ model ChatGroupMember {
 
   @@id([groupId, userId])
   @@index([userId, joinedAt])
+  @@index([groupId, manager])
+}
+
+/// Exclusion d'un salon : la personne en sort et ne peut plus y revenir tant
+/// que l'animation ne la réadmet pas. Ses messages restent — retirer un
+/// propos est un geste distinct de retirer une personne.
+model ChatGroupBan {
+  groupId   String
+  userId    String
+  byId      String // qui a prononcé l'exclusion (traçabilité)
+  createdAt DateTime @default(now())
+
+  group ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User      @relation("GroupBans", fields: [userId], references: [id], onDelete: Cascade)
+  by    User      @relation("GroupBansIssued", fields: [byId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+  @@index([userId])
 }
 
 model GroupMessage {

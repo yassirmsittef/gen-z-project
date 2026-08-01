@@ -5,6 +5,7 @@ import { createReport } from "../src/lib/moderation";
 import {
   createGroup,
   dissolveGroup,
+  excludeFromGroup,
   getGroupBySlug,
   getGroupThread,
   getMyGroups,
@@ -15,6 +16,8 @@ import {
   missingLanguageRooms,
   openLanguageRooms,
   postGroupMessage,
+  readmitToGroup,
+  setGroupManager,
 } from "../src/lib/chat-groups";
 import { LANGUAGE_ROOMS, MAX_GROUPS_OWNED } from "../src/lib/constants";
 import { DomainError } from "../src/lib/project-service";
@@ -251,6 +254,71 @@ describe("rejoindre, écrire, quitter", () => {
 
     expect(await leaveGroup(fondateur.id, slug)).toBe(true);
     expect(await getGroupBySlug(slug, fondateur.id)).toBeNull();
+  });
+});
+
+describe("animation d'un salon : gérant·es et exclusions", () => {
+  it("réserve la nomination à l'animateur, et la gérance ne se retourne pas contre lui", async () => {
+    const animateur = await mkUser();
+    const gerant = await mkUser();
+    const membre = await mkUser();
+    const slug = await group(animateur.id);
+    await joinGroup(gerant.id, slug);
+    await joinGroup(membre.id, slug);
+
+    // Un membre ordinaire ne nomme personne, pas même lui-même.
+    await expect(setGroupManager(membre.id, slug, membre.id, true)).rejects.toThrow(DomainError);
+
+    await setGroupManager(animateur.id, slug, gerant.id, true);
+    expect((await getGroupBySlug(slug, gerant.id))?.isManager).toBe(true);
+
+    // Un·e gérant·e ne nomme pas, ne destitue pas l'animateur…
+    await expect(setGroupManager(gerant.id, slug, membre.id, true)).rejects.toThrow(DomainError);
+    await expect(excludeFromGroup(gerant.id, slug, animateur.id)).rejects.toThrow(DomainError);
+    // …ni ne se débarrasse d'un pair.
+    const autreGerant = await mkUser();
+    await joinGroup(autreGerant.id, slug);
+    await setGroupManager(animateur.id, slug, autreGerant.id, true);
+    await expect(excludeFromGroup(gerant.id, slug, autreGerant.id)).rejects.toThrow(DomainError);
+  });
+
+  it("exclut, ferme la porte au retour, puis réadmet", async () => {
+    const animateur = await mkUser();
+    const gerant = await mkUser();
+    const genant = await mkUser();
+    const slug = await group(animateur.id);
+    const groupId = (await getGroupBySlug(slug, animateur.id))!.id;
+    await joinGroup(gerant.id, slug);
+    await setGroupManager(animateur.id, slug, gerant.id, true);
+    await joinGroup(genant.id, slug);
+    await postGroupMessage(genant.id, { groupId, body: "Un message qui restera." });
+
+    await excludeFromGroup(gerant.id, slug, genant.id);
+    expect((await getGroupBySlug(slug, genant.id))?.isMember).toBe(false);
+    // La porte est fermée : rejoindre à nouveau est refusé.
+    await expect(joinGroup(genant.id, slug)).rejects.toThrow(DomainError);
+    // Mais ses propos restent — retirer une personne n'efface pas ses mots.
+    expect(
+      await prisma.groupMessage.count({ where: { groupId, senderId: genant.id, system: false } })
+    ).toBe(1);
+
+    await readmitToGroup(animateur.id, slug, genant.id);
+    await joinGroup(genant.id, slug);
+    expect((await getGroupBySlug(slug, genant.id))?.isMember).toBe(true);
+  });
+
+  it("passe l'animation au gérant le plus ancien quand l'animateur s'en va", async () => {
+    const animateur = await mkUser();
+    const ancien = await mkUser();
+    const gerant = await mkUser();
+    const slug = await group(animateur.id);
+    await joinGroup(ancien.id, slug); // arrivé AVANT le gérant
+    await joinGroup(gerant.id, slug);
+    await setGroupManager(animateur.id, slug, gerant.id, true);
+
+    await leaveGroup(animateur.id, slug);
+    // La gérance prime sur l'ancienneté : il modérait déjà.
+    expect((await getGroupBySlug(slug, gerant.id))?.owner.id).toBe(gerant.id);
   });
 });
 
