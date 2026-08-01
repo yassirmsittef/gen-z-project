@@ -44,6 +44,21 @@ export const REALIZATION_DAYS = 90;
 export const MAX_SKILLS_PER_USER = 8;
 export const MAX_SKILLS_PER_PROJECT = 6;
 
+// ---------- Groupes de chat ----------
+// Les groupes sont les places publiques de la plateforme, rangées dans les
+// mêmes catégories que les projets. Ouverts à tous les membres connectés :
+// aucun gate de contribution (le chat sert justement à trouver de l'aide
+// AVANT d'avoir un projet). Les garde-fous sont donc des plafonds.
+
+/** Groupes qu'un même membre peut animer — au-delà, c'est de l'occupation. */
+export const MAX_GROUPS_OWNED = 3;
+
+/** Taille maximale d'un groupe : au-delà, un fil unique devient illisible. */
+export const MAX_GROUP_MEMBERS = 200;
+
+/** Groupes qu'un membre peut avoir rejoints en même temps. */
+export const MAX_GROUPS_JOINED = 20;
+
 // ---------- Étapes & preuves ----------
 
 export const MIN_MILESTONES = 2;
@@ -156,6 +171,7 @@ export const NOTIFICATION_TYPE_LABELS = {
   MILESTONE_RELEASED: "Étape validée, fonds débloqués",
   PROOF_REJECTED: "Preuve refusée",
   MESSAGE: "Nouveaux messages privés",
+  GROUP_MESSAGE: "Nouveaux messages dans mes groupes",
   PARTNERSHIP: "Demandes de partenariat",
   COMMENT: "Commentaires sur mes projets",
   PROJECT_UPDATE: "Actus des projets que je soutiens ou suis",

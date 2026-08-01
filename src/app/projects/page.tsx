@@ -2,12 +2,12 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ProjectCategory, ProjectStatus, type Prisma } from "@prisma/client";
 import { Search } from "lucide-react";
+import { ChipRail, FilterChip } from "@/components/filter-chips";
 import { ProjectCard } from "@/components/project-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { prisma } from "@/lib/prisma";
 import { CATEGORY_DESCRIPTIONS, CATEGORY_LABELS, STATUS_LABELS } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Projets" };
 
@@ -183,38 +183,5 @@ export default async function ProjectsPage({
         </div>
       )}
     </div>
-  );
-}
-
-/**
- * Ligne de chips défilante : une seule hauteur de ligne quel que soit le
- * nombre de filtres. Fondu aux bords pour suggérer la suite, scrollbar
- * masquée, padding vertical pour laisser vivre le lift des chips.
- */
-function ChipRail({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div
-      role="group"
-      aria-label={label}
-      className="flex gap-2 overflow-x-auto px-4 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,transparent,black_16px,black_calc(100%-24px),transparent)] -mx-4"
-    >
-      {children}
-    </div>
-  );
-}
-
-function FilterChip({ href, active, label }: { href: string; active: boolean; label: string }) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1 text-sm font-medium transition-all duration-200 ease-out",
-        active
-          ? "border-primary/40 bg-primary/15 text-primary shadow-glow"
-          : "border-white/[0.12] bg-card/60 text-muted-foreground hover:-translate-y-0.5 hover:text-foreground"
-      )}
-    >
-      {label}
-    </Link>
   );
 }

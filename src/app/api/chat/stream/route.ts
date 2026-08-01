@@ -4,10 +4,11 @@ import { prisma } from "@/lib/prisma";
 /**
  * Flux temps réel du chat (Server-Sent Events).
  *
- * Le serveur surveille les nouveaux messages de l'utilisateur (les deux sens :
- * un message envoyé depuis un autre onglet compte aussi) et pousse un
- * événement `message` dès qu'il y en a — le client fait alors un
- * router.refresh() ciblé, bien plus léger que l'ancien polling 5 s pleine page.
+ * Le serveur surveille les nouveaux messages de l'utilisateur — privés (les
+ * deux sens : un message envoyé depuis un autre onglet compte aussi) ET ceux
+ * des groupes qu'il a rejoints — et pousse un événement `message` dès qu'il y
+ * en a. Le client fait alors un router.refresh() ciblé, bien plus léger que
+ * l'ancien polling 5 s pleine page.
  *
  * Contrainte serverless (Vercel) : une fonction ne vit pas éternellement.
  * On ferme proprement le flux avant la limite (~50 s) après avoir annoncé
@@ -65,17 +66,33 @@ export async function GET(request: Request) {
 
       while (!closed && Date.now() - startedAt < STREAM_LIFETIME_MS) {
         try {
-          const latest = await prisma.message.findFirst({
-            where: {
-              OR: [{ recipientId: userId }, { senderId: userId }],
-              createdAt: { gt: since },
-            },
-            orderBy: { createdAt: "desc" },
-            select: { createdAt: true, senderId: true },
-          });
-          if (latest) {
-            since = latest.createdAt;
-            if (!push(`event: message\ndata: ${latest.createdAt.getTime()}\n\n`)) break;
+          const [privateMessage, groupMessage] = await Promise.all([
+            prisma.message.findFirst({
+              where: {
+                OR: [{ recipientId: userId }, { senderId: userId }],
+                createdAt: { gt: since },
+              },
+              orderBy: { createdAt: "desc" },
+              select: { createdAt: true },
+            }),
+            // Groupes rejoints : le fil ouvert et la pastille « non lus » de
+            // la barre latérale suivent la même horloge que le privé.
+            prisma.groupMessage.findFirst({
+              where: {
+                group: { members: { some: { userId } } },
+                createdAt: { gt: since },
+              },
+              orderBy: { createdAt: "desc" },
+              select: { createdAt: true },
+            }),
+          ]);
+          const latestAt = [privateMessage?.createdAt, groupMessage?.createdAt]
+            .filter((date): date is Date => date != null)
+            .sort((a, b) => b.getTime() - a.getTime())[0];
+
+          if (latestAt) {
+            since = latestAt;
+            if (!push(`event: message\ndata: ${latestAt.getTime()}\n\n`)) break;
           } else if (ticks % HEARTBEAT_EVERY === 0) {
             if (!push(`: ping\n\n`)) break;
           }

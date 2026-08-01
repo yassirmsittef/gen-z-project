@@ -3,13 +3,14 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { ChatSidebar } from "@/components/chat-sidebar";
 import { ChatStream } from "@/components/chat-stream";
-import { ConversationList } from "@/components/conversation-list";
 import { MessageForm } from "@/components/message-form";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { SkillTag } from "@/components/skill-tag";
 import { UserAvatar } from "@/components/user-avatar";
 import { getConversations, getThread } from "@/lib/chat";
+import { getMyGroups } from "@/lib/chat-groups";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -34,8 +35,9 @@ export default async function ChatThreadPage({
   });
   if (!partner) notFound();
 
-  const [conversations, thread] = await Promise.all([
+  const [conversations, groups, thread] = await Promise.all([
     getConversations(session.user.id),
+    getMyGroups(session.user.id),
     getThread(session.user.id, partnerId),
   ]);
 
@@ -49,7 +51,11 @@ export default async function ChatThreadPage({
 
       <div className="grid items-start gap-6 lg:grid-cols-[320px_1fr]">
         <div className="hidden lg:block">
-          <ConversationList conversations={conversations} activePartnerId={partner.id} />
+          <ChatSidebar
+            conversations={conversations}
+            groups={groups}
+            activePartnerId={partner.id}
+          />
         </div>
 
         <div className="glass flex min-h-[60vh] flex-col rounded-2xl rounded-tr-sm">

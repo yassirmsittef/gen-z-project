@@ -60,6 +60,9 @@ model User {
   votes            Vote[]
   messagesSent     Message[]           @relation("MessagesSent")
   messagesReceived Message[]           @relation("MessagesReceived")
+  groupsOwned      ChatGroup[]         @relation("GroupsOwned")
+  groupMemberships ChatGroupMember[]
+  groupMessages    GroupMessage[]      @relation("GroupMessagesSent")
   notifications    Notification[]
   comments         Comment[]
   follows          Follow[]
@@ -408,6 +411,7 @@ enum ReportTargetType {
   PROJECT
   COMMENT
   USER
+  CHAT_GROUP // groupe de chat (nom, intention ou ambiance du salon)
 }
 
 enum ReportStatus {
@@ -453,6 +457,56 @@ model Message {
   @@index([recipientId, createdAt])
 }
 
+// ---------- Groupes de chat (une catégorie = des salons) ----------
+// Le privé (Message) sert au un-à-un ; les groupes sont les places publiques
+// de la plateforme, rangées dans les MÊMES catégories que les projets —
+// « Gaming », « Musique »… Créés par n'importe quel membre, ouverts à tous.
+
+model ChatGroup {
+  id        String          @id @default(cuid())
+  slug      String          @unique
+  name      String
+  purpose   String // à quoi sert ce groupe, une phrase
+  category  ProjectCategory
+  ownerId   String
+  createdAt DateTime        @default(now())
+
+  owner    User              @relation("GroupsOwned", fields: [ownerId], references: [id], onDelete: Cascade)
+  members  ChatGroupMember[]
+  messages GroupMessage[]
+
+  @@index([category, createdAt])
+  @@index([ownerId])
+}
+
+model ChatGroupMember {
+  groupId String
+  userId  String
+  // Dernier passage dans le fil : alimente la pastille « non lus ».
+  lastReadAt DateTime @default(now())
+  joinedAt   DateTime @default(now())
+
+  group ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+  @@index([userId, joinedAt])
+}
+
+model GroupMessage {
+  id        String   @id @default(cuid())
+  groupId   String
+  senderId  String
+  body      String
+  createdAt DateTime @default(now())
+
+  group  ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender User      @relation("GroupMessagesSent", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, createdAt])
+  @@index([senderId, createdAt])
+}
+
 // ---------- Notifications ----------
 
 enum NotificationType {
@@ -465,6 +519,7 @@ enum NotificationType {
   MILESTONE_RELEASED // étape validée, fonds débloqués
   PROOF_REJECTED // preuve refusée par la communauté
   MESSAGE // nouveau message privé
+  GROUP_MESSAGE // nouveau message dans un groupe rejoint
   PARTNERSHIP // nouvelle demande de partenariat
   COMMENT // nouveau commentaire sur ton projet
   PROJECT_UPDATE // le porteur a posté une actu

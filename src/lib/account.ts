@@ -36,7 +36,25 @@ export async function eraseAccount(userId: string) {
       where: { ownerId: userId, contributions: { none: {} } },
     });
 
+    // Groupes de chat animés : la main passe au membre le plus ancien pour
+    // que le salon (et les messages des autres) survivent ; sans repreneur,
+    // le groupe est dissous.
+    const owned = await tx.chatGroup.findMany({ where: { ownerId: userId }, select: { id: true } });
+    for (const group of owned) {
+      const heir = await tx.chatGroupMember.findFirst({
+        where: { groupId: group.id, userId: { not: userId } },
+        orderBy: { joinedAt: "asc" },
+        select: { userId: true },
+      });
+      if (heir) {
+        await tx.chatGroup.update({ where: { id: group.id }, data: { ownerId: heir.userId } });
+      } else {
+        await tx.chatGroup.delete({ where: { id: group.id } });
+      }
+    }
+
     // Données personnelles satellites.
+    await tx.chatGroupMember.deleteMany({ where: { userId } });
     await tx.notification.deleteMany({ where: { userId } });
     await tx.follow.deleteMany({ where: { userId } });
     await tx.session.deleteMany({ where: { userId } });

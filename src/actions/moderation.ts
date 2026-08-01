@@ -10,7 +10,7 @@ import { DomainError } from "@/lib/project-service";
 export type ReportFormState = { error?: string; success?: boolean } | undefined;
 
 const reportSchema = z.object({
-  targetType: z.enum(["PROJECT", "COMMENT", "USER"]),
+  targetType: z.enum(["PROJECT", "COMMENT", "USER", "CHAT_GROUP"]),
   targetId: z.string().min(1),
   reason: z.string().min(1, "Choisis un motif."),
   detail: z.string().trim().max(500, "500 caractères max.").optional(),

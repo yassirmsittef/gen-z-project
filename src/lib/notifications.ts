@@ -76,6 +76,40 @@ export async function notifyOnceUnread(input: NotificationInput, client: Client 
   await notify(input, client);
 }
 
+/**
+ * Version en lot de `notifyOnceUnread` — un salon de 200 membres ne doit pas
+ * coûter 200 requêtes de déduplication : une seule lecture des non-lues du
+ * lot, puis un seul insert.
+ */
+export async function notifyManyOnceUnread(inputs: NotificationInput[], client: Client = prisma) {
+  const allowed = await withoutMuted(inputs, client);
+  if (allowed.length === 0) return;
+
+  const existing = await client.notification.findMany({
+    where: {
+      userId: { in: [...new Set(allowed.map((i) => i.userId))] },
+      href: { in: [...new Set(allowed.map((i) => i.href))] },
+      readAt: null,
+    },
+    select: { userId: true, type: true, href: true },
+  });
+  const key = (n: { userId: string; type: NotificationType; href: string }) =>
+    `${n.userId}|${n.type}|${n.href}`;
+  const alreadyPending = new Set(existing.map(key));
+
+  const fresh = allowed.filter((input) => !alreadyPending.has(key(input)));
+  if (fresh.length === 0) return;
+  await client.notification.createMany({
+    data: fresh.map((input) => ({
+      userId: input.userId,
+      type: input.type,
+      title: input.title,
+      body: input.body,
+      href: input.href,
+    })),
+  });
+}
+
 export async function unreadCount(userId: string): Promise<number> {
   return prisma.notification.count({ where: { userId, readAt: null } });
 }

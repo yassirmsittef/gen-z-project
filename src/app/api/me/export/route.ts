@@ -16,8 +16,18 @@ export async function GET() {
   }
   const userId = session.user.id;
 
-  const [user, projects, contributions, votes, comments, messagesSent, follows, reports] =
-    await Promise.all([
+  const [
+    user,
+    projects,
+    contributions,
+    votes,
+    comments,
+    messagesSent,
+    groupMemberships,
+    groupMessages,
+    follows,
+    reports,
+  ] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -108,6 +118,19 @@ export async function GET() {
           recipient: { select: { name: true } },
         },
       }),
+      prisma.chatGroupMember.findMany({
+        where: { userId },
+        orderBy: { joinedAt: "asc" },
+        select: {
+          joinedAt: true,
+          group: { select: { name: true, slug: true, category: true, ownerId: true } },
+        },
+      }),
+      prisma.groupMessage.findMany({
+        where: { senderId: userId },
+        orderBy: { createdAt: "asc" },
+        select: { body: true, createdAt: true, group: { select: { name: true, slug: true } } },
+      }),
       prisma.follow.findMany({
         where: { userId },
         orderBy: { createdAt: "asc" },
@@ -146,6 +169,18 @@ export async function GET() {
     })),
     messages_envoyes: messagesSent.map((m) => ({
       a: m.recipient.name ?? "Membre retiré",
+      texte: m.body,
+      date: m.createdAt,
+    })),
+    groupes_rejoints: groupMemberships.map((m) => ({
+      groupe: m.group.name,
+      slug: m.group.slug,
+      categorie: m.group.category,
+      anime_par_moi: m.group.ownerId === userId,
+      depuis: m.joinedAt,
+    })),
+    messages_de_groupe_envoyes: groupMessages.map((m) => ({
+      groupe: m.group.name,
       texte: m.body,
       date: m.createdAt,
     })),

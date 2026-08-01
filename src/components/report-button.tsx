@@ -22,7 +22,7 @@ export function ReportButton({
   iconOnly = false,
   className,
 }: {
-  targetType: "PROJECT" | "COMMENT" | "USER";
+  targetType: "PROJECT" | "COMMENT" | "USER" | "CHAT_GROUP";
   targetId: string;
   label?: string;
   iconOnly?: boolean;

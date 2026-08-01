@@ -202,6 +202,32 @@ export const messageSchema = z.object({
     .max(1000, "1000 caractères max par message."),
 });
 
+export const createGroupSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(3, "Nom de groupe trop court (3 caractères min).")
+    .max(40, "40 caractères max."),
+  purpose: z
+    .string()
+    .trim()
+    .min(10, "Dis en une phrase à quoi sert ce groupe (10 caractères min).")
+    .max(140, "140 caractères max — une phrase suffit."),
+  category: z.nativeEnum(ProjectCategory, {
+    errorMap: () => ({ message: "Choisis la catégorie du groupe." }),
+  }),
+});
+export type CreateGroupInput = z.infer<typeof createGroupSchema>;
+
+export const groupMessageSchema = z.object({
+  groupId: z.string().min(1),
+  body: z
+    .string()
+    .trim()
+    .min(1, "Ton message est vide.")
+    .max(1000, "1000 caractères max par message."),
+});
+
 export const commentSchema = z.object({
   projectId: z.string().min(1),
   body: z

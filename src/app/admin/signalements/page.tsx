@@ -16,14 +16,19 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const TARGET_LABELS = { PROJECT: "Projet", COMMENT: "Commentaire", USER: "Membre" } as const;
+const TARGET_LABELS = {
+  PROJECT: "Projet",
+  COMMENT: "Commentaire",
+  USER: "Membre",
+  CHAT_GROUP: "Groupe",
+} as const;
 
-/** Résout la cible de chaque signalement (lien + aperçu) en 3 requêtes groupées. */
+/** Résout la cible de chaque signalement (lien + aperçu) en requêtes groupées. */
 async function resolveTargets(reports: Report[]) {
   const ids = (type: Report["targetType"]) =>
     reports.filter((r) => r.targetType === type).map((r) => r.targetId);
 
-  const [projects, comments, users] = await Promise.all([
+  const [projects, comments, users, groups] = await Promise.all([
     prisma.project.findMany({
       where: { id: { in: ids("PROJECT") } },
       select: { id: true, title: true, slug: true },
@@ -35,6 +40,10 @@ async function resolveTargets(reports: Report[]) {
     prisma.user.findMany({
       where: { id: { in: ids("USER") } },
       select: { id: true, name: true },
+    }),
+    prisma.chatGroup.findMany({
+      where: { id: { in: ids("CHAT_GROUP") } },
+      select: { id: true, name: true, slug: true, purpose: true },
     }),
   ]);
 
@@ -54,6 +63,12 @@ async function resolveTargets(reports: Report[]) {
             commentId: c.id,
           }
         : { label: "Commentaire déjà supprimé", href: null };
+    }
+    if (report.targetType === "CHAT_GROUP") {
+      const g = groups.find((x) => x.id === report.targetId);
+      return g
+        ? { label: `« ${g.name} » — ${g.purpose}`, href: `/chat/groupes/${g.slug}` }
+        : { label: "Groupe dissous", href: null };
     }
     const u = users.find((x) => x.id === report.targetId);
     return u

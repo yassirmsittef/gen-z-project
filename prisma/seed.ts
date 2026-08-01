@@ -427,8 +427,84 @@ async function main() {
     45
   );
 
+  console.log("👥 Groupes de chat par catégorie...");
+  const demo = await prisma.user.findUniqueOrThrow({ where: { email: "demo@demo.dev" } });
+  const openGroup = async (
+    owner: { id: string },
+    input: {
+      slug: string;
+      name: string;
+      purpose: string;
+      category: ProjectCategory;
+      others: { id: string }[];
+      talk: { from: { id: string }; body: string; minutesAgo: number }[];
+    }
+  ) => {
+    const chatGroup = await prisma.chatGroup.create({
+      data: {
+        slug: input.slug,
+        name: input.name,
+        purpose: input.purpose,
+        category: input.category,
+        ownerId: owner.id,
+        members: {
+          create: [owner, ...input.others].map((member) => ({ userId: member.id })),
+        },
+      },
+    });
+    for (const line of input.talk) {
+      await prisma.groupMessage.create({
+        data: {
+          groupId: chatGroup.id,
+          senderId: line.from.id,
+          body: line.body,
+          createdAt: new Date(Date.now() - line.minutesAgo * 60_000),
+        },
+      });
+    }
+    return chatGroup;
+  };
+
+  await openGroup(lea, {
+    slug: "micro-ouvert-podcast",
+    name: "Micro ouvert",
+    purpose: "Podcasteurs débutants : matos, montage, invités, diffusion — on partage tout.",
+    category: "MEDIA",
+    others: [nina, demo],
+    talk: [
+      { from: lea, body: "Question matos : vous enregistrez en solo avec quoi ? Je cherche un micro qui tienne la route en extérieur.", minutesAgo: 300 },
+      { from: nina, body: "Un dynamique + une bonnette, ça sauve la vie dès qu'il y a du vent. Et enregistre toujours une piste de secours sur le téléphone.", minutesAgo: 250 },
+      { from: lea, body: "Noté, merci ! Je poste mon épisode test ici quand il est prêt, si vous voulez me casser (gentiment).", minutesAgo: 200 },
+    ],
+  });
+
+  await openGroup(sam, {
+    slug: "playtests-croises",
+    name: "Playtests croisés",
+    purpose: "On teste les jeux des autres avant sortie : 20 min de jeu, des retours honnêtes.",
+    category: "GAMING",
+    others: [zoe, max],
+    talk: [
+      { from: sam, body: "Je cherche 3 personnes pour tester le niveau 2 ce week-end — 20 min chacun, retours bruts bienvenus.", minutesAgo: 120 },
+      { from: zoe, body: "Partante samedi matin. J'ai une manette et beaucoup d'avis.", minutesAgo: 90 },
+      { from: max, body: "Moi aussi. Pense à couper les tutos, on verra tout de suite ce qui bloque sans explication.", minutesAgo: 60 },
+    ],
+  });
+
+  await openGroup(zoe, {
+    slug: "ateliers-et-fournitures",
+    name: "Ateliers & fournitures",
+    purpose: "Bons plans tissus, ateliers partagés et petites séries — entre marques qui débutent.",
+    category: "MODE",
+    others: [nina],
+    talk: [
+      { from: zoe, body: "Quelqu'un connaît un atelier partagé avec surjeteuse, plutôt est de Paris ?", minutesAgo: 400 },
+      { from: nina, body: "Il y en a un près de Montreuil, je te passe le contact en privé.", minutesAgo: 380 },
+    ],
+  });
+
   console.log("⭐ Suivis de projets...");
-  const demoUser = await prisma.user.findUniqueOrThrow({ where: { email: "demo@demo.dev" } });
+  const demoUser = demo;
   await prisma.follow.createMany({
     data: [
       { userId: demoUser.id, projectId: p1.id },

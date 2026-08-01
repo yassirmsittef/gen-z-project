@@ -5,6 +5,7 @@ import type { City } from "@/lib/cities";
 import { formatMoney, toMinor } from "@/lib/money";
 import { notify, notifyMany } from "@/lib/notifications";
 import { splitMilestonePayout } from "@/lib/payout-split";
+import { slugify } from "@/lib/utils";
 import type { CreateProjectInput, UpdateProjectInput } from "@/lib/validation";
 
 /** Erreur métier : son message est affichable tel quel à l'utilisateur. */
@@ -67,16 +68,6 @@ export async function gateProgress(userId: string) {
 /** Règle clé de la plateforme : contribuer (50 $ cumulés) avant de poster. */
 export async function canCreateProject(userId: string) {
   return (await gateProgress(userId)).reached;
-}
-
-function slugify(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .slice(0, 48);
 }
 
 export async function createProject(userId: string, input: CreateProjectInput): Promise<string> {

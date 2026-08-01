@@ -31,6 +31,15 @@ export async function createReport(
       select: { id: true },
     });
     if (!comment) throw new DomainError("Commentaire introuvable.");
+  } else if (input.targetType === "CHAT_GROUP") {
+    const group = await prisma.chatGroup.findUnique({
+      where: { id: input.targetId },
+      select: { ownerId: true },
+    });
+    if (!group) throw new DomainError("Groupe introuvable.");
+    if (group.ownerId === reporterId) {
+      throw new DomainError("Tu animes ce groupe — dissous-le plutôt que de le signaler.");
+    }
   } else {
     if (input.targetId === reporterId) {
       throw new DomainError("Tu ne peux pas te signaler toi-même.");

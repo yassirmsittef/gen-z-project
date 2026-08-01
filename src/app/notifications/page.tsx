@@ -14,6 +14,7 @@ import {
   PartyPopper,
   ShieldX,
   Undo2,
+  Users,
   Vote,
   type LucideIcon,
 } from "lucide-react";
@@ -40,6 +41,7 @@ const TYPE_STYLES: Record<NotificationType, { Icon: LucideIcon; tone: string }> 
   MILESTONE_RELEASED: { Icon: LockOpen, tone: "text-success" },
   PROOF_REJECTED: { Icon: ShieldX, tone: "text-destructive" },
   MESSAGE: { Icon: MessagesSquare, tone: "text-primary" },
+  GROUP_MESSAGE: { Icon: Users, tone: "text-secondary" },
   PARTNERSHIP: { Icon: Handshake, tone: "text-secondary" },
   COMMENT: { Icon: MessageCircle, tone: "text-secondary" },
   PROJECT_UPDATE: { Icon: Megaphone, tone: "text-primary" },
