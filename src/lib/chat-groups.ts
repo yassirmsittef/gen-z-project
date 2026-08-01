@@ -1,6 +1,12 @@
 import { Prisma, type ProjectCategory } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { MAX_GROUPS_JOINED, MAX_GROUPS_OWNED, MAX_GROUP_MEMBERS } from "@/lib/constants";
+import {
+  LANGUAGE_ROOMS,
+  MAX_GROUPS_JOINED,
+  MAX_GROUPS_OWNED,
+  MAX_GROUP_MEMBERS,
+} from "@/lib/constants";
+import { isAdmin } from "@/lib/moderation";
 import { notifyManyOnceUnread } from "@/lib/notifications";
 import { DomainError } from "@/lib/project-service";
 import { slugify } from "@/lib/utils";
@@ -34,7 +40,8 @@ export type GroupMessageAuthor = {
 export async function listGroups(params: { category?: ProjectCategory; userId: string }) {
   const groups = await prisma.chatGroup.findMany({
     where: params.category ? { category: params.category } : undefined,
-    orderBy: { createdAt: "desc" },
+    // Les salons d'accueil (langues) restent en tête, quoi qu'il arrive après.
+    orderBy: [{ official: "desc" }, { createdAt: "desc" }],
     take: 60,
     include: {
       owner: { select: { id: true, name: true } },
@@ -50,6 +57,7 @@ export async function listGroups(params: { category?: ProjectCategory; userId: s
     name: group.name,
     purpose: group.purpose,
     category: group.category,
+    official: group.official,
     owner: group.owner,
     memberCount: group._count.members,
     messageCount: group._count.messages,
@@ -131,6 +139,7 @@ export async function getGroupBySlug(slug: string, userId: string) {
     name: group.name,
     purpose: group.purpose,
     category: group.category,
+    official: group.official,
     createdAt: group.createdAt,
     owner: group.owner,
     isOwner: group.ownerId === userId,
@@ -163,23 +172,39 @@ async function requireMembership(groupId: string, userId: string) {
   if (!membership) throw new DomainError("Rejoins le groupe pour participer.");
 }
 
-/** Ouvrir un groupe dans une catégorie : son créateur en devient l'animateur. */
-export async function createGroup(userId: string, input: CreateGroupInput): Promise<string> {
-  const [owned, joined] = await Promise.all([
-    prisma.chatGroup.count({ where: { ownerId: userId } }),
-    prisma.chatGroupMember.count({ where: { userId } }),
-  ]);
-  if (owned >= MAX_GROUPS_OWNED) {
-    throw new DomainError(
-      `Tu animes déjà ${MAX_GROUPS_OWNED} groupes — fais-en vivre un avant d'en ouvrir un autre.`
-    );
+/**
+ * Ouvrir un groupe dans une catégorie : son créateur en devient l'animateur.
+ * Les salons OFFICIELS (langues) échappent aux plafonds et portent un slug
+ * stable — ils sont l'accueil de la plateforme, pas le groupe d'un membre.
+ */
+export async function createGroup(
+  userId: string,
+  input: CreateGroupInput,
+  options: { official?: boolean; slug?: string } = {}
+): Promise<string> {
+  if (options.official && !(await isAdmin(userId))) {
+    throw new DomainError("Seule l'équipe ouvre les salons officiels.");
   }
-  if (joined >= MAX_GROUPS_JOINED) {
-    throw new DomainError(`${MAX_GROUPS_JOINED} groupes suivis maximum — quittes-en un d'abord.`);
+
+  if (!options.official) {
+    const [owned, joined] = await Promise.all([
+      // Les salons officiels animés par l'équipe ne comptent pas : sinon
+      // l'admin serait plafonné par l'accueil qu'il entretient.
+      prisma.chatGroup.count({ where: { ownerId: userId, official: false } }),
+      prisma.chatGroupMember.count({ where: { userId } }),
+    ]);
+    if (owned >= MAX_GROUPS_OWNED) {
+      throw new DomainError(
+        `Tu animes déjà ${MAX_GROUPS_OWNED} groupes — fais-en vivre un avant d'en ouvrir un autre.`
+      );
+    }
+    if (joined >= MAX_GROUPS_JOINED) {
+      throw new DomainError(`${MAX_GROUPS_JOINED} groupes suivis maximum — quittes-en un d'abord.`);
+    }
   }
 
   const base = slugify(input.name) || "groupe";
-  const slug = `${base}-${Math.random().toString(36).slice(2, 6)}`;
+  const slug = options.slug ?? `${base}-${Math.random().toString(36).slice(2, 6)}`;
 
   await prisma.chatGroup.create({
     data: {
@@ -187,11 +212,49 @@ export async function createGroup(userId: string, input: CreateGroupInput): Prom
       name: input.name,
       purpose: input.purpose,
       category: input.category,
+      official: options.official ?? false,
       ownerId: userId,
       members: { create: { userId } },
     },
   });
   return slug;
+}
+
+/**
+ * Ouvre les salons de langue manquants (idempotent, par slug). Appelé par
+ * l'équipe depuis l'annuaire : une plateforme sans porte d'entrée dans sa
+ * langue est une plateforme muette pour qui ne parle pas français.
+ */
+export async function openLanguageRooms(adminId: string): Promise<number> {
+  if (!(await isAdmin(adminId))) {
+    throw new DomainError("Seule l'équipe ouvre les salons officiels.");
+  }
+
+  const existing = await prisma.chatGroup.findMany({
+    where: { slug: { in: LANGUAGE_ROOMS.map((room) => room.slug) } },
+    select: { slug: true },
+  });
+  const already = new Set(existing.map((group) => group.slug));
+
+  let opened = 0;
+  for (const room of LANGUAGE_ROOMS) {
+    if (already.has(room.slug)) continue;
+    await createGroup(
+      adminId,
+      { name: room.name, purpose: room.purpose, category: "AUTRE" },
+      { official: true, slug: room.slug }
+    );
+    opened += 1;
+  }
+  return opened;
+}
+
+/** Salons de langue encore à ouvrir — pilote la bannière de l'annuaire. */
+export async function missingLanguageRooms(): Promise<number> {
+  const open = await prisma.chatGroup.count({
+    where: { slug: { in: LANGUAGE_ROOMS.map((room) => room.slug) } },
+  });
+  return LANGUAGE_ROOMS.length - open;
 }
 
 /** Rejoindre un groupe. Idempotent : y être déjà n'est pas une erreur. */

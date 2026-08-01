@@ -469,6 +469,9 @@ model ChatGroup {
   purpose   String // à quoi sert ce groupe, une phrase
   category  ProjectCategory
   ownerId   String
+  // Salon d'accueil ouvert par la plateforme (les salons de langue) : épinglé
+  // en tête de l'annuaire et hors plafond de groupes animés.
+  official  Boolean         @default(false)
   createdAt DateTime        @default(now())
 
   owner    User              @relation("GroupsOwned", fields: [ownerId], references: [id], onDelete: Cascade)
@@ -476,6 +479,7 @@ model ChatGroup {
   messages GroupMessage[]
 
   @@index([category, createdAt])
+  @@index([official, createdAt])
   @@index([ownerId])
 }
 

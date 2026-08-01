@@ -57,8 +57,15 @@ export default async function GroupThreadPage({
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Tous les groupes
         </Link>
-        <h1 className="text-4xl font-semibold tracking-tight">{group.name}</h1>
+        {/* dir="auto" ordonne correctement un nom arabe ; text-left le garde
+            ancré à la mise en page (sinon il part à l'autre bout de l'écran,
+            loin de son sous-titre). Même parti pris partout où un nom de
+            groupe occupe un bloc pleine largeur. */}
+        <h1 dir="auto" className="text-left text-4xl font-semibold tracking-tight">
+          {group.name}
+        </h1>
         <p className="data-label">
+          {group.official ? "Salon d'accueil · " : ""}
           {CATEGORY_LABELS[group.category]} · {group.memberCount} membre
           {group.memberCount > 1 ? "s" : ""}
         </p>
@@ -83,8 +90,12 @@ export default async function GroupThreadPage({
                 <Hash className="h-4 w-4" />
               </span>
               <div className="min-w-0">
-                <p className="font-semibold">{group.name}</p>
-                <p className="text-sm text-muted-foreground">{group.purpose}</p>
+                <p dir="auto" className="text-left font-semibold">
+                  {group.name}
+                </p>
+                <p dir="auto" className="text-left text-sm text-muted-foreground">
+                  {group.purpose}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Animé par{" "}
                   <Link href={`/u/${group.owner.id}`} className="hover:text-foreground">
@@ -164,7 +175,11 @@ export default async function GroupThreadPage({
                               {message.sender.name}
                             </Link>
                           )}
-                          <p className="whitespace-pre-line break-words">{message.body}</p>
+                          {/* dir="auto" : un message en arabe s'affiche de
+                              droite à gauche sans casser le reste du fil. */}
+                          <p dir="auto" className="whitespace-pre-line break-words">
+                            {message.body}
+                          </p>
                           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                             {formatDate(message.createdAt)}
                           </p>

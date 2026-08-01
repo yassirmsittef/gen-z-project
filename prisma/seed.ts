@@ -5,11 +5,13 @@
  *
  * Comptes de démo (mot de passe : demo1234) :
  *   demo@demo.dev  — compte vierge (5 $, aucune contribution → gate actif)
+ *   admin@demo.dev — équipe (rôle ADMIN : /admin, modération, salons d'accueil)
  *   lea@demo.dev, max@demo.dev, zoe@demo.dev, sam@demo.dev, nina@demo.dev
  */
 import bcrypt from "bcryptjs";
 import type { ProjectCategory } from "@prisma/client";
 import { findCity } from "../src/lib/cities";
+import { openLanguageRooms } from "../src/lib/chat-groups";
 import { prisma } from "../src/lib/prisma";
 import {
   castVote,
@@ -174,6 +176,11 @@ async function main() {
     "Casablanca"
   );
   await createUser("Toi (démo)", "demo@demo.dev", passwordHash, ["montage", "photo"], "Paris");
+  // Compte d'équipe : ouvre /admin, la modération et les salons d'accueil en
+  // dev. Séparé de demo@demo.dev, qui doit rester soumis au gate (le rôle
+  // ADMIN en est exempté).
+  const equipe = await createUser("Équipe GeniGain", "admin@demo.dev", passwordHash, [], "Genève");
+  await prisma.user.update({ where: { id: equipe.id }, data: { role: "ADMIN" } });
 
   // Recharges de démo pour que les scénarios ci-dessous soient jouables
   // (le bonus d'inscription n'est que de 5 $).
@@ -429,6 +436,7 @@ async function main() {
 
   console.log("👥 Groupes de chat par catégorie...");
   const demo = await prisma.user.findUniqueOrThrow({ where: { email: "demo@demo.dev" } });
+  await openLanguageRooms(equipe.id);
   const openGroup = async (
     owner: { id: string },
     input: {

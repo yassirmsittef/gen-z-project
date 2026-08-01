@@ -59,6 +59,53 @@ export const MAX_GROUP_MEMBERS = 200;
 /** Groupes qu'un membre peut avoir rejoints en même temps. */
 export const MAX_GROUPS_JOINED = 20;
 
+/**
+ * Salons de langue — les seuls groupes ouverts par la plateforme elle-même.
+ * GeniGain est suisse et ouverte à l'international : quelqu'un qui ne parle
+ * pas français doit trouver une porte d'entrée dès son inscription, sans
+ * attendre qu'un membre ouvre un salon. Rangés dans « Autre » (ils ne
+ * dépendent d'aucun métier), épinglés en tête d'annuaire, animés par
+ * l'équipe — et hors plafond de groupes animés (`official`).
+ * Chaque intention est écrite DANS la langue du salon.
+ */
+export const LANGUAGE_ROOMS = [
+  {
+    slug: "salon-francais",
+    name: "Français",
+    purpose: "Le salon francophone : présente-toi, demande un coup de main, trouve des collabs.",
+  },
+  {
+    slug: "salon-english",
+    name: "English",
+    purpose: "The English-speaking room: say hi, ask for a hand, find people to build with.",
+  },
+  {
+    slug: "salon-espanol",
+    name: "Español",
+    purpose: "La sala en español: preséntate, pide ayuda y encuentra colaboraciones.",
+  },
+  {
+    slug: "salon-deutsch",
+    name: "Deutsch",
+    purpose: "Der deutschsprachige Raum: stell dich vor, bitte um Hilfe, finde Mitstreiter.",
+  },
+  {
+    slug: "salon-italiano",
+    name: "Italiano",
+    purpose: "La stanza italiana: presentati, chiedi una mano, trova collaborazioni.",
+  },
+  {
+    slug: "salon-portugues",
+    name: "Português",
+    purpose: "A sala em português: apresenta-te, pede ajuda e encontra colaborações.",
+  },
+  {
+    slug: "salon-arabe",
+    name: "العربية",
+    purpose: "غرفة عربية: عرّف بنفسك، اطلب المساعدة، وابحث عن فرص تعاون.",
+  },
+] as const;
+
 // ---------- Étapes & preuves ----------
 
 export const MIN_MILESTONES = 2;

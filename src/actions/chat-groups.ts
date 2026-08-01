@@ -8,6 +8,7 @@ import {
   dissolveGroup,
   joinGroup,
   leaveGroup,
+  openLanguageRooms,
   postGroupMessage,
 } from "@/lib/chat-groups";
 import { DomainError } from "@/lib/project-service";
@@ -39,6 +40,28 @@ export async function createGroupAction(
 
   revalidatePath("/chat", "layout");
   redirect(`/chat/groupes/${slug}`);
+}
+
+export type OpenLanguageRoomsState = { error?: string; opened?: number } | undefined;
+
+/** Ouvre les salons de langue manquants (équipe). Idempotent : rejouable. */
+export async function openLanguageRoomsAction(
+  _prev: OpenLanguageRoomsState,
+  _formData: FormData
+): Promise<OpenLanguageRoomsState> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  let opened: number;
+  try {
+    opened = await openLanguageRooms(session.user.id);
+  } catch (error) {
+    if (error instanceof DomainError) return { error: error.message };
+    throw error;
+  }
+
+  revalidatePath("/chat", "layout");
+  return { opened };
 }
 
 export type GroupMembershipState = { error?: string } | undefined;

@@ -152,7 +152,9 @@ export function ChatSidebar({
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="flex items-center gap-2 truncate font-semibold">
-                        <span className="truncate">{group.name}</span>
+                        <span dir="auto" className="truncate">
+                          {group.name}
+                        </span>
                         {group.unread && (
                           <span
                             className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent-gradient shadow-glow"

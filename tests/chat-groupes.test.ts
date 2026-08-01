@@ -9,10 +9,13 @@ import {
   getMyGroups,
   joinGroup,
   leaveGroup,
+  listGroups,
   markGroupRead,
+  missingLanguageRooms,
+  openLanguageRooms,
   postGroupMessage,
 } from "../src/lib/chat-groups";
-import { MAX_GROUPS_OWNED } from "../src/lib/constants";
+import { LANGUAGE_ROOMS, MAX_GROUPS_OWNED } from "../src/lib/constants";
 import { DomainError } from "../src/lib/project-service";
 
 /**
@@ -64,6 +67,69 @@ describe("création d'un groupe dans une catégorie", () => {
       await group(fondateur.id, `Salon ${i}`);
     }
     await expect(group(fondateur.id, "Un de trop")).rejects.toThrow(DomainError);
+  });
+});
+
+describe("salons de langue (officiels)", () => {
+  async function mkAdmin() {
+    const admin = await mkUser();
+    await prisma.user.update({ where: { id: admin.id }, data: { role: "ADMIN" } });
+    return admin;
+  }
+
+  it("réserve les salons officiels à l'équipe", async () => {
+    const membre = await mkUser();
+    await expect(openLanguageRooms(membre.id)).rejects.toThrow(DomainError);
+    await expect(
+      createGroup(
+        membre.id,
+        { name: "Faux officiel", purpose: "Tentative de salon officiel.", category: "AUTRE" },
+        { official: true }
+      )
+    ).rejects.toThrow(DomainError);
+  });
+
+  it("ouvre chaque langue une seule fois et l'épingle en tête d'annuaire", async () => {
+    const admin = await mkAdmin();
+
+    await openLanguageRooms(admin.id);
+    // Rejouable : le second passage ne duplique rien (reconnaissance par slug).
+    expect(await openLanguageRooms(admin.id)).toBe(0);
+    expect(await missingLanguageRooms()).toBe(0);
+
+    const slugs = await prisma.chatGroup.findMany({
+      where: { slug: { in: LANGUAGE_ROOMS.map((r) => r.slug) } },
+      select: { slug: true, official: true, category: true },
+    });
+    expect(slugs).toHaveLength(LANGUAGE_ROOMS.length);
+    expect(slugs.every((g) => g.official && g.category === "AUTRE")).toBe(true);
+
+    // Un groupe de membre ouvert après eux passe quand même derrière.
+    await createGroup(admin.id, {
+      name: "Groupe ordinaire",
+      purpose: "Un groupe de membre dans la même catégorie.",
+      category: "AUTRE",
+    });
+    const annuaire = await listGroups({ category: "AUTRE", userId: admin.id });
+    expect(annuaire[0].official).toBe(true);
+    expect(annuaire.at(-1)?.official).toBe(false);
+  });
+
+  it("laisse l'équipe animer ses salons SANS entamer son plafond de groupes", async () => {
+    const admin = await mkAdmin();
+    for (let i = 0; i < MAX_GROUPS_OWNED; i += 1) {
+      await group(admin.id, `Salon perso ${i}`);
+    }
+    // Le plafond s'applique à l'équipe comme à tout le monde…
+    await expect(group(admin.id, "Un de trop")).rejects.toThrow(DomainError);
+    // …mais les salons d'accueil n'y entrent pas.
+    await expect(
+      createGroup(
+        admin.id,
+        { name: "Salon d'accueil", purpose: "Salon officiel hors plafond.", category: "AUTRE" },
+        { official: true, slug: `officiel-${RUN}` }
+      )
+    ).resolves.toBe(`officiel-${RUN}`);
   });
 });
 

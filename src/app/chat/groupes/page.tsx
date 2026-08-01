@@ -10,10 +10,17 @@ import { CreateGroupForm } from "@/components/create-group-form";
 import { ChipRail, FilterChip } from "@/components/filter-chips";
 import { JoinGroupButton } from "@/components/group-membership";
 import { Button } from "@/components/ui/button";
+import { LanguageRoomsBanner } from "@/components/language-rooms-banner";
 import { getConversations } from "@/lib/chat";
-import { getMyGroups, groupCountsByCategory, listGroups } from "@/lib/chat-groups";
+import {
+  getMyGroups,
+  groupCountsByCategory,
+  listGroups,
+  missingLanguageRooms,
+} from "@/lib/chat-groups";
 import { CATEGORY_DESCRIPTIONS, CATEGORY_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
+import { isAdmin } from "@/lib/moderation";
 
 export const metadata: Metadata = {
   title: "Groupes",
@@ -33,12 +40,16 @@ export default async function GroupsDirectoryPage({
     ? (params.categorie as ProjectCategory)
     : undefined;
 
-  const [conversations, myGroups, groups, counts] = await Promise.all([
+  const [conversations, myGroups, groups, counts, admin] = await Promise.all([
     getConversations(session.user.id),
     getMyGroups(session.user.id),
     listGroups({ category, userId: session.user.id }),
     groupCountsByCategory(),
+    isAdmin(session.user.id),
   ]);
+  // Les salons d'accueil ne s'ouvrent qu'une fois : la bannière disparaît
+  // dès qu'ils sont tous là.
+  const missingRooms = admin ? await missingLanguageRooms() : 0;
 
   const chipHref = (value?: string) =>
     value ? `/chat/groupes?categorie=${value}` : "/chat/groupes";
@@ -84,6 +95,8 @@ export default async function GroupsDirectoryPage({
             )}
           </div>
 
+          {missingRooms > 0 && <LanguageRoomsBanner missing={missingRooms} />}
+
           {/* Le formulaire se remonte quand la catégorie change : elle y est
               déjà choisie. */}
           <CreateGroupForm key={category ?? "toutes"} defaultCategory={category} />
@@ -120,15 +133,22 @@ export default async function GroupsDirectoryPage({
                     <div className="min-w-0 flex-1">
                       <Link
                         href={`/chat/groupes/${group.slug}`}
-                        className="truncate font-display text-lg font-semibold transition-colors duration-200 hover:text-primary"
+                        dir="auto"
+                        className="block truncate text-left font-display text-lg font-semibold transition-colors duration-200 hover:text-primary"
                       >
                         {group.name}
                       </Link>
-                      <p className="data-label">{CATEGORY_LABELS[group.category]}</p>
+                      <p className="data-label">
+                        {group.official
+                          ? `Salon d'accueil · ${CATEGORY_LABELS[group.category]}`
+                          : CATEGORY_LABELS[group.category]}
+                      </p>
                     </div>
                   </div>
 
-                  <p className="line-clamp-2 text-sm text-muted-foreground">{group.purpose}</p>
+                  <p dir="auto" className="line-clamp-2 text-left text-sm text-muted-foreground">
+                    {group.purpose}
+                  </p>
 
                   <p className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
