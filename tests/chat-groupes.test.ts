@@ -353,6 +353,43 @@ describe("animation d'un salon : gérant·es et exclusions", () => {
   });
 });
 
+describe("cloches orphelines", () => {
+  /** Notifications d'un membre pointant vers un salon donné. */
+  const cloches = (userId: string, slug: string) =>
+    prisma.notification.count({
+      where: { userId, type: "GROUP_MESSAGE", href: `/chat/groupes/${slug}` },
+    });
+
+  it("efface la cloche de qui part, de qui est exclu, et de tous quand le salon disparaît", async () => {
+    const animateur = await mkUser();
+    const partant = await mkUser();
+    const exclu = await mkUser();
+    const restant = await mkUser();
+    const slug = await group(animateur.id);
+    const groupId = (await getGroupBySlug(slug, animateur.id))!.id;
+    for (const u of [partant, exclu, restant]) await joinGroup(u.id, slug);
+
+    await postGroupMessage(animateur.id, { groupId, body: "Un message pour tout le monde." });
+    expect(await cloches(partant.id, slug)).toBe(1);
+    expect(await cloches(exclu.id, slug)).toBe(1);
+    expect(await cloches(restant.id, slug)).toBe(1);
+
+    // Partir coupe sa propre cloche, sans toucher à celle des autres.
+    await leaveGroup(partant.id, slug);
+    expect(await cloches(partant.id, slug)).toBe(0);
+    expect(await cloches(restant.id, slug)).toBe(1);
+
+    // Être exclu aussi : la cloche ne doit pas mener à une porte close.
+    await excludeFromGroup(animateur.id, slug, exclu.id);
+    expect(await cloches(exclu.id, slug)).toBe(0);
+    expect(await cloches(restant.id, slug)).toBe(1);
+
+    // Le salon dissous, plus personne n'est renvoyé vers une page morte.
+    await dissolveGroup(animateur.id, slug);
+    expect(await cloches(restant.id, slug)).toBe(0);
+  });
+});
+
 describe("mettre un salon en silence", () => {
   it("coupe les notifications de CE salon, sans toucher aux autres ni aux non-lus", async () => {
     const bavard = await mkUser();

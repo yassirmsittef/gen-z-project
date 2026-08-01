@@ -299,6 +299,21 @@ async function groupPowers(group: GroupAuthority, userId: string) {
   return { owner, manager: owner || (membership?.manager ?? false) };
 }
 
+/**
+ * Efface les notifications qui pointent vers un salon devenu inaccessible.
+ * Sans ça, une cloche mène à une page dissoute (404) ou à une porte close
+ * pour qui vient d'en être exclu. `userId` absent = pour tout le monde.
+ */
+async function forgetGroupNotifications(slug: string, userId?: string) {
+  await prisma.notification.deleteMany({
+    where: {
+      type: "GROUP_MESSAGE",
+      href: `/chat/groupes/${slug}`,
+      ...(userId ? { userId } : {}),
+    },
+  });
+}
+
 async function requireMembership(groupId: string, userId: string) {
   const membership = await prisma.chatGroupMember.findUnique({
     where: { groupId_userId: { groupId, userId } },
@@ -467,7 +482,7 @@ export async function leaveGroup(userId: string, slug: string): Promise<boolean>
   });
   if (!group) throw new DomainError("Groupe introuvable.");
 
-  return prisma.$transaction(async (tx) => {
+  const dissous = await prisma.$transaction(async (tx) => {
     const membership = await tx.chatGroupMember.findUnique({
       where: { groupId_userId: { groupId: group.id, userId } },
       select: { userId: true },
@@ -505,6 +520,11 @@ export async function leaveGroup(userId: string, slug: string): Promise<boolean>
     });
     return false;
   });
+
+  // Partir, c'est aussi couper la cloche de ce salon — et s'il s'est
+  // dissous en se vidant, plus personne ne doit y être renvoyé.
+  await forgetGroupNotifications(slug, dissous ? undefined : userId);
+  return dissous;
 }
 
 /** Nommer ou démettre un·e gérant·e — l'animateur seul (ou un ADMIN). */
@@ -576,6 +596,8 @@ export async function excludeFromGroup(actorId: string, slug: string, targetId: 
       update: { byId: actorId, createdAt: new Date() },
     }),
   ]);
+  // Sa cloche ne doit plus le renvoyer vers une porte close.
+  await forgetGroupNotifications(slug, targetId);
 }
 
 /** Lever une exclusion : la personne peut rejoindre à nouveau. */
@@ -613,8 +635,11 @@ export async function dissolveGroup(userId: string, slug: string) {
   if (group.official && user?.role !== "ADMIN") {
     throw new DomainError("Un salon d'accueil ne se dissout que depuis l'équipe.");
   }
-  // Les membres et les messages cascadent avec le groupe.
+  // Les membres et les messages cascadent avec le groupe ; les
+  // notifications, elles, ne connaissent pas leur cible — sans ce ménage
+  // elles resteraient à pointer vers une page dissoute.
   await prisma.chatGroup.delete({ where: { id: group.id } });
+  await forgetGroupNotifications(slug);
 }
 
 /** Poster dans un groupe : réservé aux membres, notifie les autres (une fois). */

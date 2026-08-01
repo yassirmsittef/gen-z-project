@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ChatSidebar } from "@/components/chat-sidebar";
@@ -50,6 +50,15 @@ export default async function ChatThreadPage({
     <div className="container py-10">
       <ChatStream />
       <div className="mb-8 space-y-2">
+        {/* Sous 1024 px la colonne des conversations disparaît : sans ce
+            retour, on ne sort d'un fil qu'au bouton précédent du navigateur. */}
+        <Link
+          href="/chat"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground lg:hidden"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Toutes mes conversations
+        </Link>
         <h1 className="text-4xl font-semibold tracking-tight">Chat</h1>
         <p className="data-label">Entraide entre porteurs · collabs · coups de main</p>
       </div>
