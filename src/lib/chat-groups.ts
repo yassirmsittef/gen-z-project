@@ -214,15 +214,39 @@ export async function getGroupMembers(groupId: string, canModerate: boolean) {
   return { members, bans };
 }
 
-/** Le fil du groupe, du plus ancien au plus récent (réservé aux membres). */
-export async function getGroupThread(groupId: string) {
-  const messages = await prisma.groupMessage.findMany({
-    where: { groupId },
+/** Messages chargés d'un coup — au-delà, on remonte page par page. */
+const THREAD_PAGE = 100;
+
+/**
+ * Le fil du groupe, du plus ancien au plus récent (réservé aux membres).
+ * `avant` = l'id du plus ancien message affiché : on rend les 100 qui le
+ * précèdent. Sans lui, on rend les 100 derniers — un fil s'ouvre sur le
+ * présent, et l'historique se remonte à la demande.
+ */
+export async function getGroupThread(groupId: string, avant?: string) {
+  let borne: Date | undefined;
+  if (avant) {
+    const pivot = await prisma.groupMessage.findUnique({
+      where: { id: avant },
+      select: { createdAt: true, groupId: true },
+    });
+    // Un id d'un AUTRE salon ne doit pas servir de fenêtre sur celui-ci.
+    if (pivot?.groupId === groupId) borne = pivot.createdAt;
+  }
+
+  // Un de plus que la page : sa présence dit qu'il reste du passé.
+  const lignes = await prisma.groupMessage.findMany({
+    where: { groupId, ...(borne ? { createdAt: { lt: borne } } : {}) },
     orderBy: { createdAt: "desc" },
-    take: 100,
+    take: THREAD_PAGE + 1,
     include: { sender: { select: senderSelect } },
   });
-  return messages.reverse();
+
+  return {
+    messages: lignes.slice(0, THREAD_PAGE).reverse(),
+    hasOlder: lignes.length > THREAD_PAGE,
+    isHistory: borne !== undefined,
+  };
 }
 
 // ---------- Écritures ----------

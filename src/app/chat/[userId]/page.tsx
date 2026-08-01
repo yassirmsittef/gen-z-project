@@ -8,6 +8,7 @@ import { ChatStream } from "@/components/chat-stream";
 import { MessageForm } from "@/components/message-form";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { SkillTag } from "@/components/skill-tag";
+import { ThreadAutoScroll } from "@/components/thread-autoscroll";
 import { UserAvatar } from "@/components/user-avatar";
 import { getConversations, getThread } from "@/lib/chat";
 import { getMyGroups } from "@/lib/chat-groups";
@@ -102,6 +103,7 @@ export default async function ChatThreadPage({
                 );
               })
             )}
+            <ThreadAutoScroll count={thread.length} />
           </div>
 
           <div className="border-t border-white/[0.06] p-4">

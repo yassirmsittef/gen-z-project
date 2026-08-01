@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Hash, Lock, Users } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Hash, Lock, Users } from "lucide-react";
 import { auth } from "@/auth";
 import { ChatSidebar } from "@/components/chat-sidebar";
 import { ChatStream } from "@/components/chat-stream";
@@ -13,6 +13,7 @@ import {
 import { GroupMessageActions } from "@/components/group-message-actions";
 import { GroupMessageForm } from "@/components/group-message-form";
 import { ReportButton } from "@/components/report-button";
+import { ThreadAutoScroll } from "@/components/thread-autoscroll";
 import { UserAvatar } from "@/components/user-avatar";
 import { getConversations } from "@/lib/chat";
 import { getGroupBySlug, getGroupThread, getMyGroups, markGroupRead } from "@/lib/chat-groups";
@@ -52,10 +53,12 @@ function MemberStack({
 
 export default async function GroupThreadPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ avant?: string }>;
 }) {
-  const { slug } = await params;
+  const [{ slug }, { avant }] = await Promise.all([params, searchParams]);
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
@@ -66,11 +69,14 @@ export default async function GroupThreadPage({
   // Ouvrir le fil vaut lecture : la pastille « non lus » retombe ici.
   if (group.isMember) await markGroupRead(userId, group.id);
 
-  const [conversations, myGroups, thread] = await Promise.all([
+  const [conversations, myGroups, fil] = await Promise.all([
     getConversations(userId),
     getMyGroups(userId),
-    group.isMember ? getGroupThread(group.id) : Promise.resolve([]),
+    group.isMember
+      ? getGroupThread(group.id, avant)
+      : Promise.resolve({ messages: [], hasOlder: false, isHistory: false }),
   ]);
+  const { messages: thread, hasOlder, isHistory } = fil;
 
   return (
     <div className="container py-10">
@@ -164,6 +170,17 @@ export default async function GroupThreadPage({
           {group.isMember ? (
             <>
               <div className="flex-1 space-y-4 overflow-y-auto p-4">
+                {hasOlder && thread.length > 0 && (
+                  <p className="text-center">
+                    <Link
+                      href={`/chat/groupes/${group.slug}?avant=${thread[0].id}`}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.12] bg-card/60 px-3.5 py-1 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground"
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+                      Messages plus anciens
+                    </Link>
+                  </p>
+                )}
                 {thread.length === 0 ? (
                   <p dir="auto" className="py-12 text-center text-sm text-muted-foreground">
                     {roomTexts(group.slug).empty}
@@ -234,6 +251,22 @@ export default async function GroupThreadPage({
                     );
                   })
                 )}
+                {isHistory && (
+                  <p className="text-center">
+                    <Link
+                      href={`/chat/groupes/${group.slug}`}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-sm font-medium text-primary transition-colors duration-200 hover:bg-primary/20"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+                      Revenir aux derniers messages
+                    </Link>
+                  </p>
+                )}
+                {/* Dernier enfant du conteneur défilant : le fil s'ouvre sur
+                    le présent, pas sur les plus vieux messages. En remontant
+                    l'historique, on reste au contraire en HAUT de la page
+                    chargée — c'est là que la lecture reprend. */}
+                {!isHistory && <ThreadAutoScroll count={thread.length} />}
               </div>
 
               <div className="border-t border-white/[0.06] p-4">

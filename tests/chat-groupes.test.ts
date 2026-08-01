@@ -212,7 +212,7 @@ describe("rejoindre, écrire, quitter", () => {
     const anglais = await getGroupBySlug("salon-english", arrivant.id);
     const fil = await getGroupThread(anglais!.id);
 
-    const accueil = fil.at(-1)!;
+    const accueil = fil.messages.at(-1)!;
     expect(accueil.system).toBe(true);
     expect(accueil.body).toBe(`${arrivant.name} joined the room. Welcome!`);
     // Ligne d'événement : ni notification pour les membres, ni compteur.
@@ -236,7 +236,9 @@ describe("rejoindre, écrire, quitter", () => {
     await joinGroup(arrivant.id, ordinaire);
     const fose = await getGroupBySlug(ordinaire, arrivant.id);
     const filOrdinaire = await getGroupThread(fose!.id);
-    expect(filOrdinaire.at(-1)?.body).toBe(`${arrivant.name} a rejoint le groupe. Bienvenue !`);
+    expect(filOrdinaire.messages.at(-1)?.body).toBe(
+      `${arrivant.name} a rejoint le groupe. Bienvenue !`
+    );
   });
 
   it("marque le fil non lu pour les autres, jamais pour l'auteur", async () => {
@@ -347,6 +349,58 @@ describe("animation d'un salon : gérant·es et exclusions", () => {
     await leaveGroup(animateur.id, slug);
     // La gérance prime sur l'ancienneté : il modérait déjà.
     expect((await getGroupBySlug(slug, gerant.id))?.owner.id).toBe(gerant.id);
+  });
+});
+
+describe("remonter l'historique d'un fil", () => {
+  it("rend les derniers messages, puis les précédents à la demande", async () => {
+    const animateur = await mkUser();
+    const slug = await group(animateur.id);
+    const groupId = (await getGroupBySlug(slug, animateur.id))!.id;
+
+    // 105 messages : une page pleine et un reste.
+    const base = Date.now() - 105 * 60_000;
+    await prisma.groupMessage.createMany({
+      data: Array.from({ length: 105 }, (_, i) => ({
+        groupId,
+        senderId: animateur.id,
+        body: `Message ${i + 1}`,
+        createdAt: new Date(base + i * 60_000),
+      })),
+    });
+
+    const derniers = await getGroupThread(groupId);
+    expect(derniers.messages).toHaveLength(100);
+    // On ouvre sur le PRÉSENT : le dernier message est le plus récent.
+    expect(derniers.messages.at(-1)?.body).toBe("Message 105");
+    expect(derniers.messages[0].body).toBe("Message 6");
+    expect(derniers.hasOlder).toBe(true);
+    expect(derniers.isHistory).toBe(false);
+
+    const avant = await getGroupThread(groupId, derniers.messages[0].id);
+    expect(avant.messages.at(-1)?.body).toBe("Message 5");
+    expect(avant.isHistory).toBe(true);
+    // On est remonté au début : plus rien derrière.
+    expect(avant.hasOlder).toBe(false);
+  });
+
+  it("ignore une borne qui vient d'un autre salon", async () => {
+    const animateur = await mkUser();
+    const ici = await group(animateur.id, "Salon d'ici");
+    const ailleurs = await group(animateur.id, "Salon d'ailleurs");
+    const iciId = (await getGroupBySlug(ici, animateur.id))!.id;
+    const ailleursId = (await getGroupBySlug(ailleurs, animateur.id))!.id;
+
+    await postGroupMessage(animateur.id, { groupId: iciId, body: "Chez moi." });
+    const etranger = await postGroupMessage(animateur.id, {
+      groupId: ailleursId,
+      body: "Chez le voisin.",
+    });
+
+    // Une borne étrangère ne doit pas servir de fenêtre sur ce salon.
+    const fil = await getGroupThread(iciId, etranger.id);
+    expect(fil.isHistory).toBe(false);
+    expect(fil.messages.at(-1)?.body).toBe("Chez moi.");
   });
 });
 
