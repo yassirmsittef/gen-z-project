@@ -120,6 +120,33 @@ describe("salons de langue (officiels)", () => {
     expect(annuaire.at(-1)?.official).toBe(false);
   });
 
+  it("garde les salons d'accueil à la plateforme, même vidés de leur animateur", async () => {
+    const admin = await mkAdmin();
+    // Salon officiel de fixture : les vrais salons de langue sont partagés
+    // par toute la base, une suite ne doit pas leur retirer leurs membres.
+    const slug = await createGroup(
+      admin.id,
+      { name: "Accueil fixture", purpose: "Salon d'accueil de test.", category: "AUTRE" },
+      { official: true, slug: `accueil-${RUN}` }
+    );
+
+    // Quelqu'un passe, puis l'animation quitte le salon.
+    const membre = await mkUser();
+    await joinGroup(membre.id, slug);
+    const dissous = await leaveGroup(admin.id, slug);
+
+    expect(dissous).toBe(false);
+    const apres = await prisma.chatGroup.findUniqueOrThrow({ where: { slug } });
+    // L'animation NE tombe PAS au membre le plus ancien.
+    expect(apres.ownerId).toBe(admin.id);
+    // Et un membre ordinaire ne peut pas fermer la porte d'entrée.
+    await expect(dissolveGroup(membre.id, slug)).rejects.toThrow(DomainError);
+
+    // Le salon survit même vidé de tous ses membres.
+    await leaveGroup(membre.id, slug);
+    expect(await prisma.chatGroup.count({ where: { slug } })).toBe(1);
+  });
+
   it("laisse l'équipe animer ses salons SANS entamer son plafond de groupes", async () => {
     const admin = await mkAdmin();
     for (let i = 0; i < MAX_GROUPS_OWNED; i += 1) {

@@ -69,6 +69,33 @@ export async function listGroups(params: { category?: ProjectCategory; userId: s
   }));
 }
 
+/**
+ * Le salon le plus vivant d'une catégorie — celui qu'on propose depuis la
+ * page d'un projet. Le plus peuplé, à défaut le plus récent : c'est là
+ * qu'on a le plus de chances de trouver quelqu'un.
+ */
+export async function getLivelyRoom(category: ProjectCategory, userId: string) {
+  const group = await prisma.chatGroup.findFirst({
+    where: { category },
+    orderBy: [{ members: { _count: "desc" } }, { createdAt: "desc" }],
+    include: {
+      _count: { select: { members: true } },
+      members: { where: { userId }, select: { userId: true } },
+    },
+  });
+  if (!group) return null;
+
+  return {
+    slug: group.slug,
+    name: group.name,
+    purpose: group.purpose,
+    category: group.category,
+    memberCount: group._count.members,
+    joined: group.members.length > 0,
+    full: group._count.members >= MAX_GROUP_MEMBERS,
+  };
+}
+
 /** Nombre de groupes par catégorie — alimente les pastilles de l'annuaire. */
 export async function groupCountsByCategory(): Promise<Partial<Record<ProjectCategory, number>>> {
   const rows = await prisma.chatGroup.groupBy({ by: ["category"], _count: { _all: true } });
@@ -394,7 +421,7 @@ export async function joinGroup(userId: string, slug: string): Promise<string> {
 export async function leaveGroup(userId: string, slug: string): Promise<boolean> {
   const group = await prisma.chatGroup.findUnique({
     where: { slug },
-    select: { id: true, ownerId: true },
+    select: { id: true, ownerId: true, official: true },
   });
   if (!group) throw new DomainError("Groupe introuvable.");
 
@@ -404,6 +431,17 @@ export async function leaveGroup(userId: string, slug: string): Promise<boolean>
       select: { userId: true },
     });
     if (!membership) throw new DomainError("Tu ne fais pas partie de ce groupe.");
+
+    // Un salon d'accueil appartient à la plateforme, pas à la personne qui
+    // l'a ouvert : son animation ne tombe JAMAIS entre les mains du membre
+    // le plus ancien, et il ne disparaît pas quand il se vide. L'équipe le
+    // quitte comme n'importe quel salon, elle en garde l'animation.
+    if (group.official) {
+      await tx.chatGroupMember.delete({
+        where: { groupId_userId: { groupId: group.id, userId } },
+      });
+      return false;
+    }
 
     if (group.ownerId === userId) {
       // La main passe d'abord au gérant le plus ancien — il modère déjà —
@@ -518,12 +556,20 @@ export async function readmitToGroup(actorId: string, slug: string, targetId: st
 /** Dissoudre un groupe — son animateur, ou un ADMIN (modération). */
 export async function dissolveGroup(userId: string, slug: string) {
   const [group, user] = await Promise.all([
-    prisma.chatGroup.findUnique({ where: { slug }, select: { id: true, ownerId: true } }),
+    prisma.chatGroup.findUnique({
+      where: { slug },
+      select: { id: true, ownerId: true, official: true },
+    }),
     prisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
   ]);
   if (!group) throw new DomainError("Groupe introuvable.");
   if (group.ownerId !== userId && user?.role !== "ADMIN") {
     throw new DomainError("Seul l'animateur du groupe peut le dissoudre.");
+  }
+  // Fermer un salon d'accueil, c'est fermer une porte d'entrée de la
+  // plateforme — ça ne se fait pas par héritage d'animation.
+  if (group.official && user?.role !== "ADMIN") {
+    throw new DomainError("Un salon d'accueil ne se dissout que depuis l'équipe.");
   }
   // Les membres et les messages cascadent avec le groupe.
   await prisma.chatGroup.delete({ where: { id: group.id } });

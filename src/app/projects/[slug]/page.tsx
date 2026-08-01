@@ -20,6 +20,7 @@ import { ReportButton } from "@/components/report-button";
 import { ShareButton } from "@/components/share-button";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
+import { CategoryRoomCard } from "@/components/category-room-card";
 import { SkillTag } from "@/components/skill-tag";
 import { StatusBadge } from "@/components/status-badge";
 import { UserAvatar } from "@/components/user-avatar";
@@ -553,6 +554,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               </CardContent>
             </Card>
           )}
+
+          {/* Le salon de la catégorie : soutenir un projet, c'est bien ; en
+              parler avec ceux qui font la même chose, c'est la suite. */}
+          <CategoryRoomCard category={project.category} viewerId={viewerId ?? null} />
         </aside>
       </div>
     </div>
