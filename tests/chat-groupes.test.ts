@@ -4,6 +4,7 @@ import { eraseAccount } from "../src/lib/account";
 import { createReport } from "../src/lib/moderation";
 import {
   createGroup,
+  deleteGroupMessage,
   dissolveGroup,
   excludeFromGroup,
   getGroupBySlug,
@@ -319,6 +320,71 @@ describe("animation d'un salon : gérant·es et exclusions", () => {
     await leaveGroup(animateur.id, slug);
     // La gérance prime sur l'ancienneté : il modérait déjà.
     expect((await getGroupBySlug(slug, gerant.id))?.owner.id).toBe(gerant.id);
+  });
+});
+
+describe("retirer un message", () => {
+  it("laisse l'auteur et l'animation retirer, personne d'autre", async () => {
+    const animateur = await mkUser();
+    const gerant = await mkUser();
+    const bavard = await mkUser();
+    const temoin = await mkUser();
+    const slug = await group(animateur.id);
+    const groupId = (await getGroupBySlug(slug, animateur.id))!.id;
+    for (const u of [gerant, bavard, temoin]) await joinGroup(u.id, slug);
+    await setGroupManager(animateur.id, slug, gerant.id, true);
+
+    const sien = await postGroupMessage(bavard.id, { groupId, body: "Un message à moi." });
+    const autre = await postGroupMessage(bavard.id, { groupId, body: "Un autre message." });
+    const encore = await postGroupMessage(bavard.id, { groupId, body: "Et un troisième." });
+
+    // Un simple témoin ne fait pas la police.
+    await expect(deleteGroupMessage(temoin.id, sien.id)).rejects.toThrow(DomainError);
+    // L'auteur, oui.
+    await deleteGroupMessage(bavard.id, sien.id);
+    // L'animation aussi — gérant·e comme animateur.
+    await deleteGroupMessage(gerant.id, autre.id);
+    await deleteGroupMessage(animateur.id, encore.id);
+    expect(await prisma.groupMessage.count({ where: { groupId, system: false } })).toBe(0);
+  });
+
+  it("ne touche pas aux lignes d'arrivée et clôt le signalement du message retiré", async () => {
+    const animateur = await mkUser();
+    const bavard = await mkUser();
+    const temoin = await mkUser();
+    const slug = await group(animateur.id);
+    const groupId = (await getGroupBySlug(slug, animateur.id))!.id;
+    await joinGroup(bavard.id, slug);
+    await joinGroup(temoin.id, slug);
+
+    const arrivee = await prisma.groupMessage.findFirstOrThrow({
+      where: { groupId, system: true },
+    });
+    await expect(deleteGroupMessage(animateur.id, arrivee.id)).rejects.toThrow(DomainError);
+
+    const genant = await postGroupMessage(bavard.id, { groupId, body: "Un propos déplacé." });
+    // On ne signale pas son propre message : on le retire.
+    await expect(
+      createReport(bavard.id, {
+        targetType: "GROUP_MESSAGE",
+        targetId: genant.id,
+        reason: "Spam ou démarchage",
+      })
+    ).rejects.toThrow(DomainError);
+
+    await createReport(temoin.id, {
+      targetType: "GROUP_MESSAGE",
+      targetId: genant.id,
+      reason: "Contenu inapproprié ou haineux",
+    });
+    await deleteGroupMessage(animateur.id, genant.id);
+
+    // Le signalement n'a plus d'objet : il sort de la file.
+    const signalement = await prisma.report.findFirstOrThrow({
+      where: { targetType: "GROUP_MESSAGE", targetId: genant.id },
+    });
+    expect(signalement.status).toBe("RESOLVED");
+    expect(signalement.handledBy).toBe(animateur.id);
   });
 });
 

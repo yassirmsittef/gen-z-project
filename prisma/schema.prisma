@@ -414,6 +414,7 @@ enum ReportTargetType {
   COMMENT
   USER
   CHAT_GROUP // groupe de chat (nom, intention ou ambiance du salon)
+  GROUP_MESSAGE // un message précis dans un salon
 }
 
 enum ReportStatus {

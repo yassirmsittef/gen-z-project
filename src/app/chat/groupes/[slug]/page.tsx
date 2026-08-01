@@ -10,6 +10,7 @@ import {
   JoinGroupButton,
   LeaveGroupButton,
 } from "@/components/group-membership";
+import { GroupMessageActions } from "@/components/group-message-actions";
 import { GroupMessageForm } from "@/components/group-message-form";
 import { ReportButton } from "@/components/report-button";
 import { UserAvatar } from "@/components/user-avatar";
@@ -218,9 +219,16 @@ export default async function GroupThreadPage({
                           <p dir="auto" className="whitespace-pre-line break-words">
                             {message.body}
                           </p>
-                          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                            {formatDate(message.createdAt)}
-                          </p>
+                          <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                              {formatDate(message.createdAt)}
+                            </span>
+                            <GroupMessageActions
+                              messageId={message.id}
+                              canDelete={mine || group.canModerate}
+                              canReport={!mine}
+                            />
+                          </span>
                         </div>
                       </div>
                     );

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import {
   createGroup,
+  deleteGroupMessage,
   dissolveGroup,
   excludeFromGroup,
   joinGroup,
@@ -155,6 +156,48 @@ export async function groupModerationAction(
 
   revalidatePath("/chat", "layout");
   return { done: Date.now() };
+}
+
+export type DeleteGroupMessageState = { error?: string } | undefined;
+
+/** Retirer un message : son auteur, l'animation du salon, ou un ADMIN. */
+export async function deleteGroupMessageAction(
+  _prev: DeleteGroupMessageState,
+  formData: FormData
+): Promise<DeleteGroupMessageState> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  try {
+    await deleteGroupMessage(session.user.id, String(formData.get("messageId") ?? ""));
+  } catch (error) {
+    if (error instanceof DomainError) return { error: error.message };
+    throw error;
+  }
+
+  revalidatePath("/chat", "layout");
+  revalidatePath("/admin/signalements");
+  return {};
+}
+
+/**
+ * Variante « formulaire simple » pour la file de modération : l'admin y
+ * retire un message signalé d'un clic, sans état à afficher (la file se
+ * rafraîchit, le signalement passe en traité).
+ */
+export async function deleteGroupMessageFormAction(formData: FormData): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  try {
+    await deleteGroupMessage(session.user.id, String(formData.get("messageId") ?? ""));
+  } catch (error) {
+    if (error instanceof DomainError) return; // file rafraîchie, rien à afficher
+    throw error;
+  }
+
+  revalidatePath("/admin/signalements");
+  revalidatePath("/chat", "layout");
 }
 
 export type GroupMessageState = { error?: string; sentAt?: number } | undefined;

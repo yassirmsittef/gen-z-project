@@ -565,6 +565,39 @@ export async function postGroupMessage(userId: string, input: { groupId: string;
   return message;
 }
 
+/**
+ * Retirer UN message : son auteur, l'animation du salon (animateur ou
+ * gérant·e) ou un ADMIN. C'est le geste proportionné que l'exclusion n'est
+ * pas — on efface une phrase sans chasser la personne. Les lignes
+ * d'événement (arrivées) n'appartiennent à personne et ne s'effacent pas.
+ */
+export async function deleteGroupMessage(actorId: string, messageId: string) {
+  const message = await prisma.groupMessage.findUnique({
+    where: { id: messageId },
+    select: {
+      senderId: true,
+      system: true,
+      group: { select: { id: true, ownerId: true } },
+    },
+  });
+  if (!message) throw new DomainError("Message introuvable.");
+  if (message.system) throw new DomainError("Une ligne d'arrivée ne se supprime pas.");
+
+  if (message.senderId !== actorId) {
+    const powers = await groupPowers(message.group, actorId);
+    if (!powers.manager) {
+      throw new DomainError("Seuls son auteur et l'animation du salon peuvent le retirer.");
+    }
+  }
+
+  await prisma.groupMessage.delete({ where: { id: messageId } });
+  // Un signalement encore ouvert sur ce message n'a plus d'objet.
+  await prisma.report.updateMany({
+    where: { targetType: "GROUP_MESSAGE", targetId: messageId, status: "OPEN" },
+    data: { status: "RESOLVED", handledAt: new Date(), handledBy: actorId },
+  });
+}
+
 /** Marque le fil comme lu (appelé à l'ouverture du groupe). */
 export async function markGroupRead(userId: string, groupId: string) {
   await prisma.chatGroupMember.updateMany({

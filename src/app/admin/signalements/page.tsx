@@ -5,6 +5,7 @@ import { Check, ExternalLink, ShieldAlert, Trash2, X } from "lucide-react";
 import type { Report } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { deleteGroupMessageFormAction } from "@/actions/chat-groups";
 import { handleReportAction } from "@/actions/moderation";
 import { deleteCommentAction } from "@/actions/project-feed";
 import { isAdmin } from "@/lib/moderation";
@@ -21,6 +22,7 @@ const TARGET_LABELS = {
   COMMENT: "Commentaire",
   USER: "Membre",
   CHAT_GROUP: "Groupe",
+  GROUP_MESSAGE: "Message de groupe",
 } as const;
 
 /** Résout la cible de chaque signalement (lien + aperçu) en requêtes groupées. */
@@ -28,7 +30,7 @@ async function resolveTargets(reports: Report[]) {
   const ids = (type: Report["targetType"]) =>
     reports.filter((r) => r.targetType === type).map((r) => r.targetId);
 
-  const [projects, comments, users, groups] = await Promise.all([
+  const [projects, comments, users, groups, groupMessages] = await Promise.all([
     prisma.project.findMany({
       where: { id: { in: ids("PROJECT") } },
       select: { id: true, title: true, slug: true },
@@ -45,9 +47,15 @@ async function resolveTargets(reports: Report[]) {
       where: { id: { in: ids("CHAT_GROUP") } },
       select: { id: true, name: true, slug: true, purpose: true },
     }),
+    prisma.groupMessage.findMany({
+      where: { id: { in: ids("GROUP_MESSAGE") } },
+      select: { id: true, body: true, group: { select: { name: true, slug: true } } },
+    }),
   ]);
 
-  return (report: Report): { label: string; href: string | null; commentId?: string } => {
+  return (
+    report: Report
+  ): { label: string; href: string | null; commentId?: string; groupMessageId?: string } => {
     if (report.targetType === "PROJECT") {
       const p = projects.find((x) => x.id === report.targetId);
       return p
@@ -63,6 +71,16 @@ async function resolveTargets(reports: Report[]) {
             commentId: c.id,
           }
         : { label: "Commentaire déjà supprimé", href: null };
+    }
+    if (report.targetType === "GROUP_MESSAGE") {
+      const m = groupMessages.find((x) => x.id === report.targetId);
+      return m
+        ? {
+            label: `« ${m.body.slice(0, 80)}${m.body.length > 80 ? "…" : ""} » — dans ${m.group.name}`,
+            href: `/chat/groupes/${m.group.slug}`,
+            groupMessageId: m.id,
+          }
+        : { label: "Message déjà retiré", href: null };
     }
     if (report.targetType === "CHAT_GROUP") {
       const g = groups.find((x) => x.id === report.targetId);
@@ -176,6 +194,15 @@ export default async function ModerationPage() {
                         <Button type="submit" variant="destructive" size="sm">
                           <Trash2 aria-hidden />
                           Supprimer le commentaire
+                        </Button>
+                      </form>
+                    )}
+                    {t.groupMessageId && (
+                      <form action={deleteGroupMessageFormAction} className="ml-auto">
+                        <input type="hidden" name="messageId" value={t.groupMessageId} />
+                        <Button type="submit" variant="destructive" size="sm">
+                          <Trash2 aria-hidden />
+                          Retirer le message
                         </Button>
                       </form>
                     )}
