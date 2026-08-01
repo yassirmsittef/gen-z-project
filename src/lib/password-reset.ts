@@ -33,9 +33,12 @@ export async function createResetToken(userId: string): Promise<string> {
   await prisma.$transaction([
     // Une seule porte ouverte à la fois : les tokens précédents EXPIRENT
     // (pas de suppression — les lignes restent comptées par le plafond).
+    // Daté une seconde DANS LE PASSÉ, pas « maintenant » : la validation lit
+    // `expiresAt < new Date()`, donc un token expiré à l'instant T restait
+    // acceptable pendant toute la milliseconde T.
     prisma.passwordResetToken.updateMany({
       where: { userId, usedAt: null },
-      data: { expiresAt: new Date() },
+      data: { expiresAt: new Date(Date.now() - 1000) },
     }),
     prisma.passwordResetToken.create({
       data: {
