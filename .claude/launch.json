@@ -5,7 +5,8 @@
       "name": "genigain-dev",
       "runtimeExecutable": "/Users/lacoste/.nvm/versions/node/v24.18.0/bin/node",
       "runtimeArgs": ["node_modules/next/dist/bin/next", "dev"],
-      "port": 3000
+      "port": 3002,
+      "autoPort": true
     }
   ]
 }
