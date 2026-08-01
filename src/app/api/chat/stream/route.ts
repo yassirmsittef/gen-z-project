@@ -19,8 +19,21 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const STREAM_LIFETIME_MS = 50_000;
-const POLL_INTERVAL_MS = 1_200;
-const HEARTBEAT_EVERY = 10; // un commentaire SSE toutes les ~12 s garde les proxys éveillés
+const HEARTBEAT_MS = 12_000; // un commentaire SSE toutes les ~12 s garde les proxys éveillés
+
+/**
+ * Cadence dégressive : vif quand ça discute, calme quand il ne se passe
+ * rien. Une conversation active reste à 1,2 s (chaque événement remet le
+ * compteur à zéro) ; un fil ouvert mais silencieux ralentit et cesse de
+ * réveiller la base pour rien.
+ */
+const POLL_STEPS_MS = [1_200, 2_500, 5_000] as const;
+const TICKS_BEFORE_SLOWING = 8;
+
+function pollInterval(idleTicks: number): number {
+  const step = Math.min(Math.floor(idleTicks / TICKS_BEFORE_SLOWING), POLL_STEPS_MS.length - 1);
+  return POLL_STEPS_MS[step];
+}
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -62,7 +75,18 @@ export async function GET(request: Request) {
       // qu'un message raté entre deux connexions.
       let since = new Date(Date.now() - 2_000);
       const startedAt = Date.now();
-      let ticks = 0;
+      let idleTicks = 0;
+      let lastHeartbeat = Date.now();
+
+      // Une seule fois par connexion : inutile d'interroger les messages de
+      // groupe à chaque tour pour quelqu'un qui n'a rejoint aucun salon.
+      // Une adhésion en cours de route sera vue à la reconnexion (~50 s).
+      let watchesGroups = true;
+      try {
+        watchesGroups = (await prisma.chatGroupMember.count({ where: { userId } })) > 0;
+      } catch {
+        // Doute : on surveille, quitte à payer une requête de plus.
+      }
 
       while (!closed && Date.now() - startedAt < STREAM_LIFETIME_MS) {
         try {
@@ -77,14 +101,16 @@ export async function GET(request: Request) {
             }),
             // Groupes rejoints : le fil ouvert et la pastille « non lus » de
             // la barre latérale suivent la même horloge que le privé.
-            prisma.groupMessage.findFirst({
-              where: {
-                group: { members: { some: { userId } } },
-                createdAt: { gt: since },
-              },
-              orderBy: { createdAt: "desc" },
-              select: { createdAt: true },
-            }),
+            watchesGroups
+              ? prisma.groupMessage.findFirst({
+                  where: {
+                    group: { members: { some: { userId } } },
+                    createdAt: { gt: since },
+                  },
+                  orderBy: { createdAt: "desc" },
+                  select: { createdAt: true },
+                })
+              : null,
           ]);
           const latestAt = [privateMessage?.createdAt, groupMessage?.createdAt]
             .filter((date): date is Date => date != null)
@@ -92,15 +118,20 @@ export async function GET(request: Request) {
 
           if (latestAt) {
             since = latestAt;
+            idleTicks = 0; // ça discute : on repasse en cadence vive
+            lastHeartbeat = Date.now();
             if (!push(`event: message\ndata: ${latestAt.getTime()}\n\n`)) break;
-          } else if (ticks % HEARTBEAT_EVERY === 0) {
-            if (!push(`: ping\n\n`)) break;
+          } else {
+            idleTicks += 1;
+            if (Date.now() - lastHeartbeat >= HEARTBEAT_MS) {
+              lastHeartbeat = Date.now();
+              if (!push(`: ping\n\n`)) break;
+            }
           }
         } catch {
           // Base momentanément indisponible : on retentera au tick suivant.
         }
-        ticks += 1;
-        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+        await new Promise((resolve) => setTimeout(resolve, pollInterval(idleTicks)));
       }
       close();
     },
