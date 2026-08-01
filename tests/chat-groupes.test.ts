@@ -6,6 +6,7 @@ import {
   createGroup,
   dissolveGroup,
   getGroupBySlug,
+  getGroupThread,
   getMyGroups,
   joinGroup,
   leaveGroup,
@@ -163,6 +164,48 @@ describe("rejoindre, écrire, quitter", () => {
     expect(
       await prisma.notification.count({ where: { userId: visiteur.id, type: "GROUP_MESSAGE" } })
     ).toBe(0);
+  });
+
+  it("accueille l'arrivant dans la langue du salon, sans réveiller le fil", async () => {
+    const admin = await mkUser();
+    await prisma.user.update({ where: { id: admin.id }, data: { role: "ADMIN" } });
+    await openLanguageRooms(admin.id);
+
+    // Un membre déjà installé : c'est chez lui que l'arrivée ne doit pas
+    // faire clignoter le salon.
+    const installe = await mkUser();
+    await joinGroup(installe.id, "salon-english");
+
+    const arrivant = await mkUser();
+    await joinGroup(arrivant.id, "salon-english");
+    const anglais = await getGroupBySlug("salon-english", arrivant.id);
+    const fil = await getGroupThread(anglais!.id);
+
+    const accueil = fil.at(-1)!;
+    expect(accueil.system).toBe(true);
+    expect(accueil.body).toBe(`${arrivant.name} joined the room. Welcome!`);
+    // Ligne d'événement : ni notification pour les membres, ni compteur.
+    expect(
+      await prisma.notification.count({
+        where: { type: "GROUP_MESSAGE", href: "/chat/groupes/salon-english" },
+      })
+    ).toBe(0);
+    expect(anglais?.messageCount).toBe(0);
+    // …et le salon ne clignote pas « non lu » chez le membre déjà installé.
+    expect((await getMyGroups(installe.id)).find((g) => g.slug === "salon-english")?.unread).toBe(
+      false
+    );
+
+    // Rejoindre deux fois n'accueille pas deux fois (2 lignes : 2 arrivées).
+    await joinGroup(arrivant.id, "salon-english");
+    expect(await prisma.groupMessage.count({ where: { groupId: anglais!.id } })).toBe(2);
+
+    // Un groupe ordinaire accueille en français, la langue de la plateforme.
+    const ordinaire = await group(admin.id, "Groupe ordinaire");
+    await joinGroup(arrivant.id, ordinaire);
+    const fose = await getGroupBySlug(ordinaire, arrivant.id);
+    const filOrdinaire = await getGroupThread(fose!.id);
+    expect(filOrdinaire.at(-1)?.body).toBe(`${arrivant.name} a rejoint le groupe. Bienvenue !`);
   });
 
   it("marque le fil non lu pour les autres, jamais pour l'auteur", async () => {

@@ -68,43 +68,75 @@ export const MAX_GROUPS_JOINED = 20;
  * l'équipe — et hors plafond de groupes animés (`official`).
  * Chaque intention est écrite DANS la langue du salon.
  */
+/**
+ * `welcome` est la ligne d'accueil postée quand quelqu'un entre ({nom} =
+ * son pseudo), `empty` ce qu'on lit dans un fil encore vierge. Tournures
+ * volontairement NEUTRES en genre — on ne devine pas celui d'un membre à
+ * son pseudo (d'où « Te damos la bienvenida » plutôt que « Bienvenido/a »,
+ * « Diamo il benvenuto » plutôt que « è entrato/a »).
+ */
 export const LANGUAGE_ROOMS = [
   {
     slug: "salon-francais",
     name: "Français",
     purpose: "Le salon francophone : présente-toi, demande un coup de main, trouve des collabs.",
+    welcome: "{nom} a rejoint le salon. Bienvenue !",
+    empty: "Le fil est vierge. Lance le sujet — présente-toi, dis ce que tu cherches.",
   },
   {
     slug: "salon-english",
     name: "English",
     purpose: "The English-speaking room: say hi, ask for a hand, find people to build with.",
+    welcome: "{nom} joined the room. Welcome!",
+    empty: "Nothing here yet. Start the conversation — introduce yourself, say what you need.",
   },
   {
     slug: "salon-espanol",
     name: "Español",
     purpose: "La sala en español: preséntate, pide ayuda y encuentra colaboraciones.",
+    welcome: "{nom} se ha unido a la sala. ¡Te damos la bienvenida!",
+    empty: "Aún no hay nada. Empieza la conversación: preséntate y di qué buscas.",
   },
   {
     slug: "salon-deutsch",
     name: "Deutsch",
     purpose: "Der deutschsprachige Raum: stell dich vor, bitte um Hilfe, finde Mitstreiter.",
+    welcome: "{nom} ist dem Raum beigetreten. Willkommen!",
+    empty: "Noch nichts hier. Eröffne das Gespräch: stell dich vor und sag, was du suchst.",
   },
   {
     slug: "salon-italiano",
     name: "Italiano",
     purpose: "La stanza italiana: presentati, chiedi una mano, trova collaborazioni.",
+    welcome: "{nom} entra nella stanza. Diamo il benvenuto!",
+    empty: "Ancora niente. Apri la conversazione: presentati e di' cosa cerchi.",
   },
   {
     slug: "salon-portugues",
     name: "Português",
     purpose: "A sala em português: apresenta-te, pede ajuda e encontra colaborações.",
+    welcome: "{nom} juntou-se à sala. Damos-te as boas-vindas!",
+    empty: "Ainda não há nada. Começa a conversa: apresenta-te e diz o que procuras.",
   },
   {
     slug: "salon-arabe",
     name: "العربية",
     purpose: "غرفة عربية: عرّف بنفسك، اطلب المساعدة، وابحث عن فرص تعاون.",
+    welcome: "مرحبًا بـ {nom} في الغرفة!",
+    empty: "لا شيء هنا بعد. ابدأ الحديث: عرّف بنفسك وقل عمّا تبحث.",
   },
 ] as const;
+
+/** Groupes ordinaires : la langue de la plateforme. */
+export const DEFAULT_ROOM_TEXTS = {
+  welcome: "{nom} a rejoint le groupe. Bienvenue !",
+  empty: "Le fil est vierge. Lance le sujet — présente-toi, dis ce que tu cherches.",
+} as const;
+
+/** Textes d'un salon : sa langue s'il en a une, le français sinon. */
+export function roomTexts(slug: string): { welcome: string; empty: string } {
+  return LANGUAGE_ROOMS.find((room) => room.slug === slug) ?? DEFAULT_ROOM_TEXTS;
+}
 
 // ---------- Étapes & preuves ----------
 

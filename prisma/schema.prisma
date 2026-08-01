@@ -498,10 +498,14 @@ model ChatGroupMember {
 }
 
 model GroupMessage {
-  id        String   @id @default(cuid())
-  groupId   String
-  senderId  String
-  body      String
+  id       String @id @default(cuid())
+  groupId  String
+  senderId String
+  body     String
+  // Ligne d'événement écrite par la plateforme (arrivée d'un membre) plutôt
+  // que par une personne : rendue en filet centré, jamais en bulle, et
+  // ignorée des aperçus, des compteurs et des non-lus.
+  system    Boolean  @default(false)
   createdAt DateTime @default(now())
 
   group  ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)

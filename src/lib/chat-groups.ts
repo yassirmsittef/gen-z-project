@@ -5,6 +5,7 @@ import {
   MAX_GROUPS_JOINED,
   MAX_GROUPS_OWNED,
   MAX_GROUP_MEMBERS,
+  roomTexts,
 } from "@/lib/constants";
 import { isAdmin } from "@/lib/moderation";
 import { notifyManyOnceUnread } from "@/lib/notifications";
@@ -45,7 +46,8 @@ export async function listGroups(params: { category?: ProjectCategory; userId: s
     take: 60,
     include: {
       owner: { select: { id: true, name: true } },
-      _count: { select: { members: true, messages: true } },
+      // « X messages » compte les vraies prises de parole, pas les arrivées.
+      _count: { select: { members: true, messages: { where: { system: false } } } },
       members: { where: { userId: params.userId }, select: { userId: true } },
       messages: { orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
     },
@@ -81,7 +83,10 @@ export async function getMyGroups(userId: string) {
       group: {
         include: {
           _count: { select: { members: true } },
+          // Aperçu et pastille de non-lus : seules les vraies prises de
+          // parole comptent — une arrivée ne « réveille » pas le salon.
           messages: {
+            where: { system: false },
             orderBy: { createdAt: "desc" },
             take: 1,
             select: { body: true, createdAt: true, senderId: true, sender: { select: { name: true } } },
@@ -118,7 +123,7 @@ export async function getGroupBySlug(slug: string, userId: string) {
     where: { slug },
     include: {
       owner: { select: { id: true, name: true, avatarUrl: true, reputation: true } },
-      _count: { select: { members: true, messages: true } },
+      _count: { select: { members: true, messages: { where: { system: false } } } },
       members: {
         orderBy: { joinedAt: "asc" },
         take: 12,
@@ -261,7 +266,7 @@ export async function missingLanguageRooms(): Promise<number> {
 export async function joinGroup(userId: string, slug: string): Promise<string> {
   const group = await prisma.chatGroup.findUnique({
     where: { slug },
-    select: { id: true, _count: { select: { members: true } } },
+    select: { id: true, slug: true, _count: { select: { members: true } } },
   });
   if (!group) throw new DomainError("Groupe introuvable.");
 
@@ -272,6 +277,7 @@ export async function joinGroup(userId: string, slug: string): Promise<string> {
     }),
     prisma.chatGroupMember.count({ where: { userId } }),
   ]);
+  // Déjà là : pas de seconde ligne d'accueil (double clic, deux onglets).
   if (already) return group.id;
 
   if (group._count.members >= MAX_GROUP_MEMBERS) {
@@ -287,10 +293,28 @@ export async function joinGroup(userId: string, slug: string): Promise<string> {
     await prisma.chatGroupMember.create({ data: { groupId: group.id, userId } });
   } catch (error) {
     // Double clic / deux onglets : la contrainte de clé primaire a tranché.
-    if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
-      throw error;
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return group.id;
     }
+    throw error;
   }
+
+  // Un fil qui accueille dans SA langue : personne n'entre dans le silence.
+  // Ligne d'événement (system) — elle ne notifie personne et ne fait pas
+  // sonner « non lu » chez les autres membres.
+  const arrivant = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  });
+  await prisma.groupMessage.create({
+    data: {
+      groupId: group.id,
+      senderId: userId,
+      system: true,
+      body: roomTexts(group.slug).welcome.replace("{nom}", arrivant?.name ?? "Un membre"),
+    },
+  });
+
   return group.id;
 }
 

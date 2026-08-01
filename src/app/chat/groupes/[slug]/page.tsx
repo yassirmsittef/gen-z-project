@@ -15,7 +15,7 @@ import { ReportButton } from "@/components/report-button";
 import { UserAvatar } from "@/components/user-avatar";
 import { getConversations } from "@/lib/chat";
 import { getGroupBySlug, getGroupThread, getMyGroups, markGroupRead } from "@/lib/chat-groups";
-import { CATEGORY_LABELS } from "@/lib/constants";
+import { CATEGORY_LABELS, roomTexts } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -139,11 +139,24 @@ export default async function GroupThreadPage({
             <>
               <div className="flex-1 space-y-4 overflow-y-auto p-4">
                 {thread.length === 0 ? (
-                  <p className="py-12 text-center text-sm text-muted-foreground">
-                    Le fil est vierge. Lance le sujet — présente-toi, dis ce que tu cherches.
+                  <p dir="auto" className="py-12 text-center text-sm text-muted-foreground">
+                    {roomTexts(group.slug).empty}
                   </p>
                 ) : (
                   thread.map((message) => {
+                    // Arrivée d'un membre : filet centré dans la langue du
+                    // salon, jamais une bulle — ce n'est pas quelqu'un qui parle.
+                    if (message.system) {
+                      return (
+                        <p
+                          key={message.id}
+                          dir="auto"
+                          className="py-1 text-center text-xs text-muted-foreground"
+                        >
+                          {message.body}
+                        </p>
+                      );
+                    }
                     const mine = message.senderId === userId;
                     return (
                       <div
