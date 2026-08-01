@@ -1,11 +1,12 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { DoorOpen, LogIn, Trash2 } from "lucide-react";
+import { Bell, BellOff, DoorOpen, LogIn, Trash2 } from "lucide-react";
 import {
   dissolveGroupAction,
   joinGroupAction,
   leaveGroupAction,
+  toggleGroupMuteAction,
 } from "@/actions/chat-groups";
 import { Button } from "@/components/ui/button";
 
@@ -71,6 +72,41 @@ export function LeaveGroupButton({ slug, isOwner }: { slug: string; isOwner: boo
           Quitter
         </Button>
       )}
+      {state?.error && (
+        <p role="alert" className="text-sm font-medium text-destructive">
+          {state.error}
+        </p>
+      )}
+    </form>
+  );
+}
+
+/**
+ * Mettre CE salon en silence sans toucher aux autres. La pastille de non-lus
+ * continue de vivre : se taire n'est pas se cacher ce qui s'y dit.
+ */
+export function MuteGroupButton({ slug, muted }: { slug: string; muted: boolean }) {
+  const [state, formAction, pending] = useActionState(toggleGroupMuteAction, undefined);
+
+  return (
+    <form action={formAction} className="space-y-2">
+      <input type="hidden" name="slug" value={slug} />
+      <input type="hidden" name="muted" value={muted ? "false" : "true"} />
+      <Button
+        type="submit"
+        variant="ghost"
+        size="sm"
+        disabled={pending}
+        title={
+          muted
+            ? "Recevoir à nouveau les notifications de ce salon"
+            : "Ne plus être notifié·e de ce salon"
+        }
+        className={muted ? "text-primary hover:text-primary" : undefined}
+      >
+        {muted ? <BellOff aria-hidden /> : <Bell aria-hidden />}
+        {muted ? "En silence" : "Silence"}
+      </Button>
       {state?.error && (
         <p role="alert" className="text-sm font-medium text-destructive">
           {state.error}

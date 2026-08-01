@@ -19,6 +19,7 @@ import {
   postGroupMessage,
   readmitToGroup,
   setGroupManager,
+  setGroupMuted,
 } from "../src/lib/chat-groups";
 import { LANGUAGE_ROOMS, MAX_GROUPS_OWNED } from "../src/lib/constants";
 import { DomainError } from "../src/lib/project-service";
@@ -349,6 +350,47 @@ describe("animation d'un salon : gérant·es et exclusions", () => {
     await leaveGroup(animateur.id, slug);
     // La gérance prime sur l'ancienneté : il modérait déjà.
     expect((await getGroupBySlug(slug, gerant.id))?.owner.id).toBe(gerant.id);
+  });
+});
+
+describe("mettre un salon en silence", () => {
+  it("coupe les notifications de CE salon, sans toucher aux autres ni aux non-lus", async () => {
+    const bavard = await mkUser();
+    const silencieux = await mkUser();
+    const bruyant = await group(bavard.id, "Salon bruyant");
+    const autre = await group(bavard.id, "Salon tranquille");
+    const bruyantId = (await getGroupBySlug(bruyant, bavard.id))!.id;
+    const autreId = (await getGroupBySlug(autre, bavard.id))!.id;
+    await joinGroup(silencieux.id, bruyant);
+    await joinGroup(silencieux.id, autre);
+
+    await setGroupMuted(silencieux.id, bruyant, true);
+    expect((await getGroupBySlug(bruyant, silencieux.id))?.isMuted).toBe(true);
+
+    await postGroupMessage(bavard.id, { groupId: bruyantId, body: "Encore un message." });
+    await postGroupMessage(bavard.id, { groupId: autreId, body: "Un mot ici." });
+
+    const notifications = await prisma.notification.findMany({
+      where: { userId: silencieux.id, type: "GROUP_MESSAGE" },
+      select: { href: true },
+    });
+    // Rien du salon coupé, mais l'autre salon parle toujours.
+    expect(notifications.map((n) => n.href)).toEqual([`/chat/groupes/${autre}`]);
+
+    // Le silence ne cache pas ce qui s'y dit : la pastille reste.
+    const mesGroupes = await getMyGroups(silencieux.id);
+    expect(mesGroupes.find((g) => g.slug === bruyant)?.unread).toBe(true);
+
+    // Et on peut rendre la parole au salon.
+    await setGroupMuted(silencieux.id, bruyant, false);
+    expect((await getGroupBySlug(bruyant, silencieux.id))?.isMuted).toBe(false);
+  });
+
+  it("refuse le réglage à qui n'est pas dans le salon", async () => {
+    const animateur = await mkUser();
+    const passant = await mkUser();
+    const slug = await group(animateur.id);
+    await expect(setGroupMuted(passant.id, slug, true)).rejects.toThrow(DomainError);
   });
 });
 

@@ -493,6 +493,10 @@ model ChatGroupMember {
   // Gérant·e : partage la modération avec l'animateur (exclure un membre),
   // sans pouvoir nommer d'autres gérant·es ni toucher à l'animation.
   manager Boolean @default(false)
+  // Salon mis en silence : plus de notification pour CE salon (les autres
+  // continuent). La pastille de non-lus, elle, reste — se taire n'est pas
+  // se cacher ce qui s'y dit.
+  muted   Boolean @default(false)
   // Dernier passage dans le fil : alimente la pastille « non lus ».
   lastReadAt DateTime @default(now())
   joinedAt   DateTime @default(now())

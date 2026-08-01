@@ -9,6 +9,7 @@ import {
   DissolveGroupButton,
   JoinGroupButton,
   LeaveGroupButton,
+  MuteGroupButton,
 } from "@/components/group-membership";
 import { GroupMessageActions } from "@/components/group-message-actions";
 import { GroupMessageForm } from "@/components/group-message-form";
@@ -156,6 +157,7 @@ export default async function GroupThreadPage({
               )}
               {group.isMember && (
                 <>
+                  <MuteGroupButton slug={group.slug} muted={group.isMuted} />
                   {group.isOwner ? (
                     <DissolveGroupButton slug={group.slug} />
                   ) : (

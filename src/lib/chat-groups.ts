@@ -38,9 +38,26 @@ export type GroupMessageAuthor = {
 // ---------- Lectures ----------
 
 /** Un groupe tel qu'affiché dans l'annuaire d'une catégorie. */
-export async function listGroups(params: { category?: ProjectCategory; userId: string }) {
+export async function listGroups(params: {
+  category?: ProjectCategory;
+  query?: string;
+  userId: string;
+}) {
+  const mots = params.query?.trim();
   const groups = await prisma.chatGroup.findMany({
-    where: params.category ? { category: params.category } : undefined,
+    where: {
+      ...(params.category ? { category: params.category } : {}),
+      // On cherche dans le nom ET l'intention : « playtest » doit trouver
+      // un salon qui s'appelle autrement mais le promet dans sa phrase.
+      ...(mots
+        ? {
+            OR: [
+              { name: { contains: mots, mode: "insensitive" } },
+              { purpose: { contains: mots, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
     // Les salons d'accueil (langues) restent en tête, quoi qu'il arrive après.
     orderBy: [{ official: "desc" }, { createdAt: "desc" }],
     take: 60,
@@ -163,7 +180,7 @@ export async function getGroupBySlug(slug: string, userId: string) {
   const [membership, powers] = await Promise.all([
     prisma.chatGroupMember.findUnique({
       where: { groupId_userId: { groupId: group.id, userId } },
-      select: { joinedAt: true, manager: true },
+      select: { joinedAt: true, manager: true, muted: true },
     }),
     groupPowers(group, userId),
   ]);
@@ -179,6 +196,7 @@ export async function getGroupBySlug(slug: string, userId: string) {
     owner: group.owner,
     isOwner: group.ownerId === userId,
     isManager: membership?.manager ?? false,
+    isMuted: membership?.muted ?? false,
     // Ce que le visiteur a le droit de faire (ADMIN plateforme compris).
     canManage: powers.owner,
     canModerate: powers.manager,
@@ -619,8 +637,10 @@ export async function postGroupMessage(userId: string, input: { groupId: string;
     data: { lastReadAt: message.createdAt },
   });
 
+  // Les membres qui ont mis CE salon en silence n'entendent rien — leur
+  // pastille de non-lus continue pourtant de vivre dans la barre latérale.
   const others = await prisma.chatGroupMember.findMany({
-    where: { groupId: group.id, userId: { not: userId } },
+    where: { groupId: group.id, userId: { not: userId }, muted: false },
     select: { userId: true },
   });
   await notifyManyOnceUnread(
@@ -666,6 +686,21 @@ export async function deleteGroupMessage(actorId: string, messageId: string) {
     where: { targetType: "GROUP_MESSAGE", targetId: messageId, status: "OPEN" },
     data: { status: "RESOLVED", handledAt: new Date(), handledBy: actorId },
   });
+}
+
+/**
+ * Mettre un salon en silence, ou lui rendre la parole. Réservé à ses
+ * membres : c'est un réglage personnel, pas un geste d'animation.
+ */
+export async function setGroupMuted(userId: string, slug: string, muted: boolean) {
+  const group = await prisma.chatGroup.findUnique({ where: { slug }, select: { id: true } });
+  if (!group) throw new DomainError("Groupe introuvable.");
+
+  const changed = await prisma.chatGroupMember.updateMany({
+    where: { groupId: group.id, userId },
+    data: { muted },
+  });
+  if (changed.count === 0) throw new DomainError("Tu ne fais pas partie de ce groupe.");
 }
 
 /** Marque le fil comme lu (appelé à l'ouverture du groupe). */

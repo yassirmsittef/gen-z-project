@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ProjectCategory } from "@prisma/client";
-import { Hash, MessagesSquare, Users } from "lucide-react";
+import { Hash, MessagesSquare, Search, Users } from "lucide-react";
 import { auth } from "@/auth";
 import { ChatSidebar } from "@/components/chat-sidebar";
 import { ChatStream } from "@/components/chat-stream";
@@ -10,6 +10,7 @@ import { CreateGroupForm } from "@/components/create-group-form";
 import { ChipRail, FilterChip } from "@/components/filter-chips";
 import { JoinGroupButton } from "@/components/group-membership";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { LanguageRoomsBanner } from "@/components/language-rooms-banner";
 import { getConversations } from "@/lib/chat";
 import {
@@ -30,7 +31,7 @@ export const metadata: Metadata = {
 export default async function GroupsDirectoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ categorie?: string }>;
+  searchParams: Promise<{ categorie?: string; q?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -39,11 +40,12 @@ export default async function GroupsDirectoryPage({
   const category = Object.keys(CATEGORY_LABELS).includes(params.categorie ?? "")
     ? (params.categorie as ProjectCategory)
     : undefined;
+  const query = (params.q ?? "").trim().slice(0, 60);
 
   const [conversations, myGroups, groups, counts, admin] = await Promise.all([
     getConversations(session.user.id),
     getMyGroups(session.user.id),
-    listGroups({ category, userId: session.user.id }),
+    listGroups({ category, query, userId: session.user.id }),
     groupCountsByCategory(),
     isAdmin(session.user.id),
   ]);
@@ -51,8 +53,14 @@ export default async function GroupsDirectoryPage({
   // dès qu'ils sont tous là.
   const missingRooms = admin ? await missingLanguageRooms() : 0;
 
-  const chipHref = (value?: string) =>
-    value ? `/chat/groupes?categorie=${value}` : "/chat/groupes";
+  // Les chips gardent la recherche en cours, et inversement.
+  const chipHref = (value?: string) => {
+    const p = new URLSearchParams();
+    if (value) p.set("categorie", value);
+    if (query) p.set("q", query);
+    const qs = p.toString();
+    return qs ? `/chat/groupes?${qs}` : "/chat/groupes";
+  };
 
   return (
     <div className="container py-10">
@@ -70,6 +78,24 @@ export default async function GroupsDirectoryPage({
         {/* min-w-0 : sans lui, la largeur max-content du rail de catégories
             imposerait sa loi à la colonne (grid item = min-width auto). */}
         <div className="min-w-0 space-y-6">
+          {/* Recherche en GET : partageable, et sans JavaScript. */}
+          <form action="/chat/groupes" method="get" className="flex max-w-md gap-2">
+            {category && <input type="hidden" name="categorie" value={category} />}
+            <Input
+              type="search"
+              name="q"
+              defaultValue={query}
+              placeholder="Chercher un salon (nom, sujet…)"
+              aria-label="Chercher un salon"
+              maxLength={60}
+              className="flex-1"
+            />
+            <Button type="submit" size="icon" variant="outline" title="Chercher">
+              <Search aria-hidden />
+              <span className="sr-only">Chercher</span>
+            </Button>
+          </form>
+
           <div className="space-y-3">
             {/* La catégorie active passe en tête pour rester visible sans JS. */}
             <ChipRail label="Catégories de groupes">
@@ -108,12 +134,16 @@ export default async function GroupsDirectoryPage({
                 aria-hidden
               />
               <p className="text-lg font-semibold">
-                {category
-                  ? `Aucun groupe en ${CATEGORY_LABELS[category]} pour l'instant.`
-                  : "Aucun groupe pour l'instant."}
+                {query
+                  ? `Aucun salon ne parle de « ${query} »${category ? ` en ${CATEGORY_LABELS[category]}` : ""}.`
+                  : category
+                    ? `Aucun groupe en ${CATEGORY_LABELS[category]} pour l'instant.`
+                    : "Aucun groupe pour l'instant."}
               </p>
               <p className="text-sm text-muted-foreground">
-                Ouvre le premier — c&apos;est souvent lui qui rassemble.
+                {query
+                  ? "Essaie un autre mot, ou ouvre le salon qui manque."
+                  : "Ouvre le premier — c'est souvent lui qui rassemble."}
               </p>
             </div>
           ) : (

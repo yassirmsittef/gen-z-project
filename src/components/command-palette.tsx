@@ -4,20 +4,21 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { CornerDownLeft, Search } from "lucide-react";
+import { CornerDownLeft, Hash, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
 import { cn } from "@/lib/utils";
 
 type Results = {
   projects: { slug: string; title: string; pitch: string; status: string }[];
+  rooms: { slug: string; name: string; purpose: string; memberCount: number }[];
   members: { id: string; name: string | null; avatarUrl: string | null; city: string | null }[];
 };
 
-const EMPTY: Results = { projects: [], members: [] };
+const EMPTY: Results = { projects: [], rooms: [], members: [] };
 
 /**
- * Recherche globale ⌘K : projets et membres depuis n'importe quelle page.
+ * Recherche globale ⌘K : projets, salons et membres depuis n'importe quelle page.
  * Dialogue en portal (verre), navigation aux flèches, Entrée pour ouvrir,
  * Échap pour fermer — le focus revient au déclencheur.
  */
@@ -95,8 +96,11 @@ export function CommandPalette({ className }: { className?: string }) {
     };
   }, [query, open]);
 
+  // ⚠️ Cet ordre doit être EXACTEMENT celui du rendu plus bas : c'est lui
+  // qui décide ce qu'ouvre la touche Entrée.
   const items = [
     ...results.projects.map((p) => ({ href: `/projects/${p.slug}`, key: `p-${p.slug}` })),
+    ...results.rooms.map((r) => ({ href: `/chat/groupes/${r.slug}`, key: `s-${r.slug}` })),
     ...results.members.map((m) => ({ href: `/u/${m.id}`, key: `m-${m.id}` })),
   ];
 
@@ -129,7 +133,7 @@ export function CommandPalette({ className }: { className?: string }) {
         onClick={() => setOpen(true)}
       >
         <Search aria-hidden />
-        <span className="sr-only">Rechercher projets et membres</span>
+        <span className="sr-only">Rechercher projets, salons et membres</span>
       </Button>
 
       {open &&
@@ -154,8 +158,8 @@ export function CommandPalette({ className }: { className?: string }) {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={onInputKeyDown}
-                  placeholder="Chercher un projet, un membre…"
-                  aria-label="Chercher un projet ou un membre"
+                  placeholder="Chercher un projet, un salon, un membre…"
+                  aria-label="Chercher un projet, un salon ou un membre"
                   autoComplete="off"
                   spellCheck={false}
                   className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
@@ -186,6 +190,41 @@ export function CommandPalette({ className }: { className?: string }) {
                         <span className="block truncate font-medium">{project.title}</span>
                         <span className="block truncate text-xs text-muted-foreground">
                           {project.pitch}
+                        </span>
+                      </span>
+                      {active === i && (
+                        <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+                      )}
+                    </Link>
+                  );
+                })}
+
+                {results.rooms.length > 0 && <p className="data-label px-2 pb-1 pt-2">Salons</p>}
+                {results.rooms.map((room) => {
+                  index += 1;
+                  const i = index;
+                  return (
+                    <Link
+                      key={`s-${room.slug}`}
+                      href={`/chat/groupes/${room.slug}`}
+                      onMouseEnter={() => setActive(i)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm transition-colors duration-150",
+                        active === i ? "bg-primary/10 text-foreground" : "text-foreground/85"
+                      )}
+                    >
+                      <span
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/[0.12] bg-card/80 text-muted-foreground"
+                        aria-hidden
+                      >
+                        <Hash className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span dir="auto" className="block truncate text-left font-medium">
+                          {room.name}
+                        </span>
+                        <span dir="auto" className="block truncate text-left text-xs text-muted-foreground">
+                          {room.memberCount} membre{room.memberCount > 1 ? "s" : ""} · {room.purpose}
                         </span>
                       </span>
                       {active === i && (

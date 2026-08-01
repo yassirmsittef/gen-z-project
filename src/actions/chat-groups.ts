@@ -14,6 +14,7 @@ import {
   postGroupMessage,
   readmitToGroup,
   setGroupManager,
+  setGroupMuted,
 } from "@/lib/chat-groups";
 import { DomainError } from "@/lib/project-service";
 import { createGroupSchema, groupMessageSchema } from "@/lib/validation";
@@ -123,6 +124,31 @@ export async function dissolveGroupAction(
 
   revalidatePath("/chat", "layout");
   redirect("/chat/groupes");
+}
+
+export type GroupMuteState = { error?: string } | undefined;
+
+/** Mettre un salon en silence, ou lui rendre la parole (réglage personnel). */
+export async function toggleGroupMuteAction(
+  _prev: GroupMuteState,
+  formData: FormData
+): Promise<GroupMuteState> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  try {
+    await setGroupMuted(
+      session.user.id,
+      String(formData.get("slug") ?? ""),
+      formData.get("muted") === "true"
+    );
+  } catch (error) {
+    if (error instanceof DomainError) return { error: error.message };
+    throw error;
+  }
+
+  revalidatePath("/chat", "layout");
+  return {};
 }
 
 export type GroupModerationState = { error?: string; done?: number } | undefined;
