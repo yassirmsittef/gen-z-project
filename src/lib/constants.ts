@@ -277,6 +277,40 @@ export const MAX_COMMENTS_PER_CALL = 10;
  */
 export const MAX_COMMENTS_RENDERED = 100;
 
+// ---------- Témoignages vidéo ----------
+// La vidéo circule plus loin qu'un texte et se modère moins vite : on la
+// borne serré. Ces plafonds sont posés SUR LE JETON d'upload, côté serveur —
+// un navigateur trafiqué ne peut pas les contourner.
+
+/** Durée maximale d'un témoignage. Au-delà, ce n'est plus un témoignage. */
+export const MAX_VIDEO_SECONDS = 60;
+
+/**
+ * Poids maximal accepté. Vercel Blob ne transcode pas : ce qui est envoyé est
+ * ce qui sera servi. 30 Mo tient une minute correcte en 720p et garde la
+ * facture de bande passante lisible.
+ */
+export const MAX_VIDEO_BYTES = 30 * 1024 * 1024;
+
+/**
+ * Formats que TOUS les navigateurs savent lire. Le `.mov` d'iPhone
+ * (`video/quicktime`) en est volontairement absent : rien ne transcode ici,
+ * donc un `.mov` accepté serait stocké, facturé, et illisible pour la
+ * majorité des visiteurs — un refus clair à l'envoi vaut mieux qu'une vidéo
+ * fantôme. Restreindre l'attribut `accept` du champ de fichier pousse
+ * d'ailleurs iOS à convertir en MP4 au moment de la sélection.
+ */
+export const VIDEO_CONTENT_TYPES = ["video/mp4", "video/webm"] as const;
+
+/** Témoignages qu'un membre peut publier par tranche de 24 h. */
+export const MAX_VIDEOS_PER_DAY = 5;
+
+/** Témoignages rendus d'un coup dans le fil — au-delà, on pagine au curseur. */
+export const VIDEOS_PER_PAGE = 8;
+
+export const MIN_VIDEO_CAPTION = 20;
+export const MAX_VIDEO_CAPTION = 280;
+
 /** Liens à l'appui d'un appel — au-delà, c'est un dossier, pas un appel. */
 export const MAX_CALL_SOURCES = 3;
 
@@ -340,4 +374,5 @@ export const NOTIFICATION_TYPE_LABELS = {
   BOYCOTT_ANSWERED: "Un remplaçant se lance sur un appel que je soutiens",
   BOYCOTT_REMOVED: "Retrait d'un de mes appels par la modération",
   CALL_COMMENT: "Réponses sous mes appels",
+  CALL_VIDEO: "Témoignages vidéo sous mes appels",
 } as const satisfies Record<NotificationType, string>;

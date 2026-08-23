@@ -270,6 +270,17 @@ export default function CguPage() {
           contre la concurrence déloyale et du droit de la personnalité.
         </li>
         <li>
+          <strong>Les témoignages vidéo.</strong> Un appel peut être prolongé par une vidéo de
+          {" "}60 secondes maximum, publiée sous le nom de son auteur et rattachée à cet appel —
+          elle ne peut pas exister seule. Filmer engage plus qu’écrire : une vidéo identifie des
+          lieux, des personnes et des produits, et circule plus loin. L’auteur garantit qu’il
+          détient les droits sur ce qu’il filme, qu’aucune personne reconnaissable n’y figure sans
+          son accord, et que la vidéo ne montre ni violence, ni intrusion, ni contenu illicite.
+          Comme pour un appel écrit, la vidéo est signalable, et retirable par son auteur, par
+          l’auteur de l’appel ou par la modération. <strong>Un retrait efface le fichier</strong>,
+          pas seulement son affichage : la vidéo cesse d’être accessible.
+        </li>
+        <li>
           <strong>La discussion sous un appel</strong> suit les mêmes règles : chaque réponse est
           publiée sous le nom de son auteur, qui en est seul responsable. La contradiction y est
           expressément admise — une entreprise mise en cause peut y répondre publiquement comme

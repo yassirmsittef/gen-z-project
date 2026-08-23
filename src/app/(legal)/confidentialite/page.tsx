@@ -62,6 +62,14 @@ export default function ConfidentialitePage() {
           sous ton nom ; il reste consultable par tous tant qu’il n’est pas retiré.
         </li>
         <li>
+          <strong>Tes témoignages vidéo</strong> : le fichier lui-même (hébergé chez notre
+          prestataire de stockage), sa vignette, sa légende et sa durée. Une vidéo est{" "}
+          <strong>publique</strong> et publiée sous ton nom. Elle peut te rendre identifiable par
+          ton visage et ta voix, ainsi que les lieux et les personnes que tu filmes — n’y fais
+          apparaître personne sans son accord. Le retrait d’un témoignage <strong>supprime le
+          fichier</strong>, pas seulement son affichage.
+        </li>
+        <li>
           <strong>Ta participation au fil</strong> : tes réponses dans la discussion sous un
           appel (publiques, sous ton nom), les appels que tu soutiens, et les projets que tu as
           déclarés remplaçants d’une marque. Ces trois catégories figurent dans ton export de

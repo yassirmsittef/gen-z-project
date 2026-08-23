@@ -10,6 +10,7 @@ import {
 } from "@/actions/boycott";
 import { CallAnswerForm } from "@/components/call-answer-form";
 import { CallCommentForm } from "@/components/call-comment-form";
+import { VideoUploadForm } from "@/components/video-upload-form";
 import { CallSupportButton } from "@/components/call-support-button";
 import { ProjectCard } from "@/components/project-card";
 import { ReportButton } from "@/components/report-button";
@@ -18,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
 import { getCall, siblingCalls, targetWeight } from "@/lib/boycott";
+import { videoCountForCall } from "@/lib/call-videos";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import { formatDate, formatRelative } from "@/lib/format";
 import { isAdmin } from "@/lib/moderation";
@@ -74,10 +76,11 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
   const answeredProjectIds = new Set(call.answers.map((answer) => answer.projectId));
   const isAuthor = call.authorId === userId;
 
-  const [admin, siblings, weight] = await Promise.all([
+  const [admin, siblings, weight, nbVideos] = await Promise.all([
     userId ? isAdmin(userId) : Promise.resolve(false),
     siblingCalls(call.id, call.targetKey),
     targetWeight(call.targetKey),
+    videoCountForCall(call.id),
   ]);
 
   // Les projets que ce membre peut encore déclarer sur cet appel.
@@ -259,6 +262,43 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
               </div>
             ))}
           </div>
+        )}
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-display text-2xl font-semibold tracking-tight">
+          Les témoignages filmés
+          {nbVideos > 0 && (
+            <span className="ml-2 font-mono text-base font-normal text-muted-foreground">
+              {nbVideos}
+            </span>
+          )}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {nbVideos > 0 ? (
+            <>
+              {nbVideos} témoignage{nbVideos > 1 ? "s" : ""} rattaché{nbVideos > 1 ? "s" : ""} à cet
+              appel —{" "}
+              <Link href="/direct" className="text-secondary underline-offset-4 hover:underline">
+                les voir dans le direct
+              </Link>
+              .
+            </>
+          ) : (
+            "Une caméra dit en trente secondes ce qu'un paragraphe met à prouver."
+          )}
+        </p>
+        {userId ? (
+          <div className="mt-5">
+            <VideoUploadForm callId={call.id} target={call.target} />
+          </div>
+        ) : (
+          <p className="mt-5 rounded-2xl border border-dashed border-white/[0.12] p-6 text-center text-sm text-muted-foreground">
+            <Link href="/login" className="text-primary hover:underline">
+              Connecte-toi
+            </Link>{" "}
+            pour filmer ton témoignage.
+          </p>
         )}
       </section>
 

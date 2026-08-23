@@ -57,6 +57,10 @@ export async function Navbar() {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/appels">Appels</Link>
           </Button>
+          {/* Le direct : la version filmée du fil, une vidéo par écran. */}
+          <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+            <Link href="/direct">Direct</Link>
+          </Button>
           {/* Icône seule (comme le chat) : la Communauté reste accessible sur mobile. */}
           <Button
             variant="ghost"

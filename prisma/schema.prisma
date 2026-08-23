@@ -71,6 +71,7 @@ model User {
   boycottCalls     BoycottCall[]
   boycottSupports  BoycottSupport[]
   callComments     CallComment[]
+  callVideos       CallVideo[]
 }
 
 model Account {
@@ -421,6 +422,7 @@ enum ReportTargetType {
   GROUP_MESSAGE // un message précis dans un salon
   BOYCOTT_CALL // un appel publié dans le fil des remplacements
   CALL_COMMENT // un commentaire sous un appel
+  CALL_VIDEO // un témoignage vidéo rattaché à un appel
 }
 
 enum ReportStatus {
@@ -569,6 +571,7 @@ enum NotificationType {
   BOYCOTT_ANSWERED // un projet se lance pour remplacer une marque que tu veux voir remplacée
   BOYCOTT_REMOVED // ton appel a été retiré par la modération (type distinct : ne doit pas être masquable avec le reste)
   CALL_COMMENT // quelqu'un a commenté ton appel
+  CALL_VIDEO // quelqu'un a posté un témoignage vidéo sous ton appel
 }
 
 model Notification {
@@ -636,6 +639,7 @@ model BoycottCall {
   supports BoycottSupport[]
   answers  BoycottAnswer[]
   comments CallComment[]
+  videos   CallVideo[]
 
   @@index([targetKey])
   @@index([removedAt, createdAt])
@@ -654,6 +658,46 @@ model BoycottSupport {
 
   @@unique([callId, userId])
   @@index([userId, createdAt])
+}
+
+/// Témoignage VIDÉO, toujours rattaché à un appel.
+///
+/// Une vidéo ne peut pas exister seule : elle s'accroche à un appel, donc à
+/// une demande qui dit déjà, par écrit, ce qu'on voudrait à la place. C'est
+/// ce qui empêche le fil vidéo de devenir un mur de colère sans issue — et
+/// ce qui garde la posture d'hébergeur lisible : le propos vidéo prolonge
+/// un propos écrit, signé, sourçable et déjà encadré par la charte.
+///
+/// Le fichier vit sur Vercel Blob (upload direct navigateur → Blob : une
+/// vidéo ne passe pas par une Server Action, dont le corps est plafonné).
+/// `removedAt` = retrait logique, comme partout ailleurs dans le fil ; le
+/// BLOB, lui, est supprimé pour de bon — on ne garde pas la vidéo d'un
+/// contenu retiré sur une URL publique devinable.
+model CallVideo {
+  id         String   @id @default(cuid())
+  callId     String
+  authorId   String
+  /// URL publique du blob. Vidée au retrait, en même temps que le fichier.
+  url        String?
+  /// Vignette (première image), capturée par le navigateur à l'envoi.
+  posterUrl  String?
+  caption    String
+  durationMs Int
+  width      Int?
+  height     Int?
+
+  removedAt     DateTime?
+  removedById   String?
+  removalReason String?
+
+  createdAt DateTime @default(now())
+
+  call   BoycottCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+  author User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([removedAt, createdAt])
+  @@index([callId, removedAt, createdAt])
+  @@index([authorId, createdAt])
 }
 
 /// Discussion sous un appel : nuancer, corroborer, contredire, ou proposer une

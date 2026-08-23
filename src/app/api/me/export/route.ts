@@ -31,6 +31,7 @@ export async function GET() {
     callComments,
     boycottSupports,
     boycottAnswers,
+    callVideos,
   ] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
@@ -195,6 +196,18 @@ export async function GET() {
           call: { select: { target: true, slug: true } },
         },
       }),
+      prisma.callVideo.findMany({
+        where: { authorId: userId },
+        orderBy: { createdAt: "asc" },
+        select: {
+          caption: true,
+          url: true,
+          durationMs: true,
+          createdAt: true,
+          removedAt: true,
+          call: { select: { target: true, slug: true } },
+        },
+      }),
   ]);
 
   const data = {
@@ -262,6 +275,17 @@ export async function GET() {
       marque: s.call.target,
       lien: `/appels/${s.call.slug}`,
       date: s.createdAt,
+    })),
+    temoignages_video: callVideos.map((v) => ({
+      marque: v.call.target,
+      lien_appel: `/appels/${v.call.slug}`,
+      legende: v.caption,
+      duree_secondes: Math.round(v.durationMs / 1000),
+      // Vidée au retrait, en même temps que le fichier : un lien mort serait
+      // pire qu'une absence.
+      fichier: v.url,
+      retire_le: v.removedAt,
+      date: v.createdAt,
     })),
     projets_declares_remplacants: boycottAnswers.map((a) => ({
       projet: a.project.title,

@@ -22,7 +22,7 @@ export function ReportButton({
   iconOnly = false,
   className,
 }: {
-  targetType: "PROJECT" | "COMMENT" | "USER" | "CHAT_GROUP" | "GROUP_MESSAGE" | "BOYCOTT_CALL" | "CALL_COMMENT";
+  targetType: "PROJECT" | "COMMENT" | "USER" | "CHAT_GROUP" | "GROUP_MESSAGE" | "BOYCOTT_CALL" | "CALL_COMMENT" | "CALL_VIDEO";
   targetId: string;
   label?: string;
   iconOnly?: boolean;

@@ -18,6 +18,7 @@ const reportSchema = z.object({
     "GROUP_MESSAGE",
     "BOYCOTT_CALL",
     "CALL_COMMENT",
+    "CALL_VIDEO",
   ]),
   targetId: z.string().min(1),
   reason: z.string().min(1, "Choisis un motif."),

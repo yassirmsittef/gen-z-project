@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { deleteGroupMessageFormAction } from "@/actions/chat-groups";
 import { deleteCallCommentAction } from "@/actions/boycott";
+import { removeVideoAction } from "@/actions/call-videos";
 import { handleReportAction } from "@/actions/moderation";
 import { deleteCommentAction } from "@/actions/project-feed";
 import { isAdmin } from "@/lib/moderation";
@@ -26,6 +27,7 @@ const TARGET_LABELS = {
   GROUP_MESSAGE: "Message de groupe",
   BOYCOTT_CALL: "Appel au remplacement",
   CALL_COMMENT: "Réponse sous un appel",
+  CALL_VIDEO: "Témoignage vidéo",
 } as const;
 
 /** Résout la cible de chaque signalement (lien + aperçu) en requêtes groupées. */
@@ -33,7 +35,7 @@ async function resolveTargets(reports: Report[]) {
   const ids = (type: Report["targetType"]) =>
     reports.filter((r) => r.targetType === type).map((r) => r.targetId);
 
-  const [projects, comments, users, groups, groupMessages, calls, callComments] =
+  const [projects, comments, users, groups, groupMessages, calls, callComments, callVideos] =
     await Promise.all([
     prisma.project.findMany({
       where: { id: { in: ids("PROJECT") } },
@@ -68,6 +70,18 @@ async function resolveTargets(reports: Report[]) {
         call: { select: { slug: true, target: true } },
       },
     }),
+    prisma.callVideo.findMany({
+      where: { id: { in: ids("CALL_VIDEO") } },
+      select: {
+        id: true,
+        url: true,
+        posterUrl: true,
+        caption: true,
+        durationMs: true,
+        removedAt: true,
+        call: { select: { slug: true, target: true } },
+      },
+    }),
   ]);
 
   return (
@@ -78,6 +92,9 @@ async function resolveTargets(reports: Report[]) {
     commentId?: string;
     groupMessageId?: string;
     callCommentId?: string;
+    callVideoId?: string;
+    videoUrl?: string | null;
+    videoPoster?: string | null;
   } => {
     if (report.targetType === "PROJECT") {
       const p = projects.find((x) => x.id === report.targetId);
@@ -124,6 +141,20 @@ async function resolveTargets(reports: Report[]) {
         label: `${c.removedAt ? "[retiré] " : ""}« ${c.body.slice(0, 80)}${c.body.length > 80 ? "…" : ""} » — sous l'appel sur ${c.call.target}`,
         href: `/appels/${c.call.slug}#discussion`,
         callCommentId: c.removedAt ? undefined : c.id,
+      };
+    }
+    if (report.targetType === "CALL_VIDEO") {
+      const v = callVideos.find((x) => x.id === report.targetId);
+      if (!v) return { label: "Témoignage introuvable", href: null };
+      // Une vidéo ne se modère pas en lisant une ligne : le lecteur est posé
+      // DANS la file, sinon trancher demande d'ouvrir un autre onglet — et
+      // c'est ce qui fait qu'on tranche sans regarder.
+      return {
+        label: `${v.removedAt ? "[retiré] " : ""}« ${v.caption.slice(0, 70)}${v.caption.length > 70 ? "…" : ""} » — ${Math.round(v.durationMs / 1000)} s, sous l'appel sur ${v.call.target}`,
+        href: `/direct?v=${v.id}`,
+        callVideoId: v.removedAt ? undefined : v.id,
+        videoUrl: v.url,
+        videoPoster: v.posterUrl,
       };
     }
     if (report.targetType === "CHAT_GROUP") {
@@ -215,6 +246,17 @@ export default async function ModerationPage() {
                     </Link>
                   </p>
 
+                  {t.videoUrl && (
+                    <video
+                      src={t.videoUrl}
+                      poster={t.videoPoster ?? undefined}
+                      controls
+                      preload="metadata"
+                      playsInline
+                      className="max-h-72 w-full rounded-xl border border-white/[0.08] bg-black"
+                    />
+                  )}
+
                   <div className="flex flex-wrap gap-2 border-t border-white/[0.06] pt-3">
                     <form action={handleReportAction}>
                       <input type="hidden" name="reportId" value={report.id} />
@@ -238,6 +280,15 @@ export default async function ModerationPage() {
                         <Button type="submit" variant="destructive" size="sm">
                           <Trash2 aria-hidden />
                           Supprimer le commentaire
+                        </Button>
+                      </form>
+                    )}
+                    {t.callVideoId && (
+                      <form action={removeVideoAction} className="ml-auto">
+                        <input type="hidden" name="videoId" value={t.callVideoId} />
+                        <Button type="submit" variant="destructive" size="sm">
+                          <Trash2 aria-hidden />
+                          Retirer le témoignage
                         </Button>
                       </form>
                     )}

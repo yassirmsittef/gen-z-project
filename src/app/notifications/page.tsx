@@ -16,6 +16,7 @@ import {
   ShieldX,
   Undo2,
   Users,
+  Video,
   Vote,
   type LucideIcon,
 } from "lucide-react";
@@ -49,6 +50,7 @@ const TYPE_STYLES: Record<NotificationType, { Icon: LucideIcon; tone: string }> 
   BOYCOTT_ANSWERED: { Icon: Rocket, tone: "text-success" },
   BOYCOTT_REMOVED: { Icon: ShieldX, tone: "text-destructive" },
   CALL_COMMENT: { Icon: MessageCircle, tone: "text-secondary" },
+  CALL_VIDEO: { Icon: Video, tone: "text-secondary" },
 };
 
 export default async function NotificationsPage() {

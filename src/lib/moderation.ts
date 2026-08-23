@@ -60,6 +60,15 @@ export async function createReport(
     if (comment.userId === reporterId) {
       throw new DomainError("C'est ta réponse — tu peux la retirer toi-même.");
     }
+  } else if (input.targetType === "CALL_VIDEO") {
+    const video = await prisma.callVideo.findUnique({
+      where: { id: input.targetId },
+      select: { authorId: true, removedAt: true },
+    });
+    if (!video || video.removedAt) throw new DomainError("Témoignage introuvable.");
+    if (video.authorId === reporterId) {
+      throw new DomainError("C'est ton témoignage — tu peux le retirer toi-même.");
+    }
   } else if (input.targetType === "CHAT_GROUP") {
     const group = await prisma.chatGroup.findUnique({
       where: { id: input.targetId },

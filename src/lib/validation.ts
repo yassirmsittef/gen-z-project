@@ -12,9 +12,12 @@ import {
   MAX_PROOF_LINKS,
   MAX_SKILLS_PER_PROJECT,
   MAX_SKILLS_PER_USER,
+  MAX_VIDEO_CAPTION,
+  MAX_VIDEO_SECONDS,
   MIN_CALL_REASON,
   MIN_CALL_WANTED,
   MIN_CONTRIBUTION_MAJOR,
+  MIN_VIDEO_CAPTION,
   MIN_DURATION_DAYS,
   MIN_GOAL,
   MIN_MILESTONE_AMOUNT,
@@ -347,6 +350,38 @@ export const callCommentSchema = z.object({
     .trim()
     .min(2, "Ta réponse est un peu courte.")
     .max(1000, "1000 caractères max."),
+});
+
+/**
+ * Témoignage vidéo. L'URL n'est pas saisie par un humain : elle vient de
+ * Vercel Blob après l'upload direct. On la contraint quand même à notre
+ * propre domaine de stockage — sinon n'importe quelle URL pourrait être
+ * injectée et le fil servirait de vitrine à des vidéos hébergées ailleurs,
+ * hors de portée de la modération et du retrait.
+ */
+export const callVideoSchema = z.object({
+  callId: z.string().min(1),
+  url: z
+    .string()
+    .url()
+    .refine((u) => u.includes(".blob.vercel-storage.com/"), "Vidéo non hébergée par GeniGain."),
+  posterUrl: z
+    .string()
+    .url()
+    .refine((u) => u.includes(".blob.vercel-storage.com/"), "Vignette non hébergée par GeniGain.")
+    .optional(),
+  caption: z
+    .string()
+    .trim()
+    .min(MIN_VIDEO_CAPTION, `Dis en une phrase ce que montre ta vidéo (${MIN_VIDEO_CAPTION} caractères minimum).`)
+    .max(MAX_VIDEO_CAPTION, `${MAX_VIDEO_CAPTION} caractères max.`),
+  durationMs: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(MAX_VIDEO_SECONDS * 1000, `${MAX_VIDEO_SECONDS} secondes maximum.`),
+  width: z.coerce.number().int().positive().optional(),
+  height: z.coerce.number().int().positive().optional(),
 });
 
 /**
