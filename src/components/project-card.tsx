@@ -1,6 +1,6 @@
 import Link from "next/link";
-import type { Prisma } from "@prisma/client";
-import { Clock, Users } from "lucide-react";
+import type { ProjectCardData } from "@/lib/project-card-data";
+import { Clock, Swords, Users } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -11,11 +11,20 @@ import { CATEGORY_LABELS } from "@/lib/constants";
 import { daysLeft, progressPercent } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
 
-export type ProjectCardData = Prisma.ProjectGetPayload<{
-  include: { owner: true; _count: { select: { contributions: true } } };
-}>;
+export type { ProjectCardData };
 
-export function ProjectCard({ project }: { project: ProjectCardData }) {
+/**
+ * `replaces` : les marques que ce projet s'est engagé à remplacer (appels du
+ * fil auxquels il répond). Optionnel — les pages qui n'ont pas fait la
+ * requête n'affichent simplement pas le bandeau.
+ */
+export function ProjectCard({
+  project,
+  replaces = [],
+}: {
+  project: ProjectCardData;
+  replaces?: { target: string }[];
+}) {
   const percent = progressPercent(project.raised, project.goal);
   const remaining = daysLeft(project.deadline);
 
@@ -36,6 +45,14 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
               className="aspect-video w-full object-cover"
             />
           </div>
+        )}
+        {replaces.length > 0 && (
+          <p className="flex items-center gap-1.5 border-b border-secondary/20 bg-secondary/[0.08] px-6 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-secondary">
+            <Swords aria-hidden className="h-3 w-3 shrink-0" />
+            <span translate="no" className="truncate">
+              Remplace {replaces.map((call) => call.target).join(", ")}
+            </span>
+          </p>
         )}
         <CardHeader className="space-y-3">
           <div className="flex items-center gap-2">

@@ -16,6 +16,7 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectCard } from "@/components/project-card";
+import { PROJECT_CARD_INCLUDE } from "@/lib/project-card-data";
 import { ReportButton } from "@/components/report-button";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
@@ -77,7 +78,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
     where: { id },
     include: {
       projects: {
-        include: { owner: true, _count: { select: { contributions: true } } },
+        include: PROJECT_CARD_INCLUDE,
         orderBy: { createdAt: "desc" },
       },
       reputationEvents: { orderBy: { createdAt: "desc" }, take: 8 },

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { skillMatchScore } from "@/lib/project-service";
 import { Button } from "@/components/ui/button";
 import { ProjectCard, type ProjectCardData } from "@/components/project-card";
+import { PROJECT_CARD_INCLUDE } from "@/lib/project-card-data";
 
 export const metadata: Metadata = { title: "Rebondir" };
 
@@ -32,7 +33,7 @@ export default async function ReboundPage({
     },
     orderBy: { createdAt: "desc" },
     take: 12,
-    include: { owner: true, _count: { select: { contributions: true } } },
+    include: PROJECT_CARD_INCLUDE,
   });
 
   // Réorientation : compétences de l'utilisateur d'abord, même catégorie ensuite.

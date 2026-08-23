@@ -1,4 +1,5 @@
 import type { NotificationType, Prisma } from "@prisma/client";
+import { isUnmutable } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -18,6 +19,14 @@ export type NotificationInput = {
   title: string;
   body?: string;
   href: string;
+  /**
+   * Le contenu qui a déclenché la notification. À renseigner dès que le
+   * `body` en recopie un extrait : c'est ce qui permet de neutraliser la
+   * copie quand ce contenu est retiré. Sans clé, on ne peut retrouver la
+   * ligne qu'en filtrant sur le texte — ce qui frappe aussi les
+   * notifications d'un contenu identique resté en ligne.
+   */
+  sourceId?: string;
 };
 
 /** Écarte les notifications dont le destinataire a coupé le type (préférences). */
@@ -30,7 +39,12 @@ async function withoutMuted(
     where: { id: { in: [...new Set(inputs.map((i) => i.userId))] } },
     select: { id: true, mutedNotifications: true },
   });
-  const muted = new Map(users.map((u) => [u.id, new Set(u.mutedNotifications)]));
+  // On ignore ici les types non masquables : des lignes `mutedNotifications`
+  // écrites avant l'introduction de la règle existent peut-être déjà en base,
+  // et aucune migration de données n'est nécessaire si on filtre à la lecture.
+  const muted = new Map(
+    users.map((u) => [u.id, new Set(u.mutedNotifications.filter((t) => !isUnmutable(t)))])
+  );
   return inputs.filter((input) => !muted.get(input.userId)?.has(input.type));
 }
 
@@ -44,6 +58,7 @@ export async function notify(input: NotificationInput, client: Client = prisma) 
       title: input.title,
       body: input.body,
       href: input.href,
+      sourceId: input.sourceId,
     },
   });
 }
@@ -58,6 +73,7 @@ export async function notifyMany(inputs: NotificationInput[], client: Client = p
       title: input.title,
       body: input.body,
       href: input.href,
+      sourceId: input.sourceId,
     })),
   });
 }
@@ -106,6 +122,7 @@ export async function notifyManyOnceUnread(inputs: NotificationInput[], client: 
       title: input.title,
       body: input.body,
       href: input.href,
+      sourceId: input.sourceId,
     })),
   });
 }

@@ -68,6 +68,9 @@ model User {
   notifications    Notification[]
   comments         Comment[]
   follows          Follow[]
+  boycottCalls     BoycottCall[]
+  boycottSupports  BoycottSupport[]
+  callComments     CallComment[]
 }
 
 model Account {
@@ -166,6 +169,7 @@ model Project {
   updates             ProjectUpdate[]
   comments            Comment[]
   follows             Follow[]
+  boycottAnswers      BoycottAnswer[]
 
   @@index([status, category])
 }
@@ -415,6 +419,8 @@ enum ReportTargetType {
   USER
   CHAT_GROUP // groupe de chat (nom, intention ou ambiance du salon)
   GROUP_MESSAGE // un message précis dans un salon
+  BOYCOTT_CALL // un appel publié dans le fil des remplacements
+  CALL_COMMENT // un commentaire sous un appel
 }
 
 enum ReportStatus {
@@ -560,6 +566,9 @@ enum NotificationType {
   PARTNERSHIP // nouvelle demande de partenariat
   COMMENT // nouveau commentaire sur ton projet
   PROJECT_UPDATE // le porteur a posté une actu
+  BOYCOTT_ANSWERED // un projet se lance pour remplacer une marque que tu veux voir remplacée
+  BOYCOTT_REMOVED // ton appel a été retiré par la modération (type distinct : ne doit pas être masquable avec le reste)
+  CALL_COMMENT // quelqu'un a commenté ton appel
 }
 
 model Notification {
@@ -568,6 +577,12 @@ model Notification {
   type      NotificationType
   title     String
   body      String?
+  /// Le contenu qui a DÉCLENCHÉ la notification (id de commentaire, de
+  /// réponse…). Sert à retrouver la ligne quand ce contenu est retiré : le
+  /// corps en recopie un extrait, et sans clé on ne pouvait le neutraliser
+  /// qu'en filtrant sur le TEXTE — ce qui frappait aussi les notifications
+  /// d'un contenu identique mais toujours en ligne.
+  sourceId  String?
   href      String // destination du clic
   readAt    DateTime?
   // Relais email des types majeurs : posé quand l'email est parti (envoi
@@ -579,6 +594,112 @@ model Notification {
 
   @@index([userId, readAt])
   @@index([userId, createdAt])
+  @@index([type, sourceId])
+}
+
+// ---------- Appels au remplacement (le fil) ----------
+//
+// Un membre nomme une marque dont il ne veut plus et dit pourquoi. GeniGain
+// HÉBERGE ce contenu, ne l'écrit pas et ne l'endosse pas : l'auteur est
+// toujours affiché, l'appel est signalable (Report.BOYCOTT_CALL) et retirable
+// — par son auteur ou par la modération, qui laisse une pierre tombale plutôt
+// que d'effacer l'historique.
+//
+// Le but n'est pas la colère mais le remplacement : un appel est une DEMANDE
+// ouverte, à laquelle un projet vient répondre (BoycottAnswer).
+
+model BoycottCall {
+  id       String          @id @default(cuid())
+  authorId String
+  slug     String          @unique
+  /** La marque visée, telle que l'auteur l'écrit (affichée). */
+  target   String
+  /** `target` normalisé (minuscules, sans accents) : regroupe les appels visant la même marque. */
+  targetKey String
+  category ProjectCategory
+  /** Le motif, écrit par l'auteur. C'est SON propos, jamais celui de la plateforme. */
+  reason   String
+  /** Ce qu'il faudrait à la place — la commande passée aux porteurs. */
+  wanted   String
+  /** Liens à l'appui (https uniquement, MAX_CALL_SOURCES). */
+  sources  String[]        @default([])
+
+  // Retrait : on ne supprime pas la ligne (les soutiens et les réponses ont
+  // une histoire), on la masque.
+  removedAt     DateTime?
+  removedById   String? // null + removedAt posé = retiré par l'auteur
+  removalReason String?
+
+  createdAt DateTime @default(now())
+
+  author   User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  supports BoycottSupport[]
+  answers  BoycottAnswer[]
+  comments CallComment[]
+
+  @@index([targetKey])
+  @@index([removedAt, createdAt])
+  @@index([authorId, createdAt])
+}
+
+/** « Je veux ça remplacé aussi » — une voix par membre et par appel. */
+model BoycottSupport {
+  id        String   @id @default(cuid())
+  callId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  call BoycottCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([callId, userId])
+  @@index([userId, createdAt])
+}
+
+/// Discussion sous un appel : nuancer, corroborer, contredire, ou proposer une
+/// piste de remplacement. C'est ici que la contradiction se dit — un fil où
+/// l'on ne peut qu'acclamer n'est pas une place publique.
+/// Retrait possible par l'auteur du commentaire, l'auteur de l'appel, ou la
+/// modération (mêmes règles que les commentaires de projet).
+model CallComment {
+  id        String   @id @default(cuid())
+  callId    String
+  userId    String
+  body      String
+  createdAt DateTime @default(now())
+
+  // Retrait LOGIQUE, comme pour un appel. Trois raisons de ne pas supprimer
+  // la ligne : les plafonds anti-spam ne doivent pas se réinitialiser quand
+  // on efface ses propres messages, un signalement doit rester traitable
+  // après le retrait, et la modération a besoin de la pièce à conviction.
+  // C'est le RENDU qui disparaît, pas la preuve.
+  removedAt   DateTime?
+  removedById String? // null + removedAt posé = retiré par son auteur
+
+  call BoycottCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([callId, removedAt, createdAt])
+  @@index([userId, createdAt])
+}
+
+/** Un porteur déclare que son projet répond à l'appel : la demande trouve son remplaçant. */
+model BoycottAnswer {
+  id        String   @id @default(cuid())
+  callId    String
+  projectId String
+  createdAt DateTime @default(now())
+  // Le détachement garde la ligne : `@@unique([callId, projectId])` devient
+  // la mémoire du fait qu'on a DÉJÀ prévenu les soutiens pour ce couple. Sans
+  // ça, déclarer puis retirer en boucle rejoue la notification à volonté.
+  withdrawnAt DateTime?
+  withdrawnBy String? // qui a détaché : porteur, auteur de l'appel, ou modération
+
+  call    BoycottCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+  project Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([callId, projectId])
+  @@index([projectId, withdrawnAt])
 }
 
 // ---------- Réputation ----------

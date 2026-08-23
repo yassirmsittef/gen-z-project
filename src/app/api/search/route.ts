@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { liveAnswer, targetKeyOf } from "@/lib/boycott";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -15,11 +16,11 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const q = new URL(request.url).searchParams.get("q")?.trim() ?? "";
-  if (q.length < 2) return NextResponse.json({ projects: [], members: [], rooms: [] });
+  if (q.length < 2) return NextResponse.json({ projects: [], members: [], rooms: [], calls: [] });
 
   const session = await auth();
 
-  const [projects, members, rooms] = await Promise.all([
+  const [projects, members, rooms, calls] = await Promise.all([
     prisma.project.findMany({
       where: {
         OR: [
@@ -57,11 +58,40 @@ export async function GET(request: Request) {
           take: 5,
         })
       : Promise.resolve([]),
+    // Les appels sont publics comme les projets. Chercher une marque doit
+    // mener au fil : c'est souvent par là qu'on arrive sur la plateforme.
+    prisma.boycottCall.findMany({
+      where: {
+        removedAt: null,
+        OR: [
+          { target: { contains: q, mode: "insensitive" } },
+          // La clé normalisée aussi, comme dans `listCalls` : sans elle,
+          // « nestle » ne trouve pas « Nestlé » ici alors que le champ de
+          // recherche du fil, lui, le trouve. Deux surfaces de recherche ne
+          // peuvent pas obéir à deux règles.
+          { targetKey: { contains: targetKeyOf(q) } },
+          { wanted: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      orderBy: [{ supports: { _count: "desc" } }, { createdAt: "desc" }],
+      select: {
+        slug: true,
+        target: true,
+        wanted: true,
+        _count: { select: { supports: true, answers: { where: liveAnswer } } },
+      },
+      take: 5,
+    }),
   ]);
 
   return NextResponse.json({
     projects,
     members,
     rooms: rooms.map(({ _count, ...room }) => ({ ...room, memberCount: _count.members })),
+    calls: calls.map(({ _count, ...call }) => ({
+      ...call,
+      supportCount: _count.supports,
+      answerCount: _count.answers,
+    })),
   });
 }

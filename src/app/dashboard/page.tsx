@@ -1,13 +1,15 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { FileDown, Handshake, PenLine, Sparkles, Star } from "lucide-react";
+import { FileDown, Handshake, PenLine, Sparkles, Star, Swords } from "lucide-react";
 import { auth } from "@/auth";
+import { liveAnswer } from "@/lib/boycott";
 import { prisma } from "@/lib/prisma";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectCard } from "@/components/project-card";
+import { PROJECT_CARD_INCLUDE } from "@/lib/project-card-data";
 import { stripeEnabled } from "@/lib/stripe";
 import { stripeLive } from "@/lib/stripe-mode";
 import { ReputationBadge } from "@/components/reputation-badge";
@@ -25,7 +27,7 @@ import { nextReputationTarget } from "@/lib/reputation";
 import { GATE_USD_CENTS } from "@/lib/constants";
 import { formatMoney, formatMoneyRounded } from "@/lib/money";
 import { convertMinor } from "@/lib/fx";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -64,6 +66,7 @@ export default async function DashboardPage({
     pendingPartnerships,
     followedProjects,
     payoutParts,
+    myCalls,
   ] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),
     prisma.contribution.findMany({
@@ -73,7 +76,7 @@ export default async function DashboardPage({
     }),
     prisma.project.findMany({
       where: { ownerId: session.user.id },
-      include: { owner: true, _count: { select: { contributions: true } } },
+      include: PROJECT_CARD_INCLUDE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.reputationEvent.findMany({
@@ -89,7 +92,7 @@ export default async function DashboardPage({
       orderBy: { createdAt: "desc" },
       include: {
         project: {
-          include: { owner: true, _count: { select: { contributions: true } } },
+          include: PROJECT_CARD_INCLUDE,
         },
       },
     }),
@@ -100,6 +103,18 @@ export default async function DashboardPage({
         amountMinor: true,
         stripeTransferId: true,
         milestone: { select: { project: { select: { currency: true } } } },
+      },
+    }),
+    // Mes appels encore en ligne — les retirés ne sont pas une liste à gérer.
+    prisma.boycottCall.findMany({
+      where: { authorId: session.user.id, removedAt: null },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        slug: true,
+        target: true,
+        createdAt: true,
+        _count: { select: { supports: true, answers: { where: liveAnswer } } },
       },
     }),
   ]);
@@ -307,6 +322,49 @@ export default async function DashboardPage({
             </div>
           )}
         </section>
+
+        {/* Mes appels : l'auteur doit pouvoir retrouver les siens pour les
+            suivre ou les retirer — un contenu publié sous son nom qu'il ne
+            sait plus où retrouver, c'est un contenu qu'il ne peut plus
+            corriger. */}
+        {myCalls.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+                <Swords className="h-6 w-6 text-secondary" aria-hidden />
+                Mes appels
+              </h2>
+              <Button size="sm" variant="ghost" asChild>
+                <Link href="/appels/nouveau">Publier un appel</Link>
+              </Button>
+            </div>
+            <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-tr-sm">
+              {myCalls.map((call) => (
+                <li key={call.id}>
+                  <Link
+                    href={`/appels/${call.slug}`}
+                    className="flex items-center gap-3.5 p-4 transition-colors duration-200 hover:bg-accent"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold">
+                        Remplacer {call.target}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {call._count.supports} voix ·{" "}
+                        {call._count.answers > 0
+                          ? `${call._count.answers} remplaçant${call._count.answers > 1 ? "s" : ""}`
+                          : "aucun remplaçant pour l'instant"}
+                      </span>
+                    </span>
+                    <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                      {formatRelative(call.createdAt)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {followedProjects.length > 0 && (
           <section className="space-y-4">

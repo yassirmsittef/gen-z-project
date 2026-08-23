@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { NotificationType } from "@prisma/client";
 import { auth } from "@/auth";
+import { isUnmutable } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
 export type PrefsFormState = { error?: string; success?: boolean } | undefined;
@@ -25,7 +26,9 @@ export async function updateNotificationPrefsAction(
       (allTypes as string[]).includes(t)
     )
   );
-  const muted = allTypes.filter((type) => !enabled.has(type));
+  // Un type non masquable ne part jamais en base, même si la case est décochée
+  // (formulaire trafiqué, ou case retirée après coup de l'interface).
+  const muted = allTypes.filter((type) => !enabled.has(type) && !isUnmutable(type));
 
   await prisma.user.update({
     where: { id: session.user.id },

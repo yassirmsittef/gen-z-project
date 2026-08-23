@@ -8,11 +8,13 @@ import {
   Handshake,
   HeartHandshake,
   ShieldAlert,
+  Swords,
   Undo2,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { auth } from "@/auth";
+import { liveAnswer } from "@/lib/boycott";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/moderation";
 import { STATUS_LABELS } from "@/lib/constants";
@@ -62,6 +64,8 @@ export default async function AdminCockpitPage() {
     payoutRows,
     openReports,
     pendingPartnerships,
+    openCalls,
+    answeredCalls,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { createdAt: { gte: since7 } } }),
@@ -94,6 +98,11 @@ export default async function AdminCockpitPage() {
     }),
     prisma.report.count({ where: { status: "OPEN" } }),
     prisma.partnershipRequest.count({ where: { status: "PENDING" } }),
+    prisma.boycottCall.count({ where: { removedAt: null } }),
+    // `liveAnswer` et pas `some: {}` : sinon une réponse détachée ou portée
+    // par un projet échoué gonfle le « taux de transformation », qui ne peut
+    // alors que monter — et contredit le tri « Sans remplaçant » du fil.
+    prisma.boycottCall.count({ where: { removedAt: null, answers: { some: liveAnswer } } }),
   ]);
 
   // ----- Collecte par jour (30 j) en équivalent USD — seule échelle commune.
@@ -248,6 +257,15 @@ export default async function AdminCockpitPage() {
                 return `${STATUS_LABELS[status]} ${count}`;
               })
               .join(" · ")}
+          </Tile>
+
+          {/* Le taux de transformation du fil : un appel sans remplaçant est
+              une demande qui attend, pas un échec — mais si le ratio reste à
+              zéro, le fil ne sert qu'à râler. */}
+          <Tile Icon={Swords} label="Appels au remplacement" value={String(openCalls)}>
+            {openCalls === 0
+              ? "aucun appel publié"
+              : `${answeredCalls} avec un remplaçant · ${openCalls - answeredCalls} sans`}
           </Tile>
 
           <Tile Icon={Banknote} label="Collecté par devise" value={collectedByCurrency.length === 0 ? "—" : formatMoney(collectedByCurrency[0][1], collectedByCurrency[0][0])}>

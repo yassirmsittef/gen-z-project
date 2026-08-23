@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Clock, EyeOff, Handshake, Heart, LockOpen, MessagesSquare, PartyPopper, PenLine, Star, Trash2, Users } from "lucide-react";
+import { Clock, EyeOff, Handshake, Heart, LockOpen, MessagesSquare, PartyPopper, PenLine, Star, Swords, Trash2, Users } from "lucide-react";
 import { auth } from "@/auth";
+import { callsAnsweredBy } from "@/lib/boycott";
 import { prisma } from "@/lib/prisma";
 import { deleteCommentAction, deleteUpdateAction } from "@/actions/project-feed";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -56,7 +57,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const projectPromise = prisma.project.findUnique({
     where: { slug },
     include: {
-      owner: true,
+      // Select explicite : seuls ces quatre champs sont rendus. Charger la
+      // ligne User entière ferait transiter passwordHash et email par l'arbre
+      // de rendu d'une page publique.
+      owner: { select: { id: true, name: true, avatarUrl: true, reputation: true } },
       milestones: {
         orderBy: { order: "asc" },
         include: { proofs: { include: { votes: true } } },
@@ -91,6 +95,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       )
     : false;
 
+  // Ce que ce projet s'est engagé à remplacer. On passe par `callsAnsweredBy`
+  // plutôt que de refaire le `where` ici : cette page l'avait réimplémenté en
+  // oubliant `withdrawnAt`, si bien qu'un projet détaché de l'appel continuait
+  // d'afficher sa promesse — sur l'écran même que son porteur diffuse. Un
+  // invariant écrit à deux endroits finit toujours par diverger.
+  const replaces = await callsAnsweredBy(project.id);
   const isOwner = viewerId === project.ownerId;
   const isContributor = project.contributions.some((c) => c.userId === viewerId);
 
@@ -160,6 +170,23 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           <StatusBadge status={project.status} />
         </div>
         <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">{project.title}</h1>
+        {/* L'engagement pris : ce projet s'est déclaré sur un appel du fil.
+            C'est une promesse publique, elle se lit avant le pitch. */}
+        {replaces.length > 0 && (
+          <p className="flex flex-wrap items-center gap-2 text-sm">
+            <Swords aria-hidden className="h-4 w-4 text-secondary" />
+            <span className="text-muted-foreground">Se lance pour remplacer</span>
+            {replaces.map((call) => (
+              <Link
+                key={call.slug}
+                href={`/appels/${call.slug}`}
+                className="rounded-full border border-secondary/30 bg-secondary/15 px-3 py-1 font-semibold text-secondary transition-colors duration-200 hover:bg-secondary/25"
+              >
+                {call.target}
+              </Link>
+            ))}
+          </p>
+        )}
         <p className="max-w-3xl text-lg font-medium text-muted-foreground">{project.pitch}</p>
         <div className="flex flex-wrap items-center gap-3">
           <Link href={`/u/${project.owner.id}`} className="group inline-flex items-center gap-2">

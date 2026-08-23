@@ -6,6 +6,7 @@ import type { Report } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { deleteGroupMessageFormAction } from "@/actions/chat-groups";
+import { deleteCallCommentAction } from "@/actions/boycott";
 import { handleReportAction } from "@/actions/moderation";
 import { deleteCommentAction } from "@/actions/project-feed";
 import { isAdmin } from "@/lib/moderation";
@@ -23,6 +24,8 @@ const TARGET_LABELS = {
   USER: "Membre",
   CHAT_GROUP: "Groupe",
   GROUP_MESSAGE: "Message de groupe",
+  BOYCOTT_CALL: "Appel au remplacement",
+  CALL_COMMENT: "Réponse sous un appel",
 } as const;
 
 /** Résout la cible de chaque signalement (lien + aperçu) en requêtes groupées. */
@@ -30,7 +33,8 @@ async function resolveTargets(reports: Report[]) {
   const ids = (type: Report["targetType"]) =>
     reports.filter((r) => r.targetType === type).map((r) => r.targetId);
 
-  const [projects, comments, users, groups, groupMessages] = await Promise.all([
+  const [projects, comments, users, groups, groupMessages, calls, callComments] =
+    await Promise.all([
     prisma.project.findMany({
       where: { id: { in: ids("PROJECT") } },
       select: { id: true, title: true, slug: true },
@@ -51,11 +55,30 @@ async function resolveTargets(reports: Report[]) {
       where: { id: { in: ids("GROUP_MESSAGE") } },
       select: { id: true, body: true, group: { select: { name: true, slug: true } } },
     }),
+    prisma.boycottCall.findMany({
+      where: { id: { in: ids("BOYCOTT_CALL") } },
+      select: { id: true, target: true, slug: true, reason: true, removedAt: true },
+    }),
+    prisma.callComment.findMany({
+      where: { id: { in: ids("CALL_COMMENT") } },
+      select: {
+        id: true,
+        body: true,
+        removedAt: true,
+        call: { select: { slug: true, target: true } },
+      },
+    }),
   ]);
 
   return (
     report: Report
-  ): { label: string; href: string | null; commentId?: string; groupMessageId?: string } => {
+  ): {
+    label: string;
+    href: string | null;
+    commentId?: string;
+    groupMessageId?: string;
+    callCommentId?: string;
+  } => {
     if (report.targetType === "PROJECT") {
       const p = projects.find((x) => x.id === report.targetId);
       return p
@@ -81,6 +104,27 @@ async function resolveTargets(reports: Report[]) {
             groupMessageId: m.id,
           }
         : { label: "Message déjà retiré", href: null };
+    }
+    if (report.targetType === "BOYCOTT_CALL") {
+      const c = calls.find((x) => x.id === report.targetId);
+      if (!c) return { label: "Appel introuvable", href: null };
+      return {
+        label: `${c.removedAt ? "[retiré] " : ""}« ${c.target} » — ${c.reason.slice(0, 70)}${c.reason.length > 70 ? "…" : ""}`,
+        href: `/appels/${c.slug}`,
+      };
+    }
+    if (report.targetType === "CALL_COMMENT") {
+      const c = callComments.find((x) => x.id === report.targetId);
+      if (!c) return { label: "Réponse introuvable", href: null };
+      // Le retrait est LOGIQUE : la ligne survit. Sans marqueur, la file
+      // présentait une réponse déjà retirée exactement comme une réponse en
+      // ligne, et offrait un bouton « Retirer » devenu sans effet — un
+      // modérateur ne pouvait pas distinguer « déjà traité » de « à traiter ».
+      return {
+        label: `${c.removedAt ? "[retiré] " : ""}« ${c.body.slice(0, 80)}${c.body.length > 80 ? "…" : ""} » — sous l'appel sur ${c.call.target}`,
+        href: `/appels/${c.call.slug}#discussion`,
+        callCommentId: c.removedAt ? undefined : c.id,
+      };
     }
     if (report.targetType === "CHAT_GROUP") {
       const g = groups.find((x) => x.id === report.targetId);
@@ -194,6 +238,15 @@ export default async function ModerationPage() {
                         <Button type="submit" variant="destructive" size="sm">
                           <Trash2 aria-hidden />
                           Supprimer le commentaire
+                        </Button>
+                      </form>
+                    )}
+                    {t.callCommentId && (
+                      <form action={deleteCallCommentAction} className="ml-auto">
+                        <input type="hidden" name="commentId" value={t.callCommentId} />
+                        <Button type="submit" variant="destructive" size="sm">
+                          <Trash2 aria-hidden />
+                          Retirer la réponse
                         </Button>
                       </form>
                     )}

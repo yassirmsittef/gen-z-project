@@ -8,14 +8,21 @@ const SITE_URL = process.env.NEXT_PUBLIC_APP_URL
     : "http://localhost:3000";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [projects, users] = await Promise.all([
+  const [projects, users, calls] = await Promise.all([
     prisma.project.findMany({ select: { slug: true, createdAt: true } }),
     prisma.user.findMany({ select: { id: true, createdAt: true } }),
+    // Les appels retirés sortent du sitemap : on n'envoie pas les moteurs
+    // vers une pierre tombale.
+    prisma.boycottCall.findMany({
+      where: { removedAt: null },
+      select: { slug: true, createdAt: true },
+    }),
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
     "",
     "/projects",
+    "/appels",
     "/communaute",
     "/classements",
     "/comment-ca-marche",
@@ -33,6 +40,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...projects.map((project) => ({
       url: `${SITE_URL}/projects/${project.slug}`,
       lastModified: project.createdAt,
+      changeFrequency: "daily" as const,
+    })),
+    ...calls.map((call) => ({
+      url: `${SITE_URL}/appels/${call.slug}`,
+      lastModified: call.createdAt,
       changeFrequency: "daily" as const,
     })),
     ...users.map((user) => ({

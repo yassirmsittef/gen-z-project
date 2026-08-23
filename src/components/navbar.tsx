@@ -52,6 +52,11 @@ export async function Navbar() {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/projects">Projets</Link>
           </Button>
+          {/* Le fil des appels : deuxième porte d'entrée du produit, juste
+              après les projets — c'est de là que partent les remplaçants. */}
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/appels">Appels</Link>
+          </Button>
           {/* Icône seule (comme le chat) : la Communauté reste accessible sur mobile. */}
           <Button
             variant="ghost"

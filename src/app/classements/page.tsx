@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
-import { Flame, Trophy } from "lucide-react";
+import { PROJECT_CARD_INCLUDE } from "@/lib/project-card-data";
+import { Flame, Rocket, Swords, Trophy } from "lucide-react";
+import { mostTargetedBrands } from "@/lib/boycott";
 import { prisma } from "@/lib/prisma";
 import { UserAvatar } from "@/components/user-avatar";
 import { CATEGORY_LABELS } from "@/lib/constants";
@@ -12,7 +14,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Classements" };
 
 type RankedProject = Prisma.ProjectGetPayload<{
-  include: { owner: true; _count: { select: { contributions: true } } };
+  include: typeof PROJECT_CARD_INCLUDE;
 }>;
 
 function RankedList({ projects, showPercent }: { projects: RankedProject[]; showPercent: boolean }) {
@@ -75,8 +77,8 @@ function RankedList({ projects, showPercent }: { projects: RankedProject[]; show
 }
 
 export default async function RankingsPage() {
-  const include = { owner: true, _count: { select: { contributions: true } } } as const;
-  const [active, completed] = await Promise.all([
+  const include = PROJECT_CARD_INCLUDE;
+  const [active, completed, brands] = await Promise.all([
     prisma.project.findMany({
       where: { status: "ACTIVE" },
       orderBy: [{ raised: "desc" }, { createdAt: "asc" }],
@@ -89,6 +91,7 @@ export default async function RankingsPage() {
       take: 10,
       include,
     }),
+    mostTargetedBrands(10),
   ]);
 
   return (
@@ -116,6 +119,71 @@ export default async function RankingsPage() {
             <RankedList projects={completed} showPercent={false} />
           </section>
         </div>
+
+        {/* La demande agrégée. Placée sous les projets et pleine largeur :
+            c'est une lecture d'ensemble, pas une colonne de plus. */}
+        {brands.length > 0 && (
+          <section data-reveal className="mt-12 min-w-0 space-y-4">
+            <div className="space-y-1">
+              <h2 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+                <Swords className="h-6 w-6 text-secondary" aria-hidden />
+                Les marques qu&apos;on veut remplacer
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Le poids cumulé de tous les appels visant une même marque. Publiés par des
+                membres — GeniGain héberge ce fil et n&apos;en est pas l&apos;auteur.
+              </p>
+            </div>
+
+            <ol data-spotlight className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl">
+              {brands.map((brand, index) => (
+                <li key={brand.slug}>
+                  <Link
+                    href={`/appels/${brand.slug}`}
+                    className="flex items-center gap-4 p-4 transition-colors duration-200 hover:bg-accent"
+                  >
+                    <span
+                      className={cn(
+                        "w-7 shrink-0 text-center font-display text-lg font-semibold",
+                        index === 0 ? "text-secondary" : "text-muted-foreground"
+                      )}
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span translate="no" className="block truncate font-semibold">
+                        {brand.target}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {brand.calls} appel{brand.calls > 1 ? "s" : ""}
+                        {brand.answers > 0 ? (
+                          <span className="text-success">
+                            {" "}
+                            · {brand.answers} remplaçant{brand.answers > 1 ? "s" : ""} en route
+                          </span>
+                        ) : (
+                          " · personne ne s'y attaque encore"
+                        )}
+                      </span>
+                    </span>
+                    {brand.answers === 0 && (
+                      <span className="hidden shrink-0 items-center gap-1.5 rounded-full border border-dashed border-secondary/30 px-3 py-1 text-xs font-semibold text-secondary sm:inline-flex">
+                        <Rocket aria-hidden className="h-3 w-3" />
+                        À prendre
+                      </span>
+                    )}
+                    <span className="shrink-0 text-right">
+                      <span className="block font-mono text-lg font-semibold tabular-nums text-secondary">
+                        {brand.voices}
+                      </span>
+                      <span className="data-label">voix</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
       </div>
     </div>
   );

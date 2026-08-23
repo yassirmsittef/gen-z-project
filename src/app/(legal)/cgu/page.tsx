@@ -18,7 +18,7 @@ export default function CguPage() {
   return (
     <>
       <h1>Conditions générales d’utilisation</h1>
-      <p className="data-label mt-3">Version du 12 juillet 2026</p>
+      <p className="data-label mt-3">Version du 23 août 2026</p>
 
       <p>
         Bienvenue sur GeniGain. En créant un compte ou en utilisant la plateforme, tu acceptes
@@ -245,7 +245,51 @@ export default function CguPage() {
         personne visée.
       </p>
 
-      <h2>12. Tes données</h2>
+      <h2>12. Le fil des appels au remplacement</h2>
+      <p>
+        Le fil « Appels » permet à un membre de nommer publiquement une entreprise ou une marque
+        dont il ne veut plus, d’en exposer les raisons et de décrire ce qu’il souhaiterait à la
+        place, afin qu’un porteur s’en saisisse.
+      </p>
+      <ul>
+        <li>
+          <strong>L’auteur est seul responsable de son appel.</strong> Il est publié sous son
+          nom. GeniGain <strong>héberge</strong> ce contenu : la plateforme n’en est pas
+          l’auteur, ne le rédige pas, ne le valide pas au préalable et ne le fait pas sien.
+        </li>
+        <li>
+          L’auteur s’engage à ne viser qu’une entreprise ou une marque — jamais une personne
+          physique, un salarié ou une communauté —, à pouvoir étayer les faits qu’il affirme, à
+          distinguer le fait de l’opinion, et à s’abstenir de tout appel à la violence ou au
+          harcèlement. Ces règles sont rappelées avant chaque publication.
+        </li>
+        <li>
+          Appeler à ne plus acheter les produits d’une entreprise et exposer ses motifs relève de
+          la liberté d’expression. En revanche, l’imputation de faits inexacts, dénigrants ou non
+          étayés engage la responsabilité de son auteur, notamment au regard de la loi fédérale
+          contre la concurrence déloyale et du droit de la personnalité.
+        </li>
+        <li>
+          <strong>La discussion sous un appel</strong> suit les mêmes règles : chaque réponse est
+          publiée sous le nom de son auteur, qui en est seul responsable. La contradiction y est
+          expressément admise — une entreprise mise en cause peut y répondre publiquement comme
+          n’importe quel membre. Une réponse peut être retirée par son auteur, par l’auteur de
+          l’appel ou par la modération, et signalée par n’importe qui.
+        </li>
+        <li>
+          Tout appel peut être signalé par n’importe quel membre. L’auteur peut retirer son appel
+          à tout moment ; l’équipe de modération peut le retirer si elle l’estime contraire à ces
+          conditions, en informant l’auteur du motif.
+        </li>
+        <li>
+          <strong>Entreprise mise en cause :</strong> écris à{" "}
+          <a href="mailto:bonjour@genigain.com">bonjour@genigain.com</a> en indiquant l’appel
+          concerné et les éléments contestés. Un contenu manifestement illicite est retiré sans
+          délai ; dans les autres cas, la demande est examinée et une réponse est apportée.
+        </li>
+      </ul>
+
+      <h2>13. Tes données</h2>
       <p>
         Le traitement de tes données personnelles est décrit dans la{" "}
         <Link href="/confidentialite">politique de confidentialité</Link>. Tu peux supprimer ton
@@ -255,7 +299,7 @@ export default function CguPage() {
         bout d’abord.
       </p>
 
-      <h2>13. Responsabilité</h2>
+      <h2>14. Responsabilité</h2>
       <ul>
         <li>
           GeniGain s’engage sur le fonctionnement de la plateforme (séquestre, votes,
@@ -273,14 +317,14 @@ export default function CguPage() {
         </li>
       </ul>
 
-      <h2>14. Évolution des conditions</h2>
+      <h2>15. Évolution des conditions</h2>
       <p>
         Ces conditions peuvent évoluer avec la plateforme. Les changements importants seront
         annoncés sur le site avant leur entrée en vigueur ; la date de version en tête de page
         fait foi. Continuer à utiliser GeniGain après un changement vaut acceptation.
       </p>
 
-      <h2>15. Droit applicable et for</h2>
+      <h2>16. Droit applicable et for</h2>
       <p>
         GeniGain est éditée depuis la <strong>Suisse</strong>. Ces conditions sont soumises au{" "}
         <strong>droit suisse</strong>, à l’exclusion des règles de conflit de lois. En cas de

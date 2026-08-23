@@ -3,19 +3,30 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Lock } from "lucide-react";
 import { auth } from "@/auth";
+import { getCallBrief } from "@/lib/boycott";
 import { prisma } from "@/lib/prisma";
 import { gateProgress, skillMatchScore } from "@/lib/project-service";
 import { CreateProjectForm } from "@/components/create-project-form";
 import { ProjectCard } from "@/components/project-card";
+import { PROJECT_CARD_INCLUDE } from "@/lib/project-card-data";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { formatMoney } from "@/lib/money";
 
 export const metadata: Metadata = { title: "Lancer un projet" };
 
-export default async function NewProjectPage() {
+export default async function NewProjectPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ appel?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+
+  // Projet lancé depuis un appel du fil : son cahier des charges accompagne
+  // le porteur jusqu'au bout, gate compris.
+  const callSlug = (await searchParams).appel;
+  const answersCall = callSlug ? await getCallBrief(callSlug) : null;
 
   const gate = await gateProgress(session.user.id);
 
@@ -27,7 +38,7 @@ export default async function NewProjectPage() {
         where: { status: "ACTIVE", ownerId: { not: session.user.id } },
         orderBy: { createdAt: "desc" },
         take: 12,
-        include: { owner: true, _count: { select: { contributions: true } } },
+        include: PROJECT_CARD_INCLUDE,
       }),
     ]);
     // Compétences de l'utilisateur d'abord : c'est là qu'il peut aider.
@@ -71,6 +82,24 @@ export default async function NewProjectPage() {
             </p>
           </div>
 
+          {/* Le gate ne doit pas faire oublier l'appel : on rappelle la
+              promesse et on garde le lien de retour, paramètre compris. */}
+          {answersCall && (
+            <div className="w-full max-w-md rounded-2xl rounded-tr-sm border border-secondary/25 bg-secondary/[0.07] p-4 text-left">
+              <p className="data-label">Tu voulais remplacer</p>
+              <p className="mt-1 font-display text-lg font-semibold">{answersCall.target}</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                L&apos;appel t&apos;attend : contribue d&apos;abord, puis reviens le prendre.{" "}
+                <Link
+                  href={`/appels/${answersCall.slug}`}
+                  className="text-secondary underline-offset-4 hover:underline"
+                >
+                  Revoir l&apos;appel
+                </Link>
+              </p>
+            </div>
+          )}
+
           <Button asChild>
             <Link href="/projects">Explorer les projets</Link>
           </Button>
@@ -94,14 +123,17 @@ export default async function NewProjectPage() {
     <div className="container max-w-3xl py-10">
       {/* Réveil du rêve : la page émerge en douceur après la plongée du hero */}
       <div className="hero-reveal mb-8 space-y-2" style={{ animationDelay: "0.1s" }}>
-        <h1 className="text-4xl font-semibold tracking-tight">Lance ton projet</h1>
+        <h1 className="text-4xl font-semibold tracking-tight">
+          {answersCall ? `Remplace ${answersCall.target}` : "Lance ton projet"}
+        </h1>
         <p className="font-medium text-muted-foreground">
-          Sois transparent·e sur ton plan : c&apos;est lui que la communauté finance, étape par
-          étape.
+          {answersCall
+            ? "Quelqu'un a décrit ce qu'il achèterait à la place. Montre comment tu comptes le construire, étape par étape."
+            : "Sois transparent·e sur ton plan : c'est lui que la communauté finance, étape par étape."}
         </p>
       </div>
       <div className="hero-reveal" style={{ animationDelay: "0.35s" }}>
-        <CreateProjectForm />
+        <CreateProjectForm answersCall={answersCall ?? undefined} />
       </div>
     </div>
   );

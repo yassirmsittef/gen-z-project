@@ -16,7 +16,7 @@ export default function ConfidentialitePage() {
   return (
     <>
       <h1>Politique de confidentialité</h1>
-      <p className="data-label mt-3">Version du 12 juillet 2026</p>
+      <p className="data-label mt-3">Version du 23 août 2026</p>
 
       <p>
         Cette page décrit ce que GeniGain fait de tes données, sans jargon inutile. Le principe
@@ -54,6 +54,18 @@ export default function ConfidentialitePage() {
         <li>
           <strong>Tes messages privés</strong> avec les autres membres (visibles uniquement de
           toi et de ton interlocuteur, et de la modération en cas de signalement).
+        </li>
+        <li>
+          <strong>Tes appels au remplacement</strong> : la marque que tu nommes, le secteur, ton
+          motif, ce que tu veux à la place, les liens que tu fournis à l’appui — et, s’il a été
+          retiré, la date du retrait et son motif. Un appel est <strong>public</strong> et publié
+          sous ton nom ; il reste consultable par tous tant qu’il n’est pas retiré.
+        </li>
+        <li>
+          <strong>Ta participation au fil</strong> : tes réponses dans la discussion sous un
+          appel (publiques, sous ton nom), les appels que tu soutiens, et les projets que tu as
+          déclarés remplaçants d’une marque. Ces trois catégories figurent dans ton export de
+          données.
         </li>
         <li>
           <strong>Signalements</strong> que tu envoies ou qui te visent.

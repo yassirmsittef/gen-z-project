@@ -40,6 +40,26 @@ export async function createReport(
     if (message.senderId === reporterId) {
       throw new DomainError("C'est ton message — tu peux le supprimer toi-même.");
     }
+  } else if (input.targetType === "BOYCOTT_CALL") {
+    const call = await prisma.boycottCall.findUnique({
+      where: { id: input.targetId },
+      select: { authorId: true, removedAt: true },
+    });
+    if (!call || call.removedAt) throw new DomainError("Appel introuvable.");
+    if (call.authorId === reporterId) {
+      throw new DomainError("C'est ton appel — tu peux le retirer toi-même.");
+    }
+  } else if (input.targetType === "CALL_COMMENT") {
+    const comment = await prisma.callComment.findUnique({
+      where: { id: input.targetId },
+      select: { userId: true },
+    });
+    // Un commentaire RETIRÉ reste signalable : le signalement arrive souvent
+    // après le retrait, et la modération doit pouvoir trancher sur la pièce.
+    if (!comment) throw new DomainError("Réponse introuvable.");
+    if (comment.userId === reporterId) {
+      throw new DomainError("C'est ta réponse — tu peux la retirer toi-même.");
+    }
   } else if (input.targetType === "CHAT_GROUP") {
     const group = await prisma.chatGroup.findUnique({
       where: { id: input.targetId },

@@ -54,6 +54,38 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
+describe("le HTML des emails n'accepte pas le balisage des membres", () => {
+  it("échappe le titre et le corps, qui reprennent du texte écrit par un membre", async () => {
+    const membre = await mkUser();
+    // Un titre de projet est libre : c'est lui qui arrive dans `title`.
+    await prisma.notification.create({
+      data: {
+        userId: membre.id,
+        type: "MILESTONE_RELEASED",
+        title: `<img src=x onerror="alert(1)"> ${RUN}`,
+        body: '</p><script>fetch("//exfil")</script><p>',
+        href: "/projects/test",
+      },
+    });
+
+    const envois: { html: string; text: string }[] = [];
+    await sendPendingNotificationEmails(async (input) => {
+      envois.push({ html: input.html, text: input.text });
+      return { sent: true };
+    });
+
+    expect(envois).toHaveLength(1);
+    const { html } = envois[0];
+    // Aucune BALISE active ne survit. (Le texte « onerror= » subsiste en
+    // clair après échappement : c'est justement le but — inerte et lisible.)
+    expect(html).not.toContain("<script>");
+    expect(html).not.toContain("<img src=x");
+    // Le texte reste lisible, simplement échappé.
+    expect(html).toContain("&lt;img src=x");
+    expect(html).toContain("&lt;script&gt;");
+  });
+});
+
 describe("emails des notifications majeures", () => {
   it("envoie les types majeurs non lus, marque emailedAt, et ignore le reste", async () => {
     const user = await mkUser();

@@ -4,8 +4,10 @@ import { ProjectCategory, ProjectStatus, type Prisma } from "@prisma/client";
 import { Search } from "lucide-react";
 import { ChipRail, FilterChip } from "@/components/filter-chips";
 import { ProjectCard } from "@/components/project-card";
+import { PROJECT_CARD_INCLUDE } from "@/lib/project-card-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { replacementsByProject } from "@/lib/boycott";
 import { prisma } from "@/lib/prisma";
 import { CATEGORY_DESCRIPTIONS, CATEGORY_LABELS, STATUS_LABELS } from "@/lib/constants";
 
@@ -75,8 +77,10 @@ export default async function ProjectsPage({
   const projects = await prisma.project.findMany({
     where,
     orderBy,
-    include: { owner: true, _count: { select: { contributions: true } } },
+    include: PROJECT_CARD_INCLUDE,
   });
+
+  const replaces = await replacementsByProject(projects.map((project) => project.id));
 
   return (
     <div className="container py-10">
@@ -178,7 +182,11 @@ export default async function ProjectsPage({
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              replaces={replaces.get(project.id)}
+            />
           ))}
         </div>
       )}

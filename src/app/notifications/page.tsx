@@ -12,6 +12,7 @@ import {
   MessageCircle,
   MessagesSquare,
   PartyPopper,
+  Rocket,
   ShieldX,
   Undo2,
   Users,
@@ -45,6 +46,9 @@ const TYPE_STYLES: Record<NotificationType, { Icon: LucideIcon; tone: string }> 
   PARTNERSHIP: { Icon: Handshake, tone: "text-secondary" },
   COMMENT: { Icon: MessageCircle, tone: "text-secondary" },
   PROJECT_UPDATE: { Icon: Megaphone, tone: "text-primary" },
+  BOYCOTT_ANSWERED: { Icon: Rocket, tone: "text-success" },
+  BOYCOTT_REMOVED: { Icon: ShieldX, tone: "text-destructive" },
+  CALL_COMMENT: { Icon: MessageCircle, tone: "text-secondary" },
 };
 
 export default async function NotificationsPage() {

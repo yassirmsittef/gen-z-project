@@ -4,18 +4,19 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { CornerDownLeft, Hash, Search } from "lucide-react";
+import { CornerDownLeft, Hash, Search, Swords } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
 import { cn } from "@/lib/utils";
 
 type Results = {
   projects: { slug: string; title: string; pitch: string; status: string }[];
+  calls: { slug: string; target: string; supportCount: number; answerCount: number }[];
   rooms: { slug: string; name: string; purpose: string; memberCount: number }[];
   members: { id: string; name: string | null; avatarUrl: string | null; city: string | null }[];
 };
 
-const EMPTY: Results = { projects: [], rooms: [], members: [] };
+const EMPTY: Results = { projects: [], calls: [], rooms: [], members: [] };
 
 /**
  * Recherche globale ⌘K : projets, salons et membres depuis n'importe quelle page.
@@ -100,6 +101,7 @@ export function CommandPalette({ className }: { className?: string }) {
   // qui décide ce qu'ouvre la touche Entrée.
   const items = [
     ...results.projects.map((p) => ({ href: `/projects/${p.slug}`, key: `p-${p.slug}` })),
+    ...results.calls.map((c) => ({ href: `/appels/${c.slug}`, key: `a-${c.slug}` })),
     ...results.rooms.map((r) => ({ href: `/chat/groupes/${r.slug}`, key: `s-${r.slug}` })),
     ...results.members.map((m) => ({ href: `/u/${m.id}`, key: `m-${m.id}` })),
   ];
@@ -158,7 +160,7 @@ export function CommandPalette({ className }: { className?: string }) {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={onInputKeyDown}
-                  placeholder="Chercher un projet, un salon, un membre…"
+                  placeholder="Chercher un projet, une marque, un salon, un membre…"
                   aria-label="Chercher un projet, un salon ou un membre"
                   autoComplete="off"
                   spellCheck={false}
@@ -190,6 +192,44 @@ export function CommandPalette({ className }: { className?: string }) {
                         <span className="block truncate font-medium">{project.title}</span>
                         <span className="block truncate text-xs text-muted-foreground">
                           {project.pitch}
+                        </span>
+                      </span>
+                      {active === i && (
+                        <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+                      )}
+                    </Link>
+                  );
+                })}
+
+                {results.calls.length > 0 && <p className="data-label px-2 pb-1 pt-2">Appels</p>}
+                {results.calls.map((call) => {
+                  index += 1;
+                  const i = index;
+                  return (
+                    <Link
+                      key={`a-${call.slug}`}
+                      href={`/appels/${call.slug}`}
+                      onMouseEnter={() => setActive(i)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm transition-colors duration-150",
+                        active === i ? "bg-primary/10 text-foreground" : "text-foreground/85"
+                      )}
+                    >
+                      <span
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-secondary/25 bg-secondary/10 text-secondary"
+                        aria-hidden
+                      >
+                        <Swords className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">
+                          Remplacer {call.target}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {call.supportCount} voix ·{" "}
+                          {call.answerCount > 0
+                            ? `${call.answerCount} remplaçant${call.answerCount > 1 ? "s" : ""}`
+                            : "personne encore"}
                         </span>
                       </span>
                       {active === i && (

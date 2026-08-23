@@ -1,7 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { linkNewProjectToCall } from "@/lib/boycott";
+import { prisma } from "@/lib/prisma";
 import {
   cancelProjectByOwner,
   createProject,
@@ -42,6 +45,17 @@ export async function createProjectAction(
     if (error instanceof DomainError) return { error: error.message };
     throw error;
   }
+
+  // Le projet a été lancé depuis un appel du fil : on le déclare remplaçant
+  // dans la foulée, sans faire revenir le porteur sur la page de l'appel.
+  const callSlug = String(formData.get("callSlug") ?? "");
+  if (callSlug) {
+    const project = await prisma.project.findUnique({ where: { slug }, select: { id: true } });
+    if (project) await linkNewProjectToCall(session.user.id, project.id, callSlug);
+    revalidatePath("/appels", "layout");
+    revalidatePath("/");
+  }
+
   redirect(`/projects/${slug}`);
 }
 

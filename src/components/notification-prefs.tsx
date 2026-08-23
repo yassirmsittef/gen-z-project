@@ -4,7 +4,8 @@ import { useActionState } from "react";
 import { ChevronDown, Settings2 } from "lucide-react";
 import { updateNotificationPrefsAction } from "@/actions/notifications";
 import { Button } from "@/components/ui/button";
-import { NOTIFICATION_TYPE_LABELS } from "@/lib/constants";
+import type { NotificationType } from "@prisma/client";
+import { NOTIFICATION_TYPE_LABELS, isUnmutable } from "@/lib/constants";
 
 /**
  * Préférences de notifications : coché = je reçois. Les types décochés sont
@@ -22,7 +23,11 @@ export function NotificationPrefs({ muted }: { muted: string[] }) {
       </summary>
       <form action={formAction} className="space-y-4 border-t border-white/[0.06] p-4">
         <div className="grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
-          {Object.entries(NOTIFICATION_TYPE_LABELS).map(([type, label]) => (
+          {/* Les types non masquables ne sont pas proposés : promettre un
+              réglage qui n'a aucun effet vaut moins que ne rien promettre. */}
+          {Object.entries(NOTIFICATION_TYPE_LABELS)
+            .filter(([type]) => !isUnmutable(type as NotificationType))
+            .map(([type, label]) => (
             <label key={type} className="flex items-center gap-2.5 text-sm">
               <input
                 type="checkbox"

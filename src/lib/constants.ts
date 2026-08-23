@@ -298,6 +298,21 @@ export const CALL_CHARTER = [
   "Termine par ce que tu veux à la place : cet appel sert à faire naître un remplaçant, pas à défouler.",
 ] as const;
 
+/**
+ * Ce qu'une préférence ne peut PAS couper. La CGU §12 engage la plateforme à
+ * informer du motif l'auteur d'un appel retiré par la modération : un réglage
+ * d'interface n'annule pas un engagement contractuel. Sans ça, un retrait
+ * pouvait être exécuté sans qu'aucun avis n'existe nulle part — exactement le
+ * silence que la pierre tombale était censée éviter.
+ */
+export const UNMUTABLE_NOTIFICATION_TYPES = [
+  "BOYCOTT_REMOVED",
+] as const satisfies readonly NotificationType[];
+
+export function isUnmutable(type: NotificationType): boolean {
+  return (UNMUTABLE_NOTIFICATION_TYPES as readonly NotificationType[]).includes(type);
+}
+
 /** Libellés des types de notifications (préférences + affichage). */
 /** Motifs de signalement proposés (le service refuse tout autre motif). */
 export const REPORT_REASONS = [
@@ -322,4 +337,7 @@ export const NOTIFICATION_TYPE_LABELS = {
   PARTNERSHIP: "Demandes de partenariat",
   COMMENT: "Commentaires sur mes projets",
   PROJECT_UPDATE: "Actus des projets que je soutiens ou suis",
+  BOYCOTT_ANSWERED: "Un remplaçant se lance sur un appel que je soutiens",
+  BOYCOTT_REMOVED: "Retrait d'un de mes appels par la modération",
+  CALL_COMMENT: "Réponses sous mes appels",
 } as const satisfies Record<NotificationType, string>;

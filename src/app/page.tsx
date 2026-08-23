@@ -9,6 +9,7 @@ import {
   Rocket,
   ShieldCheck,
   Sparkles,
+  Swords,
   UserPlus,
   type LucideIcon,
 } from "lucide-react";
@@ -17,6 +18,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { HeroSceneLoader } from "@/components/hero-scene-loader";
 import { LaunchLink } from "@/components/launch-button";
 import { ProjectCard } from "@/components/project-card";
+import { PROJECT_CARD_INCLUDE } from "@/lib/project-card-data";
+import { featuredCalls, replacementsByProject, visibleAnswerCounts } from "@/lib/boycott";
 import { prisma } from "@/lib/prisma";
 import { stripeLive } from "@/lib/stripe-mode";
 import { formatRelative } from "@/lib/format";
@@ -59,7 +62,8 @@ type PulseItem = {
 
 export default async function HomePage() {
   const [
-    featured,
+    calls,
+    vivier,
     projectCount,
     userCount,
     contributed,
@@ -68,11 +72,19 @@ export default async function HomePage() {
     recentUpdates,
     recentMembers,
   ] = await Promise.all([
+    featuredCalls(3),
+    // Vivier large : le tri « répond à un appel d'abord » se fait ensuite en
+    // mémoire, parce que Prisma ne sait pas filtrer un `orderBy: { _count }`
+    // sur les appels encore visibles.
     prisma.project.findMany({
       where: { status: "ACTIVE" },
-      orderBy: { raised: "desc" },
-      take: 3,
-      include: { owner: true, _count: { select: { contributions: true } } },
+      // Départage obligatoire : à `raised` égal — l'état normal d'une
+      // plateforme jeune — l'ensemble même des 24 candidats devenait
+      // arbitraire d'une requête à l'autre. /projects et /classements
+      // départagent tous les deux ; l'accueil était la seule à ne pas le faire.
+      orderBy: [{ raised: "desc" }, { createdAt: "desc" }],
+      take: 24,
+      include: PROJECT_CARD_INCLUDE,
     }),
     prisma.project.count(),
     prisma.user.count(),
@@ -101,6 +113,21 @@ export default async function HomePage() {
       select: { id: true, name: true, createdAt: true },
     }),
   ]);
+
+  // Répondre à un appel fait passer devant — mais c'est un BOOLÉEN, pas un
+  // score. Sinon se rattacher à vingt appels suffirait à prendre la première
+  // place de l'accueil, et le compteur est entièrement auto-déclaré. Les
+  // appels retirés ne comptent plus : ils ne doivent produire aucun effet.
+  const réponses = await visibleAnswerCounts(vivier.map((project) => project.id));
+  const featured = [...vivier]
+    .sort(
+      (a, b) =>
+        Number((réponses.get(b.id) ?? 0) > 0) - Number((réponses.get(a.id) ?? 0) > 0) ||
+        b.raised - a.raised
+    )
+    .slice(0, 3);
+
+  const replaces = await replacementsByProject(featured.map((project) => project.id));
 
   // Le pouls : les derniers événements de la plateforme, toutes sources
   // confondues, du plus récent au plus ancien.
@@ -233,6 +260,79 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Le manque avant la vitrine : ce que la communauté veut voir remplacé
+          et que personne ne construit encore. C'est ce vide qui fait lever
+          des porteurs — un palmarès de projets déjà lancés, non. */}
+      {calls.length > 0 && (
+        <section className="border-b border-white/[0.08] bg-secondary/[0.03]">
+          <div className="container py-16">
+            <div data-reveal className="mb-8 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h2 className="flex items-center gap-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+                  <Swords className="h-8 w-8 text-secondary" aria-hidden />
+                  À remplacer
+                </h2>
+                <p className="mt-2 max-w-2xl text-muted-foreground">
+                  Des marques dont des membres ne veulent plus, et pour lesquelles{" "}
+                  <span className="text-foreground">personne n&apos;a encore lancé</span> de
+                  remplaçant. Chaque appel est une commande qui attend son porteur.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/appels">Voir tous les appels →</Link>
+              </Button>
+            </div>
+
+            <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {calls.map((call, i) => (
+                <li key={call.id} data-reveal style={{ transitionDelay: `${i * 0.08}s` }}>
+                  <Link
+                    href={`/appels/${call.slug}`}
+                    className="glass flex h-full flex-col rounded-2xl rounded-tr-sm p-5 transition-all duration-200 ease-out hover:-translate-y-1 hover:border-secondary/25 hover:shadow-glow-violet"
+                  >
+                    <p className="data-label">Ne veut plus de</p>
+                    <p
+                      translate="no"
+                      className="mt-1 font-display text-2xl font-semibold leading-tight"
+                    >
+                      {call.target}
+                    </p>
+                    <p className="mt-3 line-clamp-3 flex-1 text-sm text-muted-foreground">
+                      {call.wanted}
+                    </p>
+                    <p className="mt-4 flex items-center gap-2 border-t border-white/[0.06] pt-3 text-sm">
+                      <Megaphone className="h-4 w-4 text-secondary" aria-hidden />
+                      <span className="font-mono tabular-nums text-secondary">
+                        {call._count.supports}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {call._count.supports > 1 ? "personnes veulent" : "personne veut"} ça
+                        remplacé
+                      </span>
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
+              <Button asChild>
+                <Link href="/projects/new">
+                  <Rocket aria-hidden />
+                  Lancer un remplaçant
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/appels/nouveau">
+                  <Megaphone aria-hidden />
+                  Publier mon appel
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="container py-16">
         <h2
           data-reveal
@@ -279,7 +379,11 @@ export default async function HomePage() {
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard
+                key={project.id}
+                project={project}
+                replaces={replaces.get(project.id)}
+              />
             ))}
           </div>
         </section>
