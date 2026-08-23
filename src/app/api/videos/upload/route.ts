@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { assertVideoStorageAvailable } from "@/lib/call-videos";
 import { MAX_VIDEO_BYTES, MAX_VIDEOS_PER_DAY, VIDEO_CONTENT_TYPES } from "@/lib/constants";
 
 /**
@@ -37,6 +38,10 @@ export async function POST(request: Request): Promise<NextResponse> {
         if (récentes >= MAX_VIDEOS_PER_DAY) {
           throw new Error(`${MAX_VIDEOS_PER_DAY} témoignages par jour maximum.`);
         }
+
+        // Le plafond GLOBAL, après le quota personnel : son message ne doit
+        // sortir que si le membre n'a rien à se reprocher lui-même.
+        await assertVideoStorageAvailable();
 
         return {
           allowedContentTypes: [...VIDEO_CONTENT_TYPES, "image/jpeg", "image/webp"],

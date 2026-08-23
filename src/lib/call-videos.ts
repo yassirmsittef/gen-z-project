@@ -1,10 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import { deleteOwnBlob } from "@/lib/blob";
+import { deleteOwnBlob, statOwnBlob } from "@/lib/blob";
 import {
+  MAX_TOTAL_VIDEO_BYTES,
+  MAX_VIDEO_BYTES,
   MAX_VIDEOS_PER_DAY,
+  VIDEO_STORAGE_WARN_RATIO,
   VIDEOS_PER_PAGE,
 } from "@/lib/constants";
-import { notify } from "@/lib/notifications";
+import { notify, notifyMany } from "@/lib/notifications";
 import { DomainError } from "@/lib/project-service";
 
 /**
@@ -32,6 +35,82 @@ const APPEL = {
   select: { slug: true, target: true, category: true, _count: { select: { supports: true } } },
 } as const;
 
+/**
+ * Où en est le stockage vidéo face au plafond global. La somme ne compte que
+ * les fichiers VIVANTS (url non nulle) : un témoignage retiré garde sa ligne
+ * mais son fichier est supprimé — il ne coûte plus rien. `full` anticipe le
+ * pire cas du prochain dépôt (une vidéo au poids maximal) : le plafond est
+ * un mur qu'on ne veut jamais toucher, pas une ligne qu'on constate après
+ * l'avoir franchie.
+ */
+export async function videoStorageStatus() {
+  const agg = await prisma.callVideo.aggregate({
+    _sum: { storedBytes: true },
+    where: { url: { not: null } },
+  });
+  const usedBytes = agg._sum.storedBytes ?? 0;
+  return {
+    usedBytes,
+    capBytes: MAX_TOTAL_VIDEO_BYTES,
+    full: usedBytes + MAX_VIDEO_BYTES > MAX_TOTAL_VIDEO_BYTES,
+  };
+}
+
+/**
+ * Le garde du plafond global, appelé AVANT de délivrer un jeton d'upload —
+ * c'est à la délivrance qu'on s'engage à payer le stockage, pas à
+ * l'enregistrement de la ligne (refuser après coup laisserait un fichier
+ * orphelin déjà facturé, hors de toute jauge).
+ */
+export async function assertVideoStorageAvailable(): Promise<void> {
+  const { full } = await videoStorageStatus();
+  if (full) {
+    throw new DomainError("Le direct est plein pour le moment — reviens un peu plus tard.");
+  }
+}
+
+const Mo = (bytes: number) => Math.round(bytes / (1024 * 1024));
+
+/**
+ * Préviens chaque admin quand un dépôt FRANCHIT un palier — et seulement au
+ * franchissement : au-dessus du seuil sans le franchir, rien, sinon chaque
+ * dépôt suivant sonnerait. Deux paliers : l'avertissement (80 %), puis la
+ * saturation effective — le point où le garde ci-dessus commence à refuser,
+ * soit une vidéo maximale sous le plafond. Type non masquable, relayé par
+ * email : c'est l'alerte de budget que le plan Hobby ne fournit pas.
+ */
+async function alertAdminsOnStorageCrossing(beforeBytes: number, afterBytes: number) {
+  const cap = MAX_TOTAL_VIDEO_BYTES;
+  const paliers = [
+    {
+      seuil: cap * VIDEO_STORAGE_WARN_RATIO,
+      title: `Stockage vidéo à ${Math.round(VIDEO_STORAGE_WARN_RATIO * 100)} % (${Mo(afterBytes)} Mo sur ${Mo(cap)} Mo)`,
+      body: "Le direct approche de son plafond. Faire le tri, ou relever le plafond côté hébergement avant qu'il ne refuse les dépôts.",
+    },
+    {
+      seuil: cap - MAX_VIDEO_BYTES,
+      title: `Stockage vidéo saturé (${Mo(afterBytes)} Mo sur ${Mo(cap)} Mo) — les dépôts sont refusés`,
+      body: "Le prochain témoignage risquerait de dépasser le plafond : la délivrance de jetons d'upload est suspendue jusqu'à ce que de la place se libère.",
+    },
+  ];
+  const franchi = paliers.filter((p) => beforeBytes < p.seuil && afterBytes >= p.seuil).pop();
+  if (!franchi) return;
+
+  const admins = await prisma.user.findMany({
+    where: { role: "ADMIN" },
+    select: { id: true },
+  });
+  await notifyMany(
+    admins.map((admin) => ({
+      userId: admin.id,
+      type: "STORAGE_ALERT" as const,
+      title: franchi.title,
+      body: franchi.body,
+      href: "/admin",
+    }))
+  );
+}
+
 export async function postVideo(
   userId: string,
   input: { callId: string; url: string; posterUrl?: string; caption: string; durationMs: number; width?: number; height?: number }
@@ -53,6 +132,20 @@ export async function postVideo(
     );
   }
 
+  // L'empreinte réelle sur le stockage — vidéo et vignette, mesurées auprès
+  // du blob et non déclarées. Best-effort : sans mesure, la ligne se crée
+  // quand même (le fichier existe déjà, autant le référencer) et la jauge
+  // sous-compte ce dépôt — le plafond global garde une marge pour ça.
+  const [tailleVideo, taillePoster] = await Promise.all([
+    statOwnBlob(input.url),
+    statOwnBlob(input.posterUrl),
+  ]);
+  const storedBytes =
+    tailleVideo === null && taillePoster === null
+      ? null
+      : (tailleVideo ?? 0) + (taillePoster ?? 0);
+  const jaugeAvant = storedBytes === null ? null : (await videoStorageStatus()).usedBytes;
+
   const video = await prisma.callVideo.create({
     data: {
       callId: call.id,
@@ -63,9 +156,14 @@ export async function postVideo(
       durationMs: input.durationMs,
       width: input.width ?? null,
       height: input.height ?? null,
+      storedBytes,
     },
     select: { id: true },
   });
+
+  if (jaugeAvant !== null && storedBytes !== null) {
+    await alertAdminsOnStorageCrossing(jaugeAvant, jaugeAvant + storedBytes);
+  }
 
   if (call.authorId !== userId) {
     const auteur = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });

@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   Bell,
   Handshake,
+  HardDrive,
   Heart,
   LifeBuoy,
   LockOpen,
@@ -51,6 +52,7 @@ const TYPE_STYLES: Record<NotificationType, { Icon: LucideIcon; tone: string }> 
   BOYCOTT_REMOVED: { Icon: ShieldX, tone: "text-destructive" },
   CALL_COMMENT: { Icon: MessageCircle, tone: "text-secondary" },
   CALL_VIDEO: { Icon: Video, tone: "text-secondary" },
+  STORAGE_ALERT: { Icon: HardDrive, tone: "text-destructive" },
 };
 
 export default async function NotificationsPage() {

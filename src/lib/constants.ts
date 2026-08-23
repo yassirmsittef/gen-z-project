@@ -305,6 +305,20 @@ export const VIDEO_CONTENT_TYPES = ["video/mp4", "video/webm"] as const;
 /** Témoignages qu'un membre peut publier par tranche de 24 h. */
 export const MAX_VIDEOS_PER_DAY = 5;
 
+/**
+ * Plafond GLOBAL du stockage vidéo — la limite que les plafonds par membre ne
+ * donnent pas : mille membres sages remplissent le disque aussi sûrement
+ * qu'un seul qui triche. Le plan Vercel Hobby inclut 1 Go de Blob puis coupe
+ * (rien ne se facture, tout s'arrête) ; on s'arrête avant lui, et la marge de
+ * 224 Mo absorbe ce que la jauge ne voit pas encore : les jetons délivrés
+ * dont la ligne en base n'existe pas, et les fichiers déposés jamais soumis.
+ * À relever si le compte passe Pro.
+ */
+export const MAX_TOTAL_VIDEO_BYTES = 800 * 1024 * 1024;
+
+/** Fraction du plafond global au-delà de laquelle les admins sont alertés. */
+export const VIDEO_STORAGE_WARN_RATIO = 0.8;
+
 /** Témoignages rendus d'un coup dans le fil — au-delà, on pagine au curseur. */
 export const VIDEOS_PER_PAGE = 8;
 
@@ -341,6 +355,10 @@ export const CALL_CHARTER = [
  */
 export const UNMUTABLE_NOTIFICATION_TYPES = [
   "BOYCOTT_REMOVED",
+  // Une alerte de plafond de stockage est un signal d'exploitation, pas une
+  // notification sociale : un admin qui la coupe découvrirait le direct
+  // saturé en même temps que les membres.
+  "STORAGE_ALERT",
 ] as const satisfies readonly NotificationType[];
 
 export function isUnmutable(type: NotificationType): boolean {
@@ -375,4 +393,7 @@ export const NOTIFICATION_TYPE_LABELS = {
   BOYCOTT_REMOVED: "Retrait d'un de mes appels par la modération",
   CALL_COMMENT: "Réponses sous mes appels",
   CALL_VIDEO: "Témoignages vidéo sous mes appels",
+  // Non masquable, donc jamais listé dans les préférences ; seuls les admins
+  // en reçoivent.
+  STORAGE_ALERT: "Alerte de stockage vidéo (équipe)",
 } as const satisfies Record<NotificationType, string>;

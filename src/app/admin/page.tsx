@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import {
   ArrowUpRight,
   Banknote,
+  Clapperboard,
   FolderKanban,
   Handshake,
   HeartHandshake,
@@ -15,9 +16,10 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { auth } from "@/auth";
 import { liveAnswer } from "@/lib/boycott";
+import { videoStorageStatus } from "@/lib/call-videos";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/moderation";
-import { STATUS_LABELS } from "@/lib/constants";
+import { STATUS_LABELS, VIDEO_STORAGE_WARN_RATIO } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { formatMoney, formatMoneyRounded } from "@/lib/money";
 
@@ -66,6 +68,7 @@ export default async function AdminCockpitPage() {
     pendingPartnerships,
     openCalls,
     answeredCalls,
+    storage,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { createdAt: { gte: since7 } } }),
@@ -103,6 +106,7 @@ export default async function AdminCockpitPage() {
     // par un projet échoué gonfle le « taux de transformation », qui ne peut
     // alors que monter — et contredit le tri « Sans remplaçant » du fil.
     prisma.boycottCall.count({ where: { removedAt: null, answers: { some: liveAnswer } } }),
+    videoStorageStatus(),
   ]);
 
   // ----- Collecte par jour (30 j) en équivalent USD — seule échelle commune.
@@ -325,6 +329,30 @@ export default async function AdminCockpitPage() {
 
           <Tile Icon={Handshake} label="Partenariats en attente" value={String(pendingPartnerships)}>
             demandes de marques sans réponse des porteurs
+          </Tile>
+
+          {/* La jauge que Vercel Hobby n'offre pas : le plan coupe à 1 Go de
+              Blob sans prévenir, notre garde refuse les dépôts avant — cette
+              tuile dit combien de marge il reste. */}
+          <Tile
+            Icon={Clapperboard}
+            label="Stockage du direct"
+            value={
+              storage.full
+                ? "saturé"
+                : `${Math.round((storage.usedBytes / storage.capBytes) * 100)} %`
+            }
+            tone={
+              storage.full
+                ? "red"
+                : storage.usedBytes >= storage.capBytes * VIDEO_STORAGE_WARN_RATIO
+                  ? "amber"
+                  : undefined
+            }
+          >
+            {storage.usedBytes === 0
+              ? `aucun fichier hébergé · plafond ${Math.round(storage.capBytes / (1024 * 1024))} Mo`
+              : `${Math.round(storage.usedBytes / (1024 * 1024))} Mo sur ${Math.round(storage.capBytes / (1024 * 1024))} Mo${storage.full ? " — dépôts refusés" : ""}`}
           </Tile>
         </section>
       </div>

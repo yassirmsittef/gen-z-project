@@ -23,6 +23,9 @@ export const EMAILED_TYPES: NotificationType[] = [
   "REFUND",
   "PROOF_TO_VOTE",
   "MILESTONE_RELEASED",
+  // L'alerte de plafond de stockage ne vise que les admins, et attendre la
+  // prochaine visite du cockpit pourrait suffire à saturer le direct.
+  "STORAGE_ALERT",
 ];
 
 /** Au-delà, l'info est froide : la cloche in-app suffit. */

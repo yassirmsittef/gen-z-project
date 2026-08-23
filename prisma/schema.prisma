@@ -572,6 +572,7 @@ enum NotificationType {
   BOYCOTT_REMOVED // ton appel a été retiré par la modération (type distinct : ne doit pas être masquable avec le reste)
   CALL_COMMENT // quelqu'un a commenté ton appel
   CALL_VIDEO // quelqu'un a posté un témoignage vidéo sous ton appel
+  STORAGE_ALERT // réservé aux admins : le stockage vidéo approche ou atteint son plafond
 }
 
 model Notification {
@@ -685,6 +686,11 @@ model CallVideo {
   durationMs Int
   width      Int?
   height     Int?
+  /// Octets réellement occupés sur le stockage (vidéo + vignette), mesurés
+  /// côté serveur à la publication — jamais déclarés par le client. Null si
+  /// la mesure a échoué (best-effort) ; la ligne garde sa valeur au retrait,
+  /// mais la jauge ne somme que les fichiers vivants (url non nulle).
+  storedBytes Int?
 
   removedAt     DateTime?
   removedById   String?
