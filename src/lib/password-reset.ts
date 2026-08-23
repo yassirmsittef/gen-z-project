@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
+import { ERASED_EMAIL_DOMAIN } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { DomainError } from "@/lib/project-service";
@@ -88,6 +89,17 @@ export async function resetPassword(token: string, newPassword: string): Promise
     select: { id: true, userId: true, expiresAt: true, usedAt: true },
   });
   if (!record || record.usedAt || record.expiresAt < new Date()) {
+    throw new DomainError("Ce lien est invalide ou a expiré — refais une demande.");
+  }
+
+  // Défense en profondeur : `eraseAccount` purge désormais les jetons, mais
+  // un jeton émis pendant la suppression ne doit jamais pouvoir reposer un
+  // mot de passe sur une ligne anonymisée — ce serait ressusciter le compte.
+  const user = await prisma.user.findUnique({
+    where: { id: record.userId },
+    select: { email: true },
+  });
+  if (!user || user.email.endsWith(ERASED_EMAIL_DOMAIN)) {
     throw new DomainError("Ce lien est invalide ou a expiré — refais une demande.");
   }
 

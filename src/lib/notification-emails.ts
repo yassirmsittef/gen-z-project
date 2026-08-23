@@ -30,6 +30,21 @@ const MAX_AGE_HOURS = 48;
 
 type Sender = typeof sendEmail;
 
+/**
+ * Échappe le texte écrit par des MEMBRES avant de l'interpoler dans le HTML
+ * de l'email. `title` et `body` reprennent des titres de projet, d'étape ou
+ * de marque : sans ça, n'importe qui place du balisage actif dans un courrier
+ * que GeniGain signe et envoie depuis son propre domaine.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function renderEmail(params: {
   name: string | null;
   title: string;
@@ -39,16 +54,21 @@ function renderEmail(params: {
 }) {
   const { name, title, body, link, prefsLink } = params;
   const hello = name ? `Salut ${name} — ` : "";
+  // La version texte n'a pas besoin d'échappement ; le HTML, si.
+  const titleHtml = escapeHtml(title);
+  const bodyHtml = body ? escapeHtml(body) : null;
+  const linkHtml = escapeHtml(link);
+  const prefsHtml = escapeHtml(prefsLink);
   const text = `${hello}${title}\n\n${body ?? ""}\n\nVoir sur GeniGain :\n${link}\n\nTu reçois cet email parce qu'un événement important concerne tes projets ou tes contributions. Gère tes préférences : ${prefsLink}\n\n— GeniGain, la communauté qui finance ta génération`;
   const html = `<!doctype html><html><body style="margin:0;padding:0;background-color:#0B0E14;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0B0E14;padding:32px 16px;"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#131826;border:1px solid rgba(255,255,255,0.08);border-radius:16px;">
 <tr><td style="padding:32px;">
 <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#94A3B8;font-family:'SF Mono',Menlo,Consolas,monospace;">GeniGain</p>
-<h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#F1F5F9;">${title}</h1>
-${body ? `<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#94A3B8;">${body}</p>` : ""}
-<p style="margin:0 0 24px;"><a href="${link}" style="display:inline-block;padding:12px 24px;background:linear-gradient(120deg,#5EEAD4,#38BDF8);color:#0B0E14;font-weight:600;font-size:14px;text-decoration:none;border-radius:12px;">Voir sur GeniGain</a></p>
-<p style="margin:0;font-size:12px;line-height:1.6;color:#64748B;">Tu reçois cet email parce qu'un événement important concerne tes projets ou tes contributions. <a href="${prefsLink}" style="color:#5EEAD4;text-decoration:none;">Gérer mes préférences</a></p>
+<h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#F1F5F9;">${titleHtml}</h1>
+${bodyHtml ? `<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#94A3B8;">${bodyHtml}</p>` : ""}
+<p style="margin:0 0 24px;"><a href="${linkHtml}" style="display:inline-block;padding:12px 24px;background:linear-gradient(120deg,#5EEAD4,#38BDF8);color:#0B0E14;font-weight:600;font-size:14px;text-decoration:none;border-radius:12px;">Voir sur GeniGain</a></p>
+<p style="margin:0;font-size:12px;line-height:1.6;color:#64748B;">Tu reçois cet email parce qu'un événement important concerne tes projets ou tes contributions. <a href="${prefsHtml}" style="color:#5EEAD4;text-decoration:none;">Gérer mes préférences</a></p>
 </td></tr></table>
 <p style="margin:16px 0 0;font-size:11px;color:#64748B;">GeniGain — la communauté qui finance ta génération</p>
 </td></tr></table></body></html>`;

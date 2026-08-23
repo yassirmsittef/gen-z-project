@@ -1,3 +1,5 @@
+import { deleteOwnBlob } from "@/lib/blob";
+import { ERASED_EMAIL_DOMAIN } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { DomainError } from "@/lib/project-service";
 
@@ -30,6 +32,13 @@ export async function eraseAccount(userId: string) {
     );
   }
 
+  // Lu AVANT la transaction : après l'anonymisation, plus personne ne sait
+  // quel fichier effacer.
+  const avant = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { avatarUrl: true },
+  });
+
   await prisma.$transaction(async (tx) => {
     // Projets jamais soutenus : suppression pure (les enfants cascadent).
     await tx.project.deleteMany({
@@ -59,12 +68,16 @@ export async function eraseAccount(userId: string) {
     await tx.follow.deleteMany({ where: { userId } });
     await tx.session.deleteMany({ where: { userId } });
     await tx.account.deleteMany({ where: { userId } });
+    // Sans ça, un lien de réinitialisation émis AVANT la suppression reste
+    // valable : il reposerait un passwordHash sur la ligne anonymisée et
+    // ressusciterait le compte (l'email neutralisé se déduit de l'id public).
+    await tx.passwordResetToken.deleteMany({ where: { userId } });
 
     await tx.user.update({
       where: { id: userId },
       data: {
         name: "Membre retiré",
-        email: `retire-${userId}@compte-supprime.genigain.invalid`,
+        email: `retire-${userId}${ERASED_EMAIL_DOMAIN}`,
         passwordHash: null,
         avatarUrl: null,
         bio: null,
@@ -73,9 +86,17 @@ export async function eraseAccount(userId: string) {
         latitude: null,
         longitude: null,
         skills: [],
+        // Les liens publics (réseaux, site perso) ré-identifient la personne
+        // aussi sûrement qu'un nom : ils partent avec le reste.
+        links: [],
         mutedNotifications: [],
         stripeAccountId: null,
       },
     });
   });
+
+  // Après commit : la photo elle-même, pas seulement son URL en base. Sans
+  // ça, le fichier reste servi publiquement alors que /confidentialite
+  // promet qu'il est effacé.
+  await deleteOwnBlob(avant?.avatarUrl);
 }

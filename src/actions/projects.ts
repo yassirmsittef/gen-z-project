@@ -9,7 +9,12 @@ import {
   DomainError,
   updateProject,
 } from "@/lib/project-service";
-import { createProjectSchema, parseList, updateProjectSchema } from "@/lib/validation";
+import {
+  createProjectSchema,
+  projectEditFormToInput,
+  projectFormToInput,
+  updateProjectSchema,
+} from "@/lib/validation";
 
 export type CreateProjectState = { error?: string } | undefined;
 
@@ -27,17 +32,7 @@ export async function createProjectAction(
     return { error: "Étapes invalides." };
   }
 
-  const parsed = createProjectSchema.safeParse({
-    title: formData.get("title"),
-    pitch: formData.get("pitch"),
-    description: formData.get("description"),
-    category: formData.get("category"),
-    goal: formData.get("goal"),
-    coverUrl: formData.get("coverUrl"),
-    durationDays: formData.get("durationDays"),
-    neededSkills: parseList(formData.get("neededSkills")),
-    milestones,
-  });
+  const parsed = createProjectSchema.safeParse(projectFormToInput(formData, milestones));
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
   let slug: string;
@@ -47,7 +42,6 @@ export async function createProjectAction(
     if (error instanceof DomainError) return { error: error.message };
     throw error;
   }
-
   redirect(`/projects/${slug}`);
 }
 
@@ -60,14 +54,7 @@ export async function updateProjectAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const parsed = updateProjectSchema.safeParse({
-    title: formData.get("title"),
-    pitch: formData.get("pitch"),
-    description: formData.get("description"),
-    category: formData.get("category"),
-    coverUrl: formData.get("coverUrl"),
-    neededSkills: parseList(formData.get("neededSkills")),
-  });
+  const parsed = updateProjectSchema.safeParse(projectEditFormToInput(formData));
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
   let slug: string;

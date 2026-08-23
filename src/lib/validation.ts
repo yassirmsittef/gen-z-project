@@ -2,6 +2,9 @@ import { z } from "zod";
 import { PartnershipCompensation, ProjectCategory } from "@prisma/client";
 import { CURRENCY_CODES } from "@/lib/money";
 import {
+  MAX_CALL_REASON,
+  MAX_CALL_SOURCES,
+  MAX_CALL_WANTED,
   MAX_DURATION_DAYS,
   MAX_GOAL,
   MAX_MILESTONES,
@@ -9,6 +12,8 @@ import {
   MAX_PROOF_LINKS,
   MAX_SKILLS_PER_PROJECT,
   MAX_SKILLS_PER_USER,
+  MIN_CALL_REASON,
+  MIN_CALL_WANTED,
   MIN_CONTRIBUTION_MAJOR,
   MIN_DURATION_DAYS,
   MIN_GOAL,
@@ -297,6 +302,109 @@ export const partnershipResponseSchema = z.object({
     .min(10, "Ta réponse est trop courte (10 caractères minimum).")
     .max(3000, "3000 caractères max."),
 });
+
+/**
+ * Appel au remplacement. Les minimums sont volontairement hauts : un appel
+ * qui tient en trois mots est un slogan, et un slogan n'appelle personne à
+ * construire quoi que ce soit.
+ */
+export const boycottCallSchema = z.object({
+  target: z
+    .string()
+    .trim()
+    .min(2, "Nomme la marque ou l'entreprise visée.")
+    .max(60, "60 caractères max — le nom suffit."),
+  category: z.nativeEnum(ProjectCategory, {
+    errorMap: () => ({ message: "Choisis le secteur à remplacer." }),
+  }),
+  reason: z
+    .string()
+    .trim()
+    .min(MIN_CALL_REASON, `Explique pourquoi (${MIN_CALL_REASON} caractères minimum).`)
+    .max(MAX_CALL_REASON, `${MAX_CALL_REASON} caractères max.`),
+  wanted: z
+    .string()
+    .trim()
+    .min(MIN_CALL_WANTED, `Décris ce que tu veux à la place (${MIN_CALL_WANTED} caractères minimum).`)
+    .max(MAX_CALL_WANTED, `${MAX_CALL_WANTED} caractères max.`),
+  sources: z
+    .array(
+      z
+        .string()
+        .trim()
+        .url("Une source doit être un lien complet.")
+        .startsWith("https://", "Les liens doivent être en https.")
+        .max(300, "Lien trop long.")
+    )
+    .max(MAX_CALL_SOURCES, `${MAX_CALL_SOURCES} liens max.`),
+});
+export type BoycottCallInput = z.infer<typeof boycottCallSchema>;
+
+export const callCommentSchema = z.object({
+  callId: z.string().min(1),
+  body: z
+    .string()
+    .trim()
+    .min(2, "Ta réponse est un peu courte.")
+    .max(1000, "1000 caractères max."),
+});
+
+/**
+ * Le formulaire de projet → l'objet que `createProjectSchema` valide.
+ *
+ * Écrit UNE fois et utilisé des deux côtés (composant client et action
+ * serveur) : quand les deux recopiaient la liste des champs chacun de leur
+ * côté, elles ont divergé — `currency` a été ajouté au schéma et au
+ * formulaire mais pas à l'action, qui rejetait donc toute création avec un
+ * « Required » incompréhensible. Ajouter un champ ici le donne aux deux.
+ *
+ * Les étapes ne transitent pas par le même canal (état React côté client,
+ * JSON caché côté serveur) : elles restent un paramètre à part.
+ */
+export function projectFormToInput(formData: FormData, milestones: unknown) {
+  return {
+    title: formData.get("title"),
+    pitch: formData.get("pitch"),
+    description: formData.get("description"),
+    category: formData.get("category"),
+    currency: formData.get("currency"),
+    goal: formData.get("goal"),
+    coverUrl: formData.get("coverUrl"),
+    durationDays: formData.get("durationDays"),
+    neededSkills: parseList(formData.get("neededSkills")),
+    milestones,
+  };
+}
+
+/**
+ * Un élément PAR LIGNE. Réservé aux valeurs qui peuvent légitimement contenir
+ * une virgule — une URL de source, par exemple : `parseList` la couperait en
+ * morceaux et ferait rejeter l'appel entier, alors que l'interface annonce
+ * « un lien par ligne ».
+ */
+export function parseLines(raw: FormDataEntryValue | null): string[] {
+  return String(raw ?? "")
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Le formulaire de MODIFICATION → l'objet que `updateProjectSchema` valide.
+ * Même raison d'être que `projectFormToInput` : l'action et le composant
+ * recopiaient chacun la liste des champs, exactement la dérive qui a rendu
+ * la création de projet impossible pendant un mois.
+ */
+export function projectEditFormToInput(formData: FormData) {
+  return {
+    title: formData.get("title"),
+    pitch: formData.get("pitch"),
+    description: formData.get("description"),
+    category: formData.get("category"),
+    coverUrl: formData.get("coverUrl"),
+    neededSkills: parseList(formData.get("neededSkills")),
+  };
+}
 
 /** Transforme un champ texte "un élément par ligne (ou virgule)" en tableau propre. */
 export function parseList(raw: FormDataEntryValue | null): string[] {

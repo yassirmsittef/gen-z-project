@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CATEGORY_LABELS } from "@/lib/constants";
-import { parseList, updateProjectSchema } from "@/lib/validation";
+import { projectEditFormToInput, updateProjectSchema } from "@/lib/validation";
 
 type EditableProject = {
   id: string;
@@ -32,14 +32,7 @@ export function EditProjectForm({ project }: { project: EditableProject }) {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     // Validation Zod côté client — le serveur revalide avec le même schéma.
     const formData = new FormData(e.currentTarget);
-    const parsed = updateProjectSchema.safeParse({
-      title: formData.get("title"),
-      pitch: formData.get("pitch"),
-      description: formData.get("description"),
-      category: formData.get("category"),
-      coverUrl: formData.get("coverUrl"),
-      neededSkills: parseList(formData.get("neededSkills")),
-    });
+    const parsed = updateProjectSchema.safeParse(projectEditFormToInput(formData));
     if (!parsed.success) {
       e.preventDefault();
       setClientError(parsed.error.errors[0].message);

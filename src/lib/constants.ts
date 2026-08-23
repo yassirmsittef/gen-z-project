@@ -1,5 +1,14 @@
 import type { NotificationType, ProjectCategory } from "@prisma/client";
 
+/**
+ * Domaine sentinelle des comptes anonymisés (RGPD). En `.invalid` (RFC 2606) :
+ * aucune adresse n'y est délivrable, donc aucun bounce. Un seul endroit pour
+ * l'écrire ET pour le reconnaître — `eraseAccount` le pose, `resetPassword`
+ * le refuse (sinon un vieux lien ressusciterait le compte), le relais email
+ * l'écarte.
+ */
+export const ERASED_EMAIL_DOMAIN = "@compte-supprime.genigain.invalid";
+
 // ---------- Économie (argent réel, une devise par projet) ----------
 // Décisions fondateur 2026-07-12 : plus de wallet de tokens, plus de bonus
 // de bienvenue, pas de commission pour le moment. Paiement carte direct dans
@@ -231,12 +240,71 @@ export const PARTNERSHIP_STATUS_LABELS = {
   DECLINED: "Refusée",
 } as const;
 
+// ---------- Appels au remplacement ----------
+// Le fil où les membres nomment eux-mêmes les marques dont ils ne veulent
+// plus. GeniGain héberge, n'écrit pas : les garde-fous sont donc des
+// plafonds, une charte affichée, et le signalement — pas un filtrage a priori
+// du propos, qui ferait de la plateforme l'éditeur de ce qu'elle laisse
+// passer.
+
+/** Appels qu'un même membre peut publier par tranche de 24 h (anti-spam). */
+export const MAX_CALLS_PER_DAY = 3;
+
+/**
+ * Réponses qu'un membre peut poster par heure, tous appels confondus.
+ * Les appels sont plafonnés à 3/jour, mais la discussion est la surface la
+ * plus volumineuse ET la plus exposée : sur un sujet inflammable, quelqu'un
+ * qui inonde vingt fils en dix minutes fait plus de dégâts qu'un appel de
+ * trop. Assez haut pour une vraie conversation, assez bas pour couper le
+ * pilonnage.
+ */
+export const MAX_CALL_COMMENTS_PER_HOUR = 15;
+
+/** Réponses d'un même membre sous UN même appel — au-delà, c'est un monologue. */
+export const MAX_COMMENTS_PER_CALL = 10;
+
+/**
+ * Commentaires rendus d'un coup sous un appel. Le plafond par membre ne borne
+ * pas le total : cent personnes à dix réponses font mille lignes, chacune avec
+ * ses boutons.
+ *
+ * On rend les plus RÉCENTES, et la page les réordonne pour se lire dans le
+ * sens chronologique. Tronquer par la queue scellerait le fil : dix comptes
+ * respectant tous les plafonds suffiraient à occuper les cent places, et la
+ * réponse suivante — typiquement le droit de réponse de l'entreprise mise en
+ * cause, que la page promet explicitement — serait enregistrée sans jamais
+ * s'afficher.
+ */
+export const MAX_COMMENTS_RENDERED = 100;
+
+/** Liens à l'appui d'un appel — au-delà, c'est un dossier, pas un appel. */
+export const MAX_CALL_SOURCES = 3;
+
+export const MIN_CALL_REASON = 80;
+export const MAX_CALL_REASON = 1200;
+export const MIN_CALL_WANTED = 40;
+export const MAX_CALL_WANTED = 600;
+
+/**
+ * La charte, affichée au-dessus du formulaire et opposable en modération.
+ * Écrite à la deuxième personne : c'est un engagement de l'auteur, pas des
+ * conditions générales de plus.
+ */
+export const CALL_CHARTER = [
+  "Vise une entreprise ou une marque — jamais une personne, un salarié, une communauté.",
+  "Écris ce que tu sais, pas ce que tu supposes : les faits que tu avances, tu dois pouvoir les sourcer.",
+  "Distingue le fait de l'opinion. « Ils font X » engage ta responsabilité ; « je ne veux plus leur donner mon argent » est ton droit.",
+  "Aucun appel à la violence, au harcèlement, ni aucun propos discriminatoire.",
+  "Termine par ce que tu veux à la place : cet appel sert à faire naître un remplaçant, pas à défouler.",
+] as const;
+
 /** Libellés des types de notifications (préférences + affichage). */
 /** Motifs de signalement proposés (le service refuse tout autre motif). */
 export const REPORT_REASONS = [
   "Arnaque ou contenu trompeur",
   "Contenu inapproprié ou haineux",
   "Spam ou démarchage",
+  "Accusation fausse ou non sourcée",
   "Autre",
 ] as const;
 

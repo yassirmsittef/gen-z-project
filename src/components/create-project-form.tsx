@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Plus, Rocket, Trash2 } from "lucide-react";
+import { Plus, Rocket, Swords, Trash2 } from "lucide-react";
 import { createProjectAction } from "@/actions/projects";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,14 +19,23 @@ import {
   REALIZATION_DAYS,
 } from "@/lib/constants";
 import { CURRENCIES } from "@/lib/money";
-import { createProjectSchema, parseList } from "@/lib/validation";
+import { createProjectSchema, projectFormToInput } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 
 type MilestoneDraft = { title: string; description: string; amount: number };
 
 const EMPTY_MILESTONE: MilestoneDraft = { title: "", description: "", amount: 0 };
 
-export function CreateProjectForm() {
+/**
+ * `answersCall` : le projet est lancé depuis un appel du fil. On garde le
+ * cahier des charges sous les yeux pendant la rédaction et on transporte le
+ * slug jusqu'à l'action, qui déclare le projet remplaçant à la création.
+ */
+export function CreateProjectForm({
+  answersCall,
+}: {
+  answersCall?: { slug: string; target: string; wanted: string; category: string };
+}) {
   const [state, formAction, pending] = useActionState(createProjectAction, undefined);
   const [milestones, setMilestones] = useState<MilestoneDraft[]>([
     { ...EMPTY_MILESTONE },
@@ -46,18 +55,7 @@ export function CreateProjectForm() {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     // Validation Zod côté client — le serveur revalide avec le même schéma.
     const formData = new FormData(e.currentTarget);
-    const parsed = createProjectSchema.safeParse({
-      title: formData.get("title"),
-      pitch: formData.get("pitch"),
-      description: formData.get("description"),
-      category: formData.get("category"),
-      currency: formData.get("currency"),
-      goal: formData.get("goal"),
-      coverUrl: formData.get("coverUrl"),
-      durationDays: formData.get("durationDays"),
-      neededSkills: parseList(formData.get("neededSkills")),
-      milestones,
-    });
+    const parsed = createProjectSchema.safeParse(projectFormToInput(formData, milestones));
     if (!parsed.success) {
       e.preventDefault();
       setClientError(parsed.error.errors[0].message);
@@ -71,6 +69,26 @@ export function CreateProjectForm() {
   return (
     <form action={formAction} onSubmit={handleSubmit} className="space-y-8">
       <input type="hidden" name="milestones" value={JSON.stringify(milestones)} />
+
+      {answersCall && (
+        <section className="rounded-2xl rounded-tr-sm border border-secondary/25 bg-secondary/[0.07] p-5">
+          <input type="hidden" name="callSlug" value={answersCall.slug} />
+          <p className="data-label flex items-center gap-1.5">
+            <Swords aria-hidden className="h-3 w-3" />
+            Tu réponds à un appel
+          </p>
+          <p className="mt-1.5 font-display text-xl font-semibold">
+            Remplacer {answersCall.target}
+          </p>
+          <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
+            « {answersCall.wanted} »
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            C&apos;est le cahier des charges écrit par la personne qui a lancé l&apos;appel. Ton
+            projet sera déclaré remplaçant dès sa création, et tous ses soutiens seront prévenus.
+          </p>
+        </section>
+      )}
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold tracking-tight">Ton projet</h2>
@@ -110,7 +128,7 @@ export function CreateProjectForm() {
               name="category"
               required
               className="flex h-11 w-full rounded-xl border border-input bg-background/60 px-3.5 py-2 text-sm transition-colors duration-200 hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              defaultValue=""
+              defaultValue={answersCall?.category ?? ""}
             >
               <option value="" disabled>
                 Choisir…
