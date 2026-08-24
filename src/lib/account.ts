@@ -1,4 +1,5 @@
 import { deleteOwnBlob } from "@/lib/blob";
+import { detachVideoFiles } from "@/lib/call-videos";
 import { ERASED_EMAIL_DOMAIN } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { DomainError } from "@/lib/project-service";
@@ -99,4 +100,14 @@ export async function eraseAccount(userId: string) {
   // ça, le fichier reste servi publiquement alors que /confidentialite
   // promet qu'il est effacé.
   await deleteOwnBlob(avant?.avatarUrl);
+
+  // Les témoignages FILMÉS de la personne, pour la même raison — et la raison
+  // est plus forte encore : on y voit son visage et on y entend sa voix.
+  // Anonymiser la ligne User pendant que la vidéo continue de tourner sur
+  // /direct n'efface rien du tout, et le compte étant clos, la personne n'a
+  // même plus le moyen de la retirer elle-même.
+  await detachVideoFiles(
+    { authorId: userId },
+    { actorId: userId, reason: "Compte effacé à la demande de son titulaire (RGPD)." }
+  );
 }

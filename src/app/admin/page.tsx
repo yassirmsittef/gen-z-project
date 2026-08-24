@@ -340,7 +340,11 @@ export default async function AdminCockpitPage() {
             value={
               storage.full
                 ? "saturé"
-                : `${Math.round((storage.usedBytes / storage.capBytes) * 100)} %`
+                : // Arrondi vers le BAS : arrondir au plus proche afficherait
+                  // « 80 % » en teinte neutre juste avant le seuil d'alerte,
+                  // puis « 80 % » en ambre juste après — deux fois le même
+                  // chiffre pour deux états différents.
+                  `${Math.floor((storage.usedBytes / storage.capBytes) * 100)} %`
             }
             tone={
               storage.full

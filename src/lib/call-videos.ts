@@ -7,7 +7,7 @@ import {
   VIDEO_STORAGE_WARN_RATIO,
   VIDEOS_PER_PAGE,
 } from "@/lib/constants";
-import { notify, notifyMany } from "@/lib/notifications";
+import { notify, notifyManyOnceUnread } from "@/lib/notifications";
 import { DomainError } from "@/lib/project-service";
 
 /**
@@ -86,11 +86,16 @@ async function alertAdminsOnStorageCrossing(beforeBytes: number, afterBytes: num
       seuil: cap * VIDEO_STORAGE_WARN_RATIO,
       title: `Stockage vidéo à ${Math.round(VIDEO_STORAGE_WARN_RATIO * 100)} % (${Mo(afterBytes)} Mo sur ${Mo(cap)} Mo)`,
       body: "Le direct approche de son plafond. Faire le tri, ou relever le plafond côté hébergement avant qu'il ne refuse les dépôts.",
+      // Une ancre par palier : la déduplication porte sur (destinataire, type,
+      // lien), donc un lien commun ferait taire l'alerte de saturation tant
+      // que celle des 80 % resterait non lue.
+      href: "/admin#stockage-alerte",
     },
     {
       seuil: cap - MAX_VIDEO_BYTES,
       title: `Stockage vidéo saturé (${Mo(afterBytes)} Mo sur ${Mo(cap)} Mo) — les dépôts sont refusés`,
       body: "Le prochain témoignage risquerait de dépasser le plafond : la délivrance de jetons d'upload est suspendue jusqu'à ce que de la place se libère.",
+      href: "/admin#stockage-plein",
     },
   ];
   const franchi = paliers.filter((p) => beforeBytes < p.seuil && afterBytes >= p.seuil).pop();
@@ -100,15 +105,56 @@ async function alertAdminsOnStorageCrossing(beforeBytes: number, afterBytes: num
     where: { role: "ADMIN" },
     select: { id: true },
   });
-  await notifyMany(
+  // Dédupliqué sur les non-lues : deux dépôts qui franchissent le même palier
+  // en même temps ne doivent pas sonner deux fois, email compris.
+  await notifyManyOnceUnread(
     admins.map((admin) => ({
       userId: admin.id,
       type: "STORAGE_ALERT" as const,
       title: franchi.title,
       body: franchi.body,
-      href: "/admin",
+      href: franchi.href,
     }))
   );
+}
+
+/**
+ * Détache les fichiers d'un lot de témoignages : la ligne reste (la trace est
+ * auditable), l'URL part de la base et le fichier part du stockage.
+ *
+ * Appelé quand des témoignages cessent d'être publiables sans passer par
+ * `removeVideo` — le retrait de l'APPEL qui les portait, ou l'effacement du
+ * compte de leur auteur. Sans ça, les fichiers restaient servis sur une URL
+ * publique devinable et facturés indéfiniment, invisibles de la jauge comme
+ * de la modération.
+ */
+export async function detachVideoFiles(
+  where: { callId: string } | { authorId: string },
+  options: { actorId: string; reason: string }
+): Promise<number> {
+  const vidéos = await prisma.callVideo.findMany({
+    where: { ...where, url: { not: null } },
+    select: { id: true, url: true, posterUrl: true },
+  });
+  if (vidéos.length === 0) return 0;
+
+  await prisma.callVideo.updateMany({
+    where: { id: { in: vidéos.map((v) => v.id) } },
+    data: {
+      removedAt: new Date(),
+      removedById: options.actorId,
+      removalReason: options.reason,
+      url: null,
+      posterUrl: null,
+    },
+  });
+
+  // Les fichiers APRÈS commit : un échec réseau ne doit pas annuler le retrait.
+  for (const v of vidéos) {
+    await deleteOwnBlob(v.url);
+    await deleteOwnBlob(v.posterUrl);
+  }
+  return vidéos.length;
 }
 
 export async function postVideo(
@@ -132,19 +178,33 @@ export async function postVideo(
     );
   }
 
-  // L'empreinte réelle sur le stockage — vidéo et vignette, mesurées auprès
-  // du blob et non déclarées. Best-effort : sans mesure, la ligne se crée
-  // quand même (le fichier existe déjà, autant le référencer) et la jauge
-  // sous-compte ce dépôt — le plafond global garde une marge pour ça.
+  // Un fichier ne se référence qu'UNE fois, et jamais en travers : on cherche
+  // les deux URL dans les deux colonnes. Sans ce contrôle, publier l'URL du
+  // témoignage d'un autre suffisait à pouvoir le détruire (retirer sa propre
+  // ligne supprime le fichier) et à faire compter deux fois les mêmes octets.
+  const urls = [input.url, ...(input.posterUrl ? [input.posterUrl] : [])];
+  const déjàPris = await prisma.callVideo.findFirst({
+    where: { OR: [{ url: { in: urls } }, { posterUrl: { in: urls } }] },
+    select: { id: true },
+  });
+  if (déjàPris) throw new DomainError("Ce fichier est déjà publié sur le direct.");
+
+  // L'empreinte réelle sur le stockage, mesurée auprès du blob et jamais
+  // déclarée par le client. La mesure vaut aussi PREUVE D'APPARTENANCE : elle
+  // passe par notre jeton, donc elle ne réussit que sur un fichier de notre
+  // magasin. Un fichier qu'on ne sait pas mesurer est un fichier dont on ne
+  // sait rien — ni le poids, ni s'il est à nous, ni s'il respecte les limites
+  // du jeton d'upload : on refuse de le référencer plutôt que de l'afficher
+  // hors de toute portée.
   const [tailleVideo, taillePoster] = await Promise.all([
     statOwnBlob(input.url),
     statOwnBlob(input.posterUrl),
   ]);
-  const storedBytes =
-    tailleVideo === null && taillePoster === null
-      ? null
-      : (tailleVideo ?? 0) + (taillePoster ?? 0);
-  const jaugeAvant = storedBytes === null ? null : (await videoStorageStatus()).usedBytes;
+  if (tailleVideo === null) {
+    throw new DomainError("Ce fichier n'est pas hébergé par GeniGain. Renvoie ta vidéo.");
+  }
+  const storedBytes = tailleVideo + (taillePoster ?? 0);
+  const jaugeAvant = (await videoStorageStatus()).usedBytes;
 
   const video = await prisma.callVideo.create({
     data: {
@@ -161,9 +221,12 @@ export async function postVideo(
     select: { id: true },
   });
 
-  if (jaugeAvant !== null && storedBytes !== null) {
-    await alertAdminsOnStorageCrossing(jaugeAvant, jaugeAvant + storedBytes);
-  }
+  // La jauge est RELUE après le commit, jamais extrapolée : un dépôt
+  // concurrent enregistré entre-temps doit compter dans l'« après ». Sinon
+  // deux dépôts simultanés encadrant un palier le franchissent sans qu'aucun
+  // ne le voie — et comme le test de franchissement est à sens unique, plus
+  // aucune alerte ne partirait jamais.
+  await alertAdminsOnStorageCrossing(jaugeAvant, (await videoStorageStatus()).usedBytes);
 
   if (call.authorId !== userId) {
     const auteur = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });

@@ -679,9 +679,15 @@ model CallVideo {
   callId     String
   authorId   String
   /// URL publique du blob. Vidée au retrait, en même temps que le fichier.
-  url        String?
+  /// UNIQUE : deux lignes ne peuvent pas désigner le même fichier. Sans ça,
+  /// un membre pouvait publier l'URL du témoignage d'un autre puis retirer SA
+  /// ligne — la suppression du fichier détruisait la vidéo de la victime — et
+  /// faire compter deux fois les mêmes octets dans la jauge. Postgres autorise
+  /// autant de NULL qu'on veut dans un index unique : les lignes retirées, qui
+  /// ont toutes `url = null`, ne se gênent pas entre elles.
+  url        String?  @unique
   /// Vignette (première image), capturée par le navigateur à l'envoi.
-  posterUrl  String?
+  posterUrl  String?  @unique
   caption    String
   durationMs Int
   width      Int?

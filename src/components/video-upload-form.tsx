@@ -85,6 +85,18 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
   const [mesures, setMesures] = useState<Mesures | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState<"repos" | "televersement" | "enregistrement">("repos");
+
+  // L'action serveur a refusé (plafond atteint, appel disparu, fichier déjà
+  // publié) : on rouvre le formulaire. Sans ce retour au repos, le bouton
+  // restait désactivé sur « Publication… » pour de bon — même en choisissant
+  // un autre fichier — et le membre ne pouvait que recharger la page.
+  // Comparaison avec la réponse précédente : on ne réagit qu'au CHANGEMENT,
+  // sinon la remise à zéro rejouerait à chaque rendu.
+  const [dernièreRéponse, setDernièreRéponse] = useState(state);
+  if (state !== dernièreRéponse) {
+    setDernièreRéponse(state);
+    if (state?.error) setEnvoi("repos");
+  }
   const [urls, setUrls] = useState<{ url: string; posterUrl?: string } | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 

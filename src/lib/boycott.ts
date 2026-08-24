@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Prisma, ProjectCategory } from "@prisma/client";
+import { detachVideoFiles } from "@/lib/call-videos";
 import { PROJECT_CARD_INCLUDE } from "@/lib/project-card-data";
 import { prisma } from "@/lib/prisma";
 import {
@@ -343,6 +344,15 @@ export async function removeCall(
       removalReason: isAuthor ? null : (options.reason?.trim() || "Retiré par la modération"),
     },
   });
+
+  // Une vidéo ne survit pas à son ancrage : les témoignages de cet appel
+  // sortent du fil avec lui, et leurs FICHIERS partent du stockage. Sans ça
+  // ils restaient servis sur une URL publique — un contenu retiré qui
+  // continue de circuler — et facturés pour toujours.
+  await detachVideoFiles(
+    { callId },
+    { actorId, reason: "L'appel qui portait ce témoignage a été retiré." }
+  );
 
   // Retrait par la modération : l'auteur est prévenu. Un contenu qui
   // disparaît sans un mot, c'est ce qui fait croire à la censure.

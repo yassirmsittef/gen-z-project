@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { prisma } from "../src/lib/prisma";
 import { createCall } from "../src/lib/boycott";
 import {
@@ -19,6 +19,20 @@ import { DomainError } from "../src/lib/project-service";
  * la forme attendue, la suppression de blob étant best-effort et sans réseau
  * en test.
  */
+
+/**
+ * La publication mesure le fichier auprès du stockage, et cette mesure vaut
+ * preuve d'appartenance : sans elle, la vidéo est refusée. Aucun fichier
+ * n'existe ici, donc on répond une taille plausible — sans réseau.
+ */
+vi.mock("@/lib/blob", async (importOriginal) => {
+  const réel = await importOriginal<typeof import("../src/lib/blob")>();
+  return {
+    ...réel,
+    statOwnBlob: async (url: string | null | undefined) => (url ? 4 * 1024 * 1024 : null),
+    deleteOwnBlob: async () => {},
+  };
+});
 
 const RUN = `v${Date.now().toString(36)}`;
 let seq = 0;
