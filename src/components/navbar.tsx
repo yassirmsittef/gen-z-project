@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { LogOut, MessagesSquare, ShieldAlert } from "lucide-react";
+import {
+  Clapperboard,
+  FolderKanban,
+  LogOut,
+  Megaphone,
+  MessagesSquare,
+  ShieldAlert,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { signOutAction } from "@/actions/auth";
@@ -49,18 +57,14 @@ export async function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-0.5 sm:gap-2">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/projects">Projets</Link>
-          </Button>
+          <LienPrincipal href="/projects" label="Projets" Icon={FolderKanban} iconClass={iconButton} />
           {/* Le fil des appels : deuxième porte d'entrée du produit, juste
               après les projets — c'est de là que partent les remplaçants. */}
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/appels">Appels</Link>
-          </Button>
-          {/* Le direct : la version filmée du fil, une vidéo par écran. */}
-          <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-            <Link href="/direct">Direct</Link>
-          </Button>
+          <LienPrincipal href="/appels" label="Appels" Icon={Megaphone} iconClass={iconButton} />
+          {/* Le direct : la version filmée du fil, une vidéo par écran. Il
+              était masqué sous `sm` — soit invisible sur le seul format où un
+              fil vidéo vertical a du sens. */}
+          <LienPrincipal href="/direct" label="Direct" Icon={Clapperboard} iconClass={iconButton} />
           {/* Icône seule (comme le chat) : la Communauté reste accessible sur mobile. */}
           <Button
             variant="ghost"
@@ -106,7 +110,11 @@ export async function Navbar() {
                   size="icon"
                   asChild
                   title="Cockpit admin"
-                  className={`relative ${iconButton}`}
+                  /* Hors de la barre sur téléphone : c'est le seul bouton
+                     réservé à une poignée de comptes, et il coûtait la place
+                     qui manquait à tout le monde. Il est repris en tête du
+                     Dashboard, compteur inclus — rien n'est perdu. */
+                  className={`relative hidden sm:inline-flex ${iconButton}`}
                 >
                   <Link href="/admin">
                     <ShieldAlert aria-hidden />
@@ -154,5 +162,46 @@ export async function Navbar() {
         </nav>
       </div>
     </header>
+  );
+}
+
+/**
+ * Un lien principal de la barre : ICÔNE SEULE sur téléphone, texte dès `sm`.
+ *
+ * La barre mobile était pleine à craquer — 414 px de contenu pour 375 px
+ * d'écran : l'avatar était rogné et le bouton de déconnexion tombait hors de
+ * l'écran, alors qu'il n'existe nulle part ailleurs. Trois libellés en toutes
+ * lettres y coûtaient plus de 200 px, quand Communauté, Chat et Notifications
+ * tiennent déjà en 32 px chacun. On aligne les trois premiers sur ce
+ * traitement : le texte revient dès qu'il y a la place.
+ *
+ * Deux boutons plutôt qu'un seul dont le libellé se masque : un bouton `icon`
+ * et un bouton `sm` n'ont ni la même boîte ni le même rembourrage, et faire
+ * varier ça sur un seul élément produisait une pastille difforme au point de
+ * bascule.
+ */
+function LienPrincipal({
+  href,
+  label,
+  Icon,
+  iconClass,
+}: {
+  href: string;
+  label: string;
+  Icon: LucideIcon;
+  iconClass: string;
+}) {
+  return (
+    <>
+      <Button variant="ghost" size="icon" asChild title={label} className={`sm:hidden ${iconClass}`}>
+        <Link href={href}>
+          <Icon aria-hidden />
+          <span className="sr-only">{label}</span>
+        </Link>
+      </Button>
+      <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+        <Link href={href}>{label}</Link>
+      </Button>
+    </>
   );
 }

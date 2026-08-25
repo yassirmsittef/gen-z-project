@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { FileDown, Handshake, PenLine, Sparkles, Star, Swords } from "lucide-react";
+import { FileDown, Handshake, PenLine, ShieldAlert, Sparkles, Star, Swords } from "lucide-react";
 import { auth } from "@/auth";
 import { liveAnswer } from "@/lib/boycott";
 import { prisma } from "@/lib/prisma";
@@ -154,6 +154,11 @@ export default async function DashboardPage({
   const nextLevel = nextReputationTarget(user.reputation);
   // Le rôle ADMIN poste sans le gate (démarrage à froid, décision fondateur).
   const gateExempt = user.role === "ADMIN";
+  // L'accès au cockpit vit ici depuis que la barre de navigation ne le porte
+  // plus sur téléphone : c'est la page d'atterrissage d'un membre connecté,
+  // et un signalement qui attend doit se voir sans ouvrir un ordinateur.
+  const openReports =
+    user.role === "ADMIN" ? await prisma.report.count({ where: { status: "OPEN" } }) : 0;
   const gateReached = gateExempt || user.contributedUsdCents >= GATE_USD_CENTS;
   // Trajectoire : du plus ancien au plus récent, gauche → droite.
   const trajectory = [...reputationEvents].reverse();
@@ -190,6 +195,24 @@ export default async function DashboardPage({
           </div>
           <ReputationBadge reputation={user.reputation} className="ml-auto" />
         </div>
+
+        {user.role === "ADMIN" && (
+          <Link
+            href="/admin"
+            className="glass flex items-center gap-3 rounded-2xl rounded-tr-sm p-4 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-white/20 sm:hidden"
+          >
+            <ShieldAlert
+              className={cn("h-5 w-5", openReports > 0 ? "text-destructive" : "text-primary")}
+              aria-hidden
+            />
+            <span className="text-sm font-medium">Cockpit admin</span>
+            <span className="ml-auto text-xs text-muted-foreground">
+              {openReports > 0
+                ? `${openReports} signalement${openReports > 1 ? "s" : ""} à traiter`
+                : "rien à modérer"}
+            </span>
+          </Link>
+        )}
 
         {failedProjects.length > 0 && (
           <Alert>
