@@ -138,6 +138,16 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
     setErreur(null);
     setEnvoi("televersement");
     try {
+      // On demande d'abord la permission. Sans ça, un refus du serveur
+      // (direct plein, quota du jour atteint) revenait en « Failed to
+      // retrieve the client token » : @vercel/blob lève sa propre erreur sans
+      // lire notre réponse. Et le fichier serait déjà monté pour rien.
+      const permission = await fetch("/api/videos/quota").then((r) => r.json());
+      if (!permission.ok) {
+        setEnvoi("repos");
+        return setErreur(permission.raison ?? "Publication impossible pour le moment.");
+      }
+
       const blob = await upload(`temoignages/${Date.now()}-${fichier.name}`, fichier, {
         access: "public",
         handleUploadUrl: "/api/videos/upload",

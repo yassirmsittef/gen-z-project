@@ -50,8 +50,11 @@ export default async function DirectPage({
       voix: video.call._count.supports,
     },
     // Mêmes titres que pour la discussion écrite : son auteur, l'auteur de
-    // l'appel, la modération.
-    peutRetirer: Boolean(userId) && (video.authorId === userId || admin),
+    // l'appel, la modération. L'auteur de l'appel manquait ici alors que
+    // `removeVideo` l'autorise : la règle existait, aucun bouton ne l'offrait.
+    peutRetirer:
+      Boolean(userId) &&
+      (video.authorId === userId || video.call.authorId === userId || admin),
   }));
 
   return (

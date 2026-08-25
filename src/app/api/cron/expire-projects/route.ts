@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
+import { sweepOrphanVideoBlobs } from "@/lib/call-videos";
 import { purgeStaleLoginAttempts } from "@/lib/login-rate-limit";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { executeDuePayouts, executeDueRefunds } from "@/lib/payouts";
 import { failExpiredProjects, failOverdueRealizations } from "@/lib/project-service";
 
 /**
- * Cron Vercel (toutes les 10 min, voir vercel.json) : expire les campagnes
- * échues (deadline dépassée sans objectif atteint) et rembourse au prorata.
+ * Cron Vercel (une fois par jour à 3 h — plan Hobby, voir vercel.json) :
+ * expire les campagnes échues (deadline dépassée sans objectif atteint) et
+ * rembourse au prorata, puis fait le ménage (emails manqués, tentatives de
+ * connexion périmées, fichiers vidéo orphelins).
  *
  * Remplace l'évaluation paresseuse qui tournait `await failExpiredProjects()`
  * en tête de CHAQUE page lisant des projets — c'était une cascade séquentielle
@@ -35,5 +38,13 @@ export async function GET(request: Request) {
   await sendPendingNotificationEmails();
   // Ménage anti brute-force : les échecs sortis de la fenêtre ne servent plus.
   await purgeStaleLoginAttempts();
-  return NextResponse.json({ ok: true, ranAt: new Date().toISOString() });
+  // Fichiers déposés sur le stockage dont la publication n'est jamais venue :
+  // invisibles de la jauge (qui somme des lignes), ils se payaient sans fin.
+  const balayage = await sweepOrphanVideoBlobs();
+  return NextResponse.json({
+    ok: true,
+    ranAt: new Date().toISOString(),
+    blobsOrphelins: balayage.orphelins,
+    octetsLibérés: balayage.octetsLibérés,
+  });
 }

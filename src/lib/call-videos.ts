@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { deleteOwnBlob, statOwnBlob } from "@/lib/blob";
+import { deleteOwnBlob, listOwnBlobs, statOwnBlob } from "@/lib/blob";
 import {
   MAX_TOTAL_VIDEO_BYTES,
   MAX_VIDEO_BYTES,
   MAX_VIDEOS_PER_DAY,
+  ORPHAN_BLOB_GRACE_MS,
+  VIDEO_BLOB_PREFIX,
   VIDEO_STORAGE_WARN_RATIO,
   VIDEOS_PER_PAGE,
 } from "@/lib/constants";
@@ -32,7 +34,16 @@ export const visibleVideo = {
 
 const AUTEUR = { select: { id: true, name: true, avatarUrl: true } } as const;
 const APPEL = {
-  select: { slug: true, target: true, category: true, _count: { select: { supports: true } } },
+  // `authorId` sert au droit de retrait : celui qui tient le fil répond de ce
+  // qui s'y dit, et `removeVideo` l'autorise explicitement. Sans ce champ,
+  // l'interface ne pouvait pas le calculer et le bouton n'apparaissait jamais.
+  select: {
+    slug: true,
+    target: true,
+    category: true,
+    authorId: true,
+    _count: { select: { supports: true } },
+  },
 } as const;
 
 /**
@@ -338,4 +349,64 @@ export async function getVideo(videoId: string) {
 /** Combien de témoignages sous cet appel — affiché sur la page de l'appel. */
 export async function videoCountForCall(callId: string): Promise<number> {
   return prisma.callVideo.count({ where: { callId, ...visibleVideo } });
+}
+
+/**
+ * Balaye les fichiers que plus aucune ligne ne réclame.
+ *
+ * Le dépôt se fait en deux temps : le navigateur envoie le fichier au
+ * stockage, PUIS l'action serveur crée la ligne. Si le second temps n'arrive
+ * jamais — légende refusée, onglet fermé, réseau coupé, ou simple abandon — le
+ * fichier reste. Il est alors invisible de la jauge (qui somme des LIGNES),
+ * invisible du plafond, invisible de la modération, et rien ne le supprimait :
+ * il se payait indéfiniment. C'était le trou le plus large du dispositif.
+ *
+ * Trois garde-fous, parce que ce code EFFACE :
+ * 1. un seul dossier, celui des témoignages — les photos de profil vivent dans
+ *    le même magasin et ne doivent jamais tomber sous ce râteau ;
+ * 2. un délai de grâce : un fichier récent est probablement une publication en
+ *    cours, pas un déchet ;
+ * 3. l'ensemble des URL réclamées est relu À CHAQUE passage, juste avant de
+ *    supprimer — jamais un cache, jamais une liste calculée plus tôt.
+ *
+ * `dryRun` permet de mesurer ce qui serait supprimé sans rien détruire.
+ */
+export async function sweepOrphanVideoBlobs(
+  options: { dryRun?: boolean; now?: number } = {}
+): Promise<{ examinés: number; orphelins: number; octetsLibérés: number; supprimés: string[] }> {
+  const maintenant = options.now ?? Date.now();
+
+  // Toutes les URL vivantes, dans les deux colonnes. Lu maintenant : entre
+  // deux passages du cron, des lignes sont nées et d'autres sont mortes.
+  const lignes = await prisma.callVideo.findMany({
+    where: { OR: [{ url: { not: null } }, { posterUrl: { not: null } }] },
+    select: { url: true, posterUrl: true },
+  });
+  const réclamées = new Set<string>();
+  for (const l of lignes) {
+    if (l.url) réclamées.add(l.url);
+    if (l.posterUrl) réclamées.add(l.posterUrl);
+  }
+
+  let examinés = 0;
+  let octetsLibérés = 0;
+  const supprimés: string[] = [];
+
+  for await (const blob of listOwnBlobs(VIDEO_BLOB_PREFIX)) {
+    examinés += 1;
+    if (réclamées.has(blob.url)) continue;
+    // Trop jeune : sans doute une publication en cours de route.
+    if (maintenant - blob.uploadedAt.getTime() < ORPHAN_BLOB_GRACE_MS) continue;
+
+    octetsLibérés += blob.size;
+    supprimés.push(blob.url);
+    if (!options.dryRun) await deleteOwnBlob(blob.url);
+  }
+
+  if (supprimés.length > 0) {
+    console.info(
+      `[balayage] ${supprimés.length} fichier(s) orphelin(s), ${Math.round(octetsLibérés / (1024 * 1024))} Mo${options.dryRun ? " (à blanc)" : " libérés"}`
+    );
+  }
+  return { examinés, orphelins: supprimés.length, octetsLibérés, supprimés };
 }

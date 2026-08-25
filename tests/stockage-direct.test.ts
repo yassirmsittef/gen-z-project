@@ -8,11 +8,13 @@ import {
   getVideo,
   postVideo,
   removeVideo,
+  sweepOrphanVideoBlobs,
   videoStorageStatus,
 } from "../src/lib/call-videos";
 import {
   MAX_TOTAL_VIDEO_BYTES,
   MAX_VIDEO_BYTES,
+  ORPHAN_BLOB_GRACE_MS,
   VIDEO_STORAGE_WARN_RATIO,
 } from "../src/lib/constants";
 import { DomainError } from "../src/lib/project-service";
@@ -28,6 +30,10 @@ import { DomainError } from "../src/lib/project-service";
 const TAILLES = vi.hoisted(() => new Map<string, number>());
 /** Les fichiers dont la suppression a été RÉELLEMENT demandée au stockage. */
 const SUPPRIMES = vi.hoisted(() => [] as string[]);
+/** Le magasin simulé que parcourt le balayage : url → poids et date de dépôt. */
+const MAGASIN = vi.hoisted(
+  () => new Map<string, { size: number; uploadedAt: Date; pathname: string }>()
+);
 
 vi.mock("@/lib/blob", async (importOriginal) => {
   const réel = await importOriginal<typeof import("../src/lib/blob")>();
@@ -39,7 +45,17 @@ vi.mock("@/lib/blob", async (importOriginal) => {
     // pouvait prouver que le FICHIER part avec la ligne — or c'est la seule
     // chose qui rend la baisse de la jauge honnête.
     deleteOwnBlob: async (url: string | null | undefined) => {
-      if (url) SUPPRIMES.push(url);
+      if (url) {
+        SUPPRIMES.push(url);
+        MAGASIN.delete(url);
+      }
+    },
+    // Ne rend que ce qui commence par le préfixe demandé — c'est justement le
+    // garde-fou qu'on veut pouvoir mettre en défaut.
+    listOwnBlobs: async function* (prefix: string) {
+      for (const [url, meta] of [...MAGASIN.entries()]) {
+        if (meta.pathname.startsWith(prefix)) yield { url, ...meta };
+      }
     },
   };
 });
@@ -115,6 +131,7 @@ beforeEach(async () => {
   });
   TAILLES.clear();
   SUPPRIMES.length = 0;
+  MAGASIN.clear();
 });
 
 afterAll(async () => {
@@ -339,5 +356,86 @@ describe("les fichiers suivent le contenu qui disparaît", () => {
     expect(SUPPRIMES).not.toContain(urlAutre);
     expect(await getVideo(autre)).not.toBeNull();
     expect((await videoStorageStatus()).usedBytes).toBe(4 * Mo);
+  });
+});
+
+/**
+ * Le balayage des fichiers orphelins. C'est du code qui EFFACE : chaque test
+ * ci-dessous protège un garde-fou, et doit tomber si on le retire.
+ */
+describe("le balayage des fichiers que plus rien ne réclame", () => {
+  /** Pose un fichier dans le magasin simulé, sans ligne en base. */
+  const poser = (chemin: string, ageMs: number, size = 5 * Mo) => {
+    const url = `${BLOB}/${chemin}`;
+    MAGASIN.set(url, { size, uploadedAt: new Date(Date.now() - ageMs), pathname: chemin });
+    return url;
+  };
+
+  it("supprime un dépôt abandonné, et rend les octets qu'il coûtait", async () => {
+    const abandonné = poser(`temoignages/${RUN}-abandonne.mp4`, ORPHAN_BLOB_GRACE_MS + 60_000, 7 * Mo);
+
+    const bilan = await sweepOrphanVideoBlobs();
+
+    expect(bilan.orphelins).toBe(1);
+    expect(bilan.octetsLibérés).toBe(7 * Mo);
+    expect(SUPPRIMES).toContain(abandonné);
+  });
+
+  it("épargne le fichier d'un témoignage publié", async () => {
+    const membre = await mkUser();
+    const call = await mkCall(membre.id);
+    const id = await mkVideo(membre.id, call.id, { video: 6 * Mo, poster: 1 * Mo });
+    const ligne = await prisma.callVideo.findUnique({ where: { id } });
+    // Le fichier existe dans le magasin depuis longtemps : seul son statut de
+    // fichier RÉCLAMÉ doit le sauver.
+    MAGASIN.set(ligne!.url!, {
+      size: 6 * Mo,
+      uploadedAt: new Date(Date.now() - ORPHAN_BLOB_GRACE_MS * 10),
+      pathname: new URL(ligne!.url!).pathname.slice(1),
+    });
+    MAGASIN.set(ligne!.posterUrl!, {
+      size: 1 * Mo,
+      uploadedAt: new Date(Date.now() - ORPHAN_BLOB_GRACE_MS * 10),
+      pathname: new URL(ligne!.posterUrl!).pathname.slice(1),
+    });
+
+    const bilan = await sweepOrphanVideoBlobs();
+
+    expect(bilan.orphelins).toBe(0);
+    expect(SUPPRIMES).not.toContain(ligne!.url!);
+    // La VIGNETTE compte autant que la vidéo : elle est réclamée par l'autre
+    // colonne, et l'oublier reviendrait à défigurer un témoignage en ligne.
+    expect(SUPPRIMES).not.toContain(ligne!.posterUrl!);
+  });
+
+  it("épargne un dépôt tout frais — une publication peut être en cours", async () => {
+    const enCours = poser(`temoignages/${RUN}-en-cours.mp4`, 60_000);
+
+    const bilan = await sweepOrphanVideoBlobs();
+
+    expect(bilan.orphelins).toBe(0);
+    expect(SUPPRIMES).not.toContain(enCours);
+  });
+
+  it("ne sort JAMAIS du dossier des témoignages — les photos de profil vivent au même endroit", async () => {
+    const avatar = poser(`avatars/${RUN}-photo.webp`, ORPHAN_BLOB_GRACE_MS * 5);
+    const preuve = poser(`preuves/${RUN}-piece.png`, ORPHAN_BLOB_GRACE_MS * 5);
+
+    const bilan = await sweepOrphanVideoBlobs();
+
+    expect(SUPPRIMES).not.toContain(avatar);
+    expect(SUPPRIMES).not.toContain(preuve);
+    expect(bilan.examinés).toBe(0); // le balayage ne les a même pas regardés
+  });
+
+  it("à blanc : compte sans rien détruire", async () => {
+    const orphelin = poser(`temoignages/${RUN}-blanc.mp4`, ORPHAN_BLOB_GRACE_MS * 2, 4 * Mo);
+
+    const bilan = await sweepOrphanVideoBlobs({ dryRun: true });
+
+    expect(bilan.orphelins).toBe(1);
+    expect(bilan.octetsLibérés).toBe(4 * Mo);
+    expect(SUPPRIMES).toHaveLength(0);
+    expect(MAGASIN.has(orphelin)).toBe(true);
   });
 });

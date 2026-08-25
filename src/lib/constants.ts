@@ -319,6 +319,24 @@ export const MAX_TOTAL_VIDEO_BYTES = 800 * 1024 * 1024;
 /** Fraction du plafond global au-delà de laquelle les admins sont alertés. */
 export const VIDEO_STORAGE_WARN_RATIO = 0.8;
 
+/**
+ * Dossier du magasin où vivent les témoignages (vidéos et vignettes). C'est le
+ * SEUL préfixe que le balayage des fichiers orphelins est autorisé à toucher :
+ * les photos de profil habitent le même magasin, sous `avatars/`, et ne
+ * doivent jamais tomber sous le même râteau.
+ */
+export const VIDEO_BLOB_PREFIX = "temoignages/";
+
+/**
+ * Âge minimal d'un fichier avant que le balayage ose le supprimer. Un dépôt
+ * suit ce chemin : le navigateur envoie le fichier, PUIS l'action serveur crée
+ * la ligne. Entre les deux, le fichier est légitimement orphelin — quelques
+ * secondes en temps normal, davantage si la personne rédige sa légende, laisse
+ * l'onglet ouvert ou perd le réseau. Douze heures de grâce mettent hors
+ * d'atteinte tout dépôt en cours, si lent soit-il.
+ */
+export const ORPHAN_BLOB_GRACE_MS = 12 * 60 * 60 * 1000;
+
 /** Témoignages rendus d'un coup dans le fil — au-delà, on pagine au curseur. */
 export const VIDEOS_PER_PAGE = 8;
 

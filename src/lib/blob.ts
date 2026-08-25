@@ -1,4 +1,4 @@
-import { del, head } from "@vercel/blob";
+import { del, head, list } from "@vercel/blob";
 
 /**
  * Fichiers que NOUS hébergeons sur Vercel Blob, par opposition aux URL
@@ -38,4 +38,18 @@ export async function statOwnBlob(url: string | null | undefined): Promise<numbe
     console.error("[blob] taille illisible", url, error);
     return null;
   }
+}
+
+/**
+ * Parcourt un dossier du magasin et rend les fichiers qui y dorment, page par
+ * page. Sortie paresseuse : un magasin de plusieurs milliers de fichiers ne
+ * tient pas forcément en mémoire, et l'appelant s'arrête quand il veut.
+ */
+export async function* listOwnBlobs(prefix: string) {
+  let cursor: string | undefined;
+  do {
+    const page = await list({ prefix, cursor, limit: 1000 });
+    for (const blob of page.blobs) yield blob;
+    cursor = page.hasMore ? page.cursor : undefined;
+  } while (cursor);
 }
