@@ -319,12 +319,19 @@ export const MAX_VIDEOS_PER_DAY = 5;
 export const MAX_UPLOAD_TICKETS_PER_DAY = MAX_VIDEOS_PER_DAY * 4;
 
 /**
- * Plafond GLOBAL du stockage vidéo — la limite que les plafonds par membre ne
- * donnent pas : mille membres sages remplissent le disque aussi sûrement
- * qu'un seul qui triche. Le plan Vercel Hobby inclut 1 Go de Blob puis coupe
- * (rien ne se facture, tout s'arrête) ; on s'arrête avant lui, et la marge de
- * 224 Mo absorbe ce que la jauge ne voit pas encore : les jetons délivrés
- * dont la ligne en base n'existe pas, et les fichiers déposés jamais soumis.
+ * Plafond GLOBAL du magasin — la limite que les plafonds par membre ne donnent
+ * pas : mille membres sages le remplissent aussi sûrement qu'un seul qui
+ * triche. Il couvre les DEUX producteurs, témoignages et photos de profil.
+ *
+ * Le plan Vercel Hobby inclut 1 Go de Blob puis coupe (rien ne se facture,
+ * tout s'arrête) ; on s'arrête avant lui. La marge de 224 Mo couvre ce que la
+ * jauge ne voit pas à l'instant T : les fichiers déposés dont la publication
+ * n'est pas encore venue. Elle ne les couvre PAS tous en théorie — la cadence
+ * autorise jusqu'à MAX_UPLOAD_TICKETS_PER_DAY × MAX_VIDEO_BYTES d'octets en
+ * vol pour un membre — mais ces octets-là ne survivent pas : le balayage du
+ * cron les ramasse dès qu'ils dépassent ORPHAN_BLOB_GRACE_MS. La marge tient
+ * le temps d'un cycle, pas indéfiniment.
+ *
  * À relever si le compte passe Pro.
  */
 export const MAX_TOTAL_VIDEO_BYTES = 800 * 1024 * 1024;
@@ -339,6 +346,9 @@ export const VIDEO_STORAGE_WARN_RATIO = 0.8;
  * doivent jamais tomber sous le même râteau.
  */
 export const VIDEO_BLOB_PREFIX = "temoignages/";
+
+/** Dossier des photos de profil — l'autre producteur du même magasin. */
+export const AVATAR_BLOB_PREFIX = "avatars/";
 
 /**
  * Âge minimal d'un fichier avant que le balayage ose le supprimer. Un dépôt
@@ -426,5 +436,5 @@ export const NOTIFICATION_TYPE_LABELS = {
   CALL_VIDEO: "Témoignages vidéo sous mes appels",
   // Non masquable, donc jamais listé dans les préférences ; seuls les admins
   // en reçoivent.
-  STORAGE_ALERT: "Alerte de stockage vidéo (équipe)",
+  STORAGE_ALERT: "Alerte de stockage hébergé (équipe)",
 } as const satisfies Record<NotificationType, string>;

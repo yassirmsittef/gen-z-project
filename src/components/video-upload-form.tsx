@@ -108,7 +108,7 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
     if (!file) return;
 
     if (!(VIDEO_CONTENT_TYPES as readonly string[]).includes(file.type)) {
-      return setErreur("Format non accepté — envoie un MP4, un WebM ou une vidéo iPhone.");
+      return setErreur("Format non accepté — il faut un MP4 ou un WebM. Depuis un iPhone, choisis la vidéo dans la photothèque : elle sera convertie automatiquement.");
     }
     if (file.size > MAX_VIDEO_BYTES) {
       return setErreur(

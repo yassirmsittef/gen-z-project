@@ -278,7 +278,7 @@ describe("l'alerte aux admins", () => {
     const alertes = await alertesDe(admin.id);
     expect(alertes).toHaveLength(1);
     expect(alertes[0].title).toContain("80 %");
-    expect(alertes[0].href).toBe("/admin#stockage-alerte");
+    expect(alertes[0].href).toBe("/admin?palier=alerte#stockage");
     expect(await alertesDe(membre.id)).toHaveLength(0);
 
     // Au-dessus du seuil sans franchissement : pas une de plus.
@@ -507,5 +507,85 @@ describe("la cadence des jetons d'upload", () => {
     for (let i = 0; i < MAX_UPLOAD_TICKETS_PER_DAY; i += 1) {
       await expect(claimUploadTicket(membre.id)).resolves.toBeUndefined();
     }
+  });
+});
+
+describe("le dossier des témoignages est une frontière", () => {
+  it("refuse la photo de profil d'autrui, comme vidéo ET comme vignette", async () => {
+    const victime = await mkUser();
+    const pillard = await mkUser();
+    const call = await mkCall(pillard.id);
+
+    // La photo vit dans le MÊME magasin : la mesure réussit, l'unicité ne la
+    // connaît pas (elle n'interroge que les témoignages). Seul le dossier la
+    // distingue — sans ce contrôle, retirer sa propre ligne effaçait la photo
+    // de la victime de son profil.
+    const avatar = `${BLOB}/avatars/${RUN}-victime.webp`;
+    TAILLES.set(avatar, 1 * Mo);
+    await prisma.user.update({
+      where: { id: victime.id },
+      data: { avatarUrl: avatar, avatarBytes: 1 * Mo },
+    });
+
+    await expect(
+      postVideo(pillard.id, {
+        callId: call.id,
+        url: avatar,
+        caption: "Je fais passer la photo de quelqu'un pour ma vidéo.",
+        durationMs: 20_000,
+      })
+    ).rejects.toBeInstanceOf(DomainError);
+
+    const vidéo = `${BLOB}/temoignages/${RUN}-vraie.mp4`;
+    TAILLES.set(vidéo, 5 * Mo);
+    await expect(
+      postVideo(pillard.id, {
+        callId: call.id,
+        url: vidéo,
+        posterUrl: avatar,
+        caption: "Et là je la mets en vignette, même intention.",
+        durationMs: 20_000,
+      })
+    ).rejects.toBeInstanceOf(DomainError);
+
+    // La photo de la victime est intacte, et rien n'a été supprimé.
+    const après = await prisma.user.findUnique({ where: { id: victime.id } });
+    expect(après!.avatarUrl).toBe(avatar);
+    expect(SUPPRIMES).toHaveLength(0);
+  });
+
+  it("refuse aussi un fichier d'un autre dossier du magasin", async () => {
+    const membre = await mkUser();
+    const call = await mkCall(membre.id);
+    const ailleurs = `${BLOB}/preuves/${RUN}-piece.mp4`;
+    TAILLES.set(ailleurs, 5 * Mo);
+
+    // Hors du dossier des témoignages, le balayage ne passerait jamais :
+    // le fichier serait facturé sans que rien ne puisse le réclamer.
+    await expect(
+      postVideo(membre.id, {
+        callId: call.id,
+        url: ailleurs,
+        caption: "Un fichier rangé ailleurs dans le magasin.",
+        durationMs: 20_000,
+      })
+    ).rejects.toBeInstanceOf(DomainError);
+  });
+});
+
+describe("la cadence tient sous la rafale", () => {
+  it("ne laisse pas passer plus que le plafond, même en parallèle", async () => {
+    const membre = await mkUser();
+
+    // Compter PUIS écrire laissait passer autant de dépôts que de requêtes
+    // simultanées : chacune lisait le compteur avant que les autres n'aient
+    // écrit. On lance tout d'un coup, comme le ferait un script.
+    const tentatives = await Promise.allSettled(
+      Array.from({ length: MAX_UPLOAD_TICKETS_PER_DAY + 10 }, () => claimUploadTicket(membre.id))
+    );
+    const acceptées = tentatives.filter((t) => t.status === "fulfilled").length;
+
+    expect(acceptées).toBeLessThanOrEqual(MAX_UPLOAD_TICKETS_PER_DAY);
+    expect(acceptées).toBeGreaterThan(0);
   });
 });

@@ -23,7 +23,9 @@ export function DeleteAccount() {
       <form action={formAction} className="space-y-3 border-t border-destructive/15 p-3.5">
         <p className="text-sm leading-relaxed text-muted-foreground">
           Tes données personnelles sont effacées (profil, avatar, bio, ville, préférences) et la
-          connexion coupée définitivement. Tes contributions et l&apos;historique des projets
+          connexion coupée définitivement. <strong>Tes témoignages filmés sont retirés du direct
+          et leurs fichiers supprimés</strong> : on y voit ton visage, ils ne peuvent pas te
+          survivre — c&apos;est sans retour. Tes contributions et l&apos;historique des projets
           déjà soutenus restent, au nom de « Membre retiré » — les comptes de la communauté ne
           mentent jamais. Impossible tant qu&apos;une de tes campagnes soutenues est en cours.
         </p>

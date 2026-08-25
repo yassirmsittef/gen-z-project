@@ -1,4 +1,5 @@
 import { del, head, list } from "@vercel/blob";
+import { VIDEO_BLOB_PREFIX } from "@/lib/constants";
 
 /**
  * Fichiers que NOUS hébergeons sur Vercel Blob, par opposition aux URL
@@ -7,6 +8,25 @@ import { del, head, list } from "@vercel/blob";
  */
 export const isOwnBlob = (url: string | null | undefined): url is string =>
   Boolean(url?.includes(".blob.vercel-storage.com/"));
+
+/**
+ * Un fichier du DOSSIER DES TÉMOIGNAGES, et pas seulement du magasin.
+ *
+ * Vérifier l'hôte ne suffit pas : les photos de profil vivent dans le même
+ * magasin, sous `avatars/`. Sans contrôle de dossier, un membre pouvait
+ * soumettre l'URL de la photo de quelqu'un comme vidéo ou comme vignette —
+ * elle passait l'unicité (qui n'interroge que les témoignages) et la mesure
+ * (qui réussit, puisque le fichier est bien à nous), s'affichait sur le fil,
+ * puis DISPARAISSAIT du profil de la victime au premier retrait.
+ */
+export function isVideoBlob(url: string | null | undefined): url is string {
+  if (!isOwnBlob(url)) return false;
+  try {
+    return new URL(url).pathname.startsWith(`/${VIDEO_BLOB_PREFIX}`);
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Efface un fichier qu'on héberge — best-effort et JAMAIS dans une
@@ -45,11 +65,13 @@ export async function statOwnBlob(url: string | null | undefined): Promise<numbe
  * page. Sortie paresseuse : un magasin de plusieurs milliers de fichiers ne
  * tient pas forcément en mémoire, et l'appelant s'arrête quand il veut.
  */
-export async function* listOwnBlobs(prefix: string) {
-  let cursor: string | undefined;
-  do {
-    const page = await list({ prefix, cursor, limit: 1000 });
-    for (const blob of page.blobs) yield blob;
-    cursor = page.hasMore ? page.cursor : undefined;
-  } while (cursor);
+export async function* listOwnBlobs(...prefixes: string[]) {
+  for (const prefix of prefixes) {
+    let cursor: string | undefined;
+    do {
+      const page = await list({ prefix, cursor, limit: 1000 });
+      for (const blob of page.blobs) yield blob;
+      cursor = page.hasMore ? page.cursor : undefined;
+    } while (cursor);
+  }
 }

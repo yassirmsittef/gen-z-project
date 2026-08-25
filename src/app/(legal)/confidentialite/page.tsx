@@ -154,7 +154,9 @@ export default function ConfidentialitePage() {
           Ton compte et son contenu : tant que le compte existe. La suppression du compte
           (tableau de bord → Sécurité) <strong>anonymise immédiatement</strong> tes données
           personnelles : le profil devient « Membre retiré », l’email est neutralisé, photo,
-          bio, ville et compétences sont effacées.
+          bio, ville et compétences sont effacées. <strong>Tes témoignages filmés sont retirés
+          du direct et leurs fichiers supprimés du stockage</strong> — on y voit ton visage et
+          on y entend ta voix : ils ne peuvent pas rester en ligne une fois le compte clos.
         </li>
         <li>
           Les écritures financières (contributions, remboursements, versements) sont conservées

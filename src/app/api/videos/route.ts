@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { listVideos } from "@/lib/call-videos";
+import { listVideos, peutRetirerVideo } from "@/lib/call-videos";
 import { isAdmin } from "@/lib/moderation";
 
 /** Pagination au curseur du fil vidéo (défilement infini). */
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
         category: video.call.category,
         voix: video.call._count.supports,
       },
-      peutRetirer: Boolean(userId) && (video.authorId === userId || admin),
+      peutRetirer: peutRetirerVideo(video, userId, admin),
     })),
     cursor: suivant,
   });

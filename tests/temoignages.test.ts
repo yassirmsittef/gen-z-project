@@ -112,7 +112,7 @@ describe("publier un témoignage", () => {
 });
 
 describe("le schéma refuse ce qui n'est pas à nous", () => {
-  it("rejette une vidéo hébergée ailleurs", () => {
+  it("rejette une vidéo hébergée ailleurs, et hors du dossier des témoignages", () => {
     const base = {
       callId: "abc",
       caption: "Une légende assez longue pour passer le minimum imposé.",
@@ -123,13 +123,32 @@ describe("le schéma refuse ce qui n'est pas à nous", () => {
     expect(callVideoSchema.safeParse({ ...base, url: "https://ailleurs.test/v.mp4" }).success).toBe(
       false
     );
-    expect(callVideoSchema.safeParse({ ...base, url: `${BLOB}/v.mp4` }).success).toBe(true);
+    // Notre magasin ne suffit pas : les photos de profil y vivent aussi.
+    // Accepter une URL du dossier `avatars/` laissait afficher la photo de
+    // quelqu'un comme témoignage — et la détruire au retrait.
+    expect(callVideoSchema.safeParse({ ...base, url: `${BLOB}/avatars/x.webp` }).success).toBe(
+      false
+    );
+    // Pas davantage à la racine du magasin : le balayage n'y passe jamais.
+    expect(callVideoSchema.safeParse({ ...base, url: `${BLOB}/v.mp4` }).success).toBe(false);
+    // La vignette est soumise à la même frontière que la vidéo.
+    expect(
+      callVideoSchema.safeParse({
+        ...base,
+        url: `${BLOB}/temoignages/v.mp4`,
+        posterUrl: `${BLOB}/avatars/x.webp`,
+      }).success
+    ).toBe(false);
+    // Le seul cas qui passe.
+    expect(callVideoSchema.safeParse({ ...base, url: `${BLOB}/temoignages/v.mp4` }).success).toBe(
+      true
+    );
   });
 
   it("rejette une vidéo trop longue", () => {
     const r = callVideoSchema.safeParse({
       callId: "abc",
-      url: `${BLOB}/v.mp4`,
+      url: `${BLOB}/temoignages/v.mp4`,
       caption: "Une légende assez longue pour passer le minimum imposé.",
       durationMs: 120_000,
     });

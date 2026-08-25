@@ -3,6 +3,7 @@ import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { assertVideoStorageAvailable, claimUploadTicket } from "@/lib/call-videos";
+import { VIDEO_BLOB_PREFIX } from "@/lib/constants";
 import { MAX_VIDEO_BYTES, MAX_VIDEOS_PER_DAY, VIDEO_CONTENT_TYPES } from "@/lib/constants";
 
 /**
@@ -25,7 +26,15 @@ export async function POST(request: Request): Promise<NextResponse> {
     const json = await handleUpload({
       body,
       request,
-      onBeforeGenerateToken: async () => {
+      onBeforeGenerateToken: async (pathname) => {
+        // Le chemin est choisi par le CLIENT. Sans ce contrôle, un dépôt
+        // pouvait atterrir hors du dossier des témoignages — donc hors de
+        // portée du balayage, qui ne regarde que ce dossier : un fichier
+        // facturé pour toujours, que rien ne réclame et que rien ne ramasse.
+        if (!pathname.startsWith(VIDEO_BLOB_PREFIX)) {
+          throw new Error("Chemin de dépôt refusé.");
+        }
+
         const session = await auth();
         if (!session?.user?.id) throw new Error("Connecte-toi pour publier un témoignage.");
 

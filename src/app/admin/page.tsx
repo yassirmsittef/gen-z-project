@@ -335,6 +335,7 @@ export default async function AdminCockpitPage() {
               Blob sans prévenir, notre garde refuse les dépôts avant — cette
               tuile dit combien de marge il reste. */}
           <Tile
+            id="stockage"
             Icon={Clapperboard}
             label="Stockage hébergé"
             value={
@@ -371,6 +372,7 @@ function Tile({
   children,
   tone,
   interactive = false,
+  id,
 }: {
   Icon: LucideIcon;
   label: string;
@@ -378,10 +380,13 @@ function Tile({
   children: React.ReactNode;
   tone?: "amber" | "red";
   interactive?: boolean;
+  /** Ancre visée par les notifications (scroll-mt : sous la barre collante). */
+  id?: string;
 }) {
   return (
     <div
-      className={`glass h-full rounded-2xl rounded-tr-sm p-4 ${
+      id={id}
+      className={`glass h-full scroll-mt-24 rounded-2xl rounded-tr-sm p-4 ${
         tone === "amber" ? "border-amber-400/25" : tone === "red" ? "border-destructive/30" : ""
       } ${interactive ? "transition duration-200 ease-out group-hover:-translate-y-1 group-hover:border-white/20" : ""}`}
     >

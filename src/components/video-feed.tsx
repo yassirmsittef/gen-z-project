@@ -46,6 +46,20 @@ export function VideoFeed({
 }) {
   const [videos, setVideos] = useState(initiales);
   const [curseur, setCurseur] = useState(curseurInitial);
+
+  // Le fil se resynchronise quand le serveur renvoie une liste différente.
+  // Sans ça, `revalidatePath("/direct")` re-rendait bien l'arbre serveur mais
+  // l'état local gardait l'ancienne liste : un témoignage qu'on venait de
+  // retirer restait affiché, légende comprise, jusqu'au rechargement complet
+  // de la page. On ne compare que les identifiants — comparer les objets
+  // rejouerait à chaque rendu.
+  const [signature, setSignature] = useState(() => initiales.map((v) => v.id).join());
+  const signatureServeur = initiales.map((v) => v.id).join();
+  if (signatureServeur !== signature) {
+    setSignature(signatureServeur);
+    setVideos(initiales);
+    setCurseur(curseurInitial);
+  }
   const [chargeEnCours, setChargeEnCours] = useState(false);
   const [actif, setActif] = useState(0);
   const [muet, setMuet] = useState(true);

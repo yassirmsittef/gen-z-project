@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isVideoBlob } from "@/lib/blob";
 import { PartnershipCompensation, ProjectCategory } from "@prisma/client";
 import { CURRENCY_CODES } from "@/lib/money";
 import {
@@ -364,11 +365,11 @@ export const callVideoSchema = z.object({
   url: z
     .string()
     .url()
-    .refine((u) => u.includes(".blob.vercel-storage.com/"), "Vidéo non hébergée par GeniGain."),
+    .refine(isVideoBlob, "Vidéo non hébergée par GeniGain."),
   posterUrl: z
     .string()
     .url()
-    .refine((u) => u.includes(".blob.vercel-storage.com/"), "Vignette non hébergée par GeniGain.")
+    .refine(isVideoBlob, "Vignette non hébergée par GeniGain.")
     .optional(),
   caption: z
     .string()

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { deleteOwnBlob, listOwnBlobs, statOwnBlob } from "@/lib/blob";
+import { deleteOwnBlob, isVideoBlob, listOwnBlobs, statOwnBlob } from "@/lib/blob";
 import {
+  AVATAR_BLOB_PREFIX,
   MAX_TOTAL_VIDEO_BYTES,
   MAX_VIDEO_BYTES,
   MAX_UPLOAD_TICKETS_PER_DAY,
@@ -10,7 +11,7 @@ import {
   VIDEO_STORAGE_WARN_RATIO,
   VIDEOS_PER_PAGE,
 } from "@/lib/constants";
-import { notify, notifyManyOnceUnread } from "@/lib/notifications";
+import { notify, notifyMany, notifyManyOnceUnread } from "@/lib/notifications";
 import { DomainError } from "@/lib/project-service";
 
 /**
@@ -99,15 +100,33 @@ export async function storageStatus() {
  */
 export async function claimUploadTicket(userId: string): Promise<void> {
   const depuis = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const délivrés = await prisma.uploadTicket.count({
-    where: { userId, createdAt: { gte: depuis } },
+
+  // Un VERROU par membre, tenu jusqu'à la fin de la transaction : les
+  // demandes du même compte passent une par une, celles des autres ne sont
+  // jamais gênées.
+  //
+  // Ni compter-puis-écrire ni écrire-puis-compter ne suffisent : en lecture
+  // validée (le défaut de PostgreSQL), deux transactions simultanées ne voient
+  // pas les écritures que l'autre n'a pas encore validées, et toutes se
+  // croient sous le plafond. Mesuré : 22 jetons délivrés pour un plafond de 20
+  // en lançant les demandes d'un coup. En serverless, ces requêtes tombent sur
+  // des instances différentes — la base est la seule mémoire partagée, donc
+  // c'est elle qui doit arbitrer.
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
+
+    const délivrés = await tx.uploadTicket.count({
+      where: { userId, createdAt: { gte: depuis } },
+    });
+    if (délivrés >= MAX_UPLOAD_TICKETS_PER_DAY) {
+      // L'exception annule la transaction : une tentative refusée ne laisse
+      // aucune trace et ne pénalise donc pas la fenêtre du lendemain.
+      throw new DomainError(
+        "Trop d'envois lancés aujourd'hui. Reviens demain, ou termine ceux qui sont en cours."
+      );
+    }
+    await tx.uploadTicket.create({ data: { userId } });
   });
-  if (délivrés >= MAX_UPLOAD_TICKETS_PER_DAY) {
-    throw new DomainError(
-      "Trop d'envois lancés aujourd'hui. Reviens demain, ou termine ceux qui sont en cours."
-    );
-  }
-  await prisma.uploadTicket.create({ data: { userId } });
 }
 
 /** Purge des jetons sortis de la fenêtre (cron quotidien). */
@@ -140,23 +159,24 @@ const Mo = (bytes: number) => Math.round(bytes / (1024 * 1024));
  * soit une vidéo maximale sous le plafond. Type non masquable, relayé par
  * email : c'est l'alerte de budget que le plan Hobby ne fournit pas.
  */
-async function alertAdminsOnStorageCrossing(beforeBytes: number, afterBytes: number) {
+export async function alertAdminsOnStorageCrossing(beforeBytes: number, afterBytes: number) {
   const cap = MAX_TOTAL_VIDEO_BYTES;
   const paliers = [
     {
       seuil: cap * VIDEO_STORAGE_WARN_RATIO,
-      title: `Stockage vidéo à ${Math.round(VIDEO_STORAGE_WARN_RATIO * 100)} % (${Mo(afterBytes)} Mo sur ${Mo(cap)} Mo)`,
-      body: "Le direct approche de son plafond. Faire le tri, ou relever le plafond côté hébergement avant qu'il ne refuse les dépôts.",
-      // Une ancre par palier : la déduplication porte sur (destinataire, type,
+      title: `Stockage hébergé à ${Math.round(VIDEO_STORAGE_WARN_RATIO * 100)} % (${Mo(afterBytes)} Mo sur ${Mo(cap)} Mo)`,
+      body: "Le magasin (témoignages du direct ET photos de profil) approche de son plafond. Le cockpit en donne la répartition. Faire le tri, ou relever le plafond côté hébergement avant qu'il ne refuse les dépôts.",
+      // Deux liens DISTINCTS : la déduplication porte sur (destinataire, type,
       // lien), donc un lien commun ferait taire l'alerte de saturation tant
-      // que celle des 80 % resterait non lue.
-      href: "/admin#stockage-alerte",
+      // que celle des 80 % resterait non lue. Ils visent la même tuile — dont
+      // l'ancre existe bel et bien — en se distinguant par le paramètre.
+      href: "/admin?palier=alerte#stockage",
     },
     {
       seuil: cap - MAX_VIDEO_BYTES,
-      title: `Stockage vidéo saturé (${Mo(afterBytes)} Mo sur ${Mo(cap)} Mo) — les dépôts sont refusés`,
+      title: `Stockage hébergé saturé (${Mo(afterBytes)} Mo sur ${Mo(cap)} Mo) — les dépôts sont refusés`,
       body: "Le prochain témoignage risquerait de dépasser le plafond : la délivrance de jetons d'upload est suspendue jusqu'à ce que de la place se libère.",
-      href: "/admin#stockage-plein",
+      href: "/admin?palier=plein#stockage",
     },
   ];
   const franchi = paliers.filter((p) => beforeBytes < p.seuil && afterBytes >= p.seuil).pop();
@@ -195,12 +215,13 @@ export async function detachVideoFiles(
 ): Promise<number> {
   const vidéos = await prisma.callVideo.findMany({
     where: { ...where, url: { not: null } },
-    select: { id: true, url: true, posterUrl: true },
+    select: { id: true, url: true, posterUrl: true, authorId: true },
   });
   if (vidéos.length === 0) return 0;
 
+  const ids = vidéos.map((v) => v.id);
   await prisma.callVideo.updateMany({
-    where: { id: { in: vidéos.map((v) => v.id) } },
+    where: { id: { in: ids } },
     data: {
       removedAt: new Date(),
       removedById: options.actorId,
@@ -209,6 +230,38 @@ export async function detachVideoFiles(
       posterUrl: null,
     },
   });
+
+  // Les signalements qui visaient ces témoignages n'ont plus d'objet : sans
+  // ça, la file de modération gardait des entrées mortes, pointant vers un
+  // contenu déjà détruit. `removeVideo` le fait déjà pour la voie ordinaire.
+  await prisma.report.updateMany({
+    where: { targetType: "CALL_VIDEO", targetId: { in: ids }, status: "OPEN" },
+    data: { status: "RESOLVED", handledAt: new Date(), handledBy: options.actorId },
+  });
+
+  // La copie de la légende voyage dans les notifications déjà posées : on la
+  // neutralise, comme au retrait ordinaire. Le contenu disparaît, la trace
+  // qu'il a existé reste.
+  await prisma.notification.updateMany({
+    where: { type: "CALL_VIDEO", sourceId: { in: ids } },
+    data: { body: "Ce témoignage a été retiré." },
+  });
+
+  // Chacun apprend que SON témoignage a disparu, et pourquoi. Un contenu qui
+  // s'efface sans un mot, c'est ce qui fait croire à la censure — la règle
+  // vaut pour le retrait en cascade comme pour la modération directe. Rien
+  // n'est envoyé à qui a lui-même déclenché la cascade.
+  await notifyMany(
+    vidéos
+      .filter((v) => v.authorId !== options.actorId)
+      .map((v) => ({
+        userId: v.authorId,
+        type: "CALL_VIDEO" as const,
+        title: "Ton témoignage filmé a été retiré",
+        body: options.reason,
+        href: "/direct",
+      }))
+  );
 
   // Les fichiers APRÈS commit : un échec réseau ne doit pas annuler le retrait.
   for (const v of vidéos) {
@@ -237,6 +290,15 @@ export async function postVideo(
     throw new DomainError(
       `${MAX_VIDEOS_PER_DAY} témoignages par jour maximum. Reviens demain — un fil se nourrit de voix différentes.`
     );
+  }
+
+  // Le DOSSIER, avant tout le reste. Les photos de profil partagent le magasin
+  // avec les témoignages : sans ce contrôle, l'URL de la photo de quelqu'un
+  // passait l'unicité (qui n'interroge que les témoignages) et la mesure (qui
+  // réussit, le fichier étant bien à nous), puis disparaissait de son profil
+  // au premier retrait.
+  if (!isVideoBlob(input.url) || (input.posterUrl && !isVideoBlob(input.posterUrl))) {
+    throw new DomainError("Ce fichier n'est pas un témoignage hébergé par GeniGain.");
   }
 
   // Un fichier ne se référence qu'UNE fois, et jamais en travers : on cherche
@@ -367,6 +429,25 @@ export async function removeVideo(
 }
 
 /**
+ * Qui peut retirer ce témoignage : son auteur, l'auteur de l'appel qui le
+ * porte, ou la modération — les mêmes titres que pour la discussion écrite,
+ * et exactement ceux que `removeVideo` fait respecter.
+ *
+ * Défini ICI et nulle part ailleurs : le calcul vivait en double, sur la page
+ * du fil et dans l'API de pagination, et les deux avaient déjà divergé —
+ * l'auteur d'un appel voyait le bouton sur le premier écran puis le perdait
+ * dès la page suivante du défilement.
+ */
+export function peutRetirerVideo(
+  video: { authorId: string; call: { authorId: string } },
+  userId: string | undefined,
+  admin: boolean
+): boolean {
+  if (!userId) return false;
+  return video.authorId === userId || video.call.authorId === userId || admin;
+}
+
+/**
  * Le fil, paginé au CURSEUR et non par page numérotée : on fait défiler sans
  * fin, et un curseur reste juste quand des témoignages s'ajoutent en tête
  * pendant qu'on lit (un `skip` numérique, lui, décale et fait réapparaître
@@ -402,6 +483,68 @@ export async function videoCountForCall(callId: string): Promise<number> {
 }
 
 /**
+ * À appeler après tout dépôt qui alourdit le magasin SANS passer par le fil —
+ * une photo de profil, par exemple. L'alerte de palier n'était déclenchée que
+ * par la publication d'un témoignage : depuis que les photos comptent dans la
+ * jauge, un franchissement dû à elles seules n'était jamais rapporté, et le
+ * test de franchissement étant à sens unique, il ne l'aurait plus jamais été.
+ */
+export async function reportStorageAfterUpload(avantBytes: number): Promise<void> {
+  await alertAdminsOnStorageCrossing(avantBytes, (await storageStatus()).usedBytes);
+}
+
+/**
+ * Rattrape les tailles manquantes.
+ *
+ * Les colonnes `storedBytes` et `avatarBytes` sont arrivées par migration, en
+ * NULL : tout ce qui avait été déposé AVANT pesait donc zéro pour la jauge, et
+ * pour toujours — une ligne n'est mesurée qu'à sa création, et une photo qu'à
+ * son remplacement. Le plafond protégeait un magasin dont il ignorait une
+ * partie du contenu.
+ *
+ * Mesuré auprès du stockage, borné par passage pour ne pas allonger le cron,
+ * et sans effet une fois le retard résorbé.
+ */
+export async function backfillStorageSizes(limite = 200): Promise<{ mesurés: number }> {
+  const [vidéos, avatars] = await Promise.all([
+    prisma.callVideo.findMany({
+      where: { url: { not: null }, storedBytes: null },
+      select: { id: true, url: true, posterUrl: true },
+      take: limite,
+    }),
+    prisma.user.findMany({
+      where: { avatarUrl: { not: null }, avatarBytes: null },
+      select: { id: true, avatarUrl: true },
+      take: limite,
+    }),
+  ]);
+
+  let mesurés = 0;
+
+  for (const v of vidéos) {
+    const [taille, poster] = await Promise.all([statOwnBlob(v.url), statOwnBlob(v.posterUrl)]);
+    // Mesure impossible : on laisse NULL plutôt que d'inscrire un zéro, qui
+    // se confondrait avec « pesé, et vide ». Le prochain passage réessaiera.
+    if (taille === null && poster === null) continue;
+    await prisma.callVideo.update({
+      where: { id: v.id },
+      data: { storedBytes: (taille ?? 0) + (poster ?? 0) },
+    });
+    mesurés += 1;
+  }
+
+  for (const u of avatars) {
+    const taille = await statOwnBlob(u.avatarUrl);
+    if (taille === null) continue;
+    await prisma.user.update({ where: { id: u.id }, data: { avatarBytes: taille } });
+    mesurés += 1;
+  }
+
+  if (mesurés > 0) console.info(`[rattrapage] ${mesurés} fichier(s) mesuré(s)`);
+  return { mesurés };
+}
+
+/**
  * Balaye les fichiers que plus aucune ligne ne réclame.
  *
  * Le dépôt se fait en deux temps : le navigateur envoie le fichier au
@@ -412,8 +555,8 @@ export async function videoCountForCall(callId: string): Promise<number> {
  * il se payait indéfiniment. C'était le trou le plus large du dispositif.
  *
  * Trois garde-fous, parce que ce code EFFACE :
- * 1. un seul dossier, celui des témoignages — les photos de profil vivent dans
- *    le même magasin et ne doivent jamais tomber sous ce râteau ;
+ * 1. seulement les dossiers que la base sait réclamer — les témoignages et les
+ *    photos de profil ; tout autre dossier du magasin est hors de portée ;
  * 2. un délai de grâce : un fichier récent est probablement une publication en
  *    cours, pas un déchet ;
  * 3. l'ensemble des URL réclamées est relu À CHAQUE passage, juste avant de
@@ -442,7 +585,16 @@ export async function sweepOrphanVideoBlobs(
   let octetsLibérés = 0;
   const supprimés: string[] = [];
 
-  for await (const blob of listOwnBlobs(VIDEO_BLOB_PREFIX)) {
+  // Les photos de profil sont l'autre producteur du magasin : une photo
+  // remplacée ou effacée dont la suppression a échoué n'était réclamée par
+  // personne et n'était balayée par rien.
+  const avatars = await prisma.user.findMany({
+    where: { avatarUrl: { not: null } },
+    select: { avatarUrl: true },
+  });
+  for (const a of avatars) if (a.avatarUrl) réclamées.add(a.avatarUrl);
+
+  for await (const blob of listOwnBlobs(VIDEO_BLOB_PREFIX, AVATAR_BLOB_PREFIX)) {
     examinés += 1;
     if (réclamées.has(blob.url)) continue;
     // Trop jeune : sans doute une publication en cours de route.

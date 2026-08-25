@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { reportStorageAfterUpload, storageStatus } from "@/lib/call-videos";
 import { redirect } from "next/navigation";
 import { del, put } from "@vercel/blob";
 import { auth } from "@/auth";
@@ -134,6 +135,10 @@ export async function updateProfileAction(
     where: { id: session.user.id },
     select: { avatarUrl: true, avatarBytes: true },
   });
+  // Relevé AVANT le dépôt : les photos comptent dans la jauge, donc elles
+  // peuvent franchir un palier — et le franchissement ne se constate qu'en
+  // comparant l'avant et l'après.
+  const jaugeAvant = (await storageStatus()).usedBytes;
 
   // Photo : nouveau fichier > suppression demandée > inchangée.
   let avatarUrl = current.avatarUrl;
@@ -177,6 +182,12 @@ export async function updateProfileAction(
       links: parsed.data.links,
     },
   });
+
+  // Si cette photo a fait franchir un palier de stockage, l'équipe l'apprend
+  // maintenant — sans ça, seule la publication d'un témoignage pouvait le
+  // signaler, et le test de franchissement étant à sens unique, une alerte
+  // manquée ne repartait jamais.
+  await reportStorageAfterUpload(jaugeAvant);
 
   // L'ancienne photo hébergée chez nous ne sert plus : suppression best effort.
   if (isOwnBlob(current.avatarUrl) && current.avatarUrl !== avatarUrl) {

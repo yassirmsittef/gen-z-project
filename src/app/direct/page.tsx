@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { VideoFeed, type VideoDuFilRendu } from "@/components/video-feed";
 import { Button } from "@/components/ui/button";
-import { getVideo, listVideos } from "@/lib/call-videos";
+import { getVideo, listVideos, peutRetirerVideo } from "@/lib/call-videos";
 import { isAdmin } from "@/lib/moderation";
 
 export const metadata: Metadata = {
@@ -49,12 +49,7 @@ export default async function DirectPage({
       category: video.call.category,
       voix: video.call._count.supports,
     },
-    // Mêmes titres que pour la discussion écrite : son auteur, l'auteur de
-    // l'appel, la modération. L'auteur de l'appel manquait ici alors que
-    // `removeVideo` l'autorise : la règle existait, aucun bouton ne l'offrait.
-    peutRetirer:
-      Boolean(userId) &&
-      (video.authorId === userId || video.call.authorId === userId || admin),
+    peutRetirer: peutRetirerVideo(video, userId, admin),
   }));
 
   return (
