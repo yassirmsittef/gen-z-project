@@ -11,6 +11,7 @@ import {
   VIDEO_STORAGE_WARN_RATIO,
   VIDEOS_PER_PAGE,
 } from "@/lib/constants";
+import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { notify, notifyMany, notifyManyOnceUnread } from "@/lib/notifications";
 import { DomainError } from "@/lib/project-service";
 
@@ -197,6 +198,12 @@ export async function alertAdminsOnStorageCrossing(beforeBytes: number, afterByt
       href: franchi.href,
     }))
   );
+
+  // L'email part D'ICI, où l'on sait qu'une alerte vient de naître. Il partait
+  // auparavant de chaque publication de témoignage : toute la file d'attente
+  // était drainée en série, dans la requête du membre, pour un événement qui
+  // ne survient au plus que deux fois dans la vie du plafond.
+  await sendPendingNotificationEmails();
 }
 
 /**

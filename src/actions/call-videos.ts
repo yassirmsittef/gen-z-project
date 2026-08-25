@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { postVideo, removeVideo } from "@/lib/call-videos";
 import { isAdmin } from "@/lib/moderation";
-import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { DomainError } from "@/lib/project-service";
 import { callVideoSchema } from "@/lib/validation";
 
@@ -40,10 +39,6 @@ export async function postVideoAction(
     if (error instanceof DomainError) return { error: error.message };
     throw error;
   }
-
-  // Si ce dépôt a fait franchir un palier de stockage, l'alerte admin part
-  // par email tout de suite plutôt qu'au prochain cron quotidien.
-  await sendPendingNotificationEmails();
 
   revalidatePath("/direct");
   revalidatePath("/appels", "layout");

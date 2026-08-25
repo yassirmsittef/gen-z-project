@@ -173,10 +173,13 @@ describe("l'empreinte d'un dépôt", () => {
     const pillard = await mkUser();
     const call = await mkCall(victime.id);
     const url = `${BLOB}/temoignages/${RUN}-convoitee.mp4`;
+    const vignette = `${BLOB}/temoignages/posters/${RUN}-convoitee.webp`;
     TAILLES.set(url, 8 * Mo);
+    TAILLES.set(vignette, 1 * Mo);
     await postVideo(victime.id, {
       callId: call.id,
       url,
+      posterUrl: vignette,
       caption: "Le témoignage que quelqu'un voudra faire disparaître.",
       durationMs: 20_000,
     });
@@ -206,8 +209,25 @@ describe("l'empreinte d'un dépôt", () => {
       })
     ).rejects.toBeInstanceOf(DomainError);
 
+    // La SECONDE branche du croisement : reprendre comme VIDÉO une URL qui
+    // sert de vignette ailleurs. Sans elle, seule la colonne `url` était
+    // réellement exercée et la moitié du contrôle ne prouvait rien.
+    const posterVictime = (await prisma.callVideo.findFirst({
+      where: { authorId: victime.id },
+      select: { posterUrl: true },
+    }))!.posterUrl;
+    expect(posterVictime).toBe(vignette); // sans quoi le cas suivant serait creux
+    await expect(
+      postVideo(pillard.id, {
+        callId: call.id,
+        url: posterVictime!,
+        caption: "Je reprends comme vidéo ce qui sert de vignette à un autre.",
+        durationMs: 20_000,
+      })
+    ).rejects.toBeInstanceOf(DomainError);
+
     // La vidéo de la victime est intacte, et rien n'a été supprimé.
-    expect((await storageStatus()).usedBytes).toBe(8 * Mo);
+    expect((await storageStatus()).usedBytes).toBe(9 * Mo);
     expect(SUPPRIMES).toHaveLength(0);
   });
 
@@ -281,7 +301,14 @@ describe("l'alerte aux admins", () => {
     expect(alertes[0].href).toBe("/admin?palier=alerte#stockage");
     expect(await alertesDe(membre.id)).toHaveLength(0);
 
-    // Au-dessus du seuil sans franchissement : pas une de plus.
+    // Au-dessus du seuil sans franchissement : pas une de plus. On MARQUE LUE
+    // l'alerte existante d'abord — sinon la déduplication des non-lues suffit
+    // à faire passer l'assertion, et le test ne prouve plus rien de la
+    // condition de franchissement elle-même.
+    await prisma.notification.updateMany({
+      where: { userId: admin.id, type: "STORAGE_ALERT" },
+      data: { readAt: new Date() },
+    });
     await mkVideo(membre.id, call.id, { video: 1 * Mo });
     expect(await alertesDe(admin.id)).toHaveLength(1);
   });

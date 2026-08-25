@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { assertVideoStorageAvailable } from "@/lib/call-videos";
-import { MAX_UPLOAD_TICKETS_PER_DAY, MAX_VIDEOS_PER_DAY } from "@/lib/constants";
+import {
+  JETONS_PAR_PUBLICATION,
+  MAX_UPLOAD_TICKETS_PER_DAY,
+  MAX_VIDEOS_PER_DAY,
+} from "@/lib/constants";
 import { DomainError } from "@/lib/project-service";
 
 /**
@@ -50,7 +54,11 @@ export async function GET(): Promise<NextResponse> {
       createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
     },
   });
-  if (jetons >= MAX_UPLOAD_TICKETS_PER_DAY) {
+  // DEUX places, pas une : une publication téléverse la vidéo puis la
+  // vignette, donc consomme deux jetons. Sur un compteur impair, la vidéo
+  // passait et la vignette était refusée — l'envoi échouait après coup, en
+  // laissant un fichier de 30 Mo que personne ne réclamerait.
+  if (jetons + JETONS_PAR_PUBLICATION > MAX_UPLOAD_TICKETS_PER_DAY) {
     return NextResponse.json({
       ok: false,
       raison: "Trop d'envois lancés aujourd'hui. Reviens demain, ou termine ceux qui sont en cours.",

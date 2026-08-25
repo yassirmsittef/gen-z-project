@@ -306,6 +306,12 @@ export const VIDEO_CONTENT_TYPES = ["video/mp4", "video/webm"] as const;
 export const MAX_VIDEOS_PER_DAY = 5;
 
 /**
+ * Jetons consommés par UNE publication : la vidéo, puis la vignette. Les deux
+ * passent par la même route, donc chacune prend son jeton.
+ */
+export const JETONS_PAR_PUBLICATION = 2;
+
+/**
  * Jetons d'upload délivrés à un membre par tranche de 24 h.
  *
  * Le quota ci-dessus compte les témoignages PUBLIÉS. Quelqu'un qui obtient un
@@ -313,8 +319,9 @@ export const MAX_VIDEOS_PER_DAY = 5;
  * sans fin : chaque jeton engage jusqu'à 30 Mo de stockage, payés dès le
  * dépôt. C'est la délivrance qu'il faut compter, pas ce qui en ressort.
  *
- * Quatre fois le quota de publication : de quoi rater son envoi, changer
- * d'avis, recommencer une vignette — sans ouvrir la porte à un remplissage.
+ * Quatre fois le quota de publication, soit DEUX fois ce qu'il faut vraiment
+ * (5 publications × 2 jetons = 10) : la marge sert à rater son envoi, changer
+ * d'avis, recommencer — sans ouvrir la porte à un remplissage.
  */
 export const MAX_UPLOAD_TICKETS_PER_DAY = MAX_VIDEOS_PER_DAY * 4;
 
