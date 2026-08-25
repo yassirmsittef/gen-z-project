@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sweepOrphanVideoBlobs } from "@/lib/call-videos";
+import { purgeStaleUploadTickets, sweepOrphanVideoBlobs } from "@/lib/call-videos";
 import { purgeStaleLoginAttempts } from "@/lib/login-rate-limit";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { executeDuePayouts, executeDueRefunds } from "@/lib/payouts";
@@ -40,6 +40,7 @@ export async function GET(request: Request) {
   await purgeStaleLoginAttempts();
   // Fichiers déposés sur le stockage dont la publication n'est jamais venue :
   // invisibles de la jauge (qui somme des lignes), ils se payaient sans fin.
+  await purgeStaleUploadTickets();
   const balayage = await sweepOrphanVideoBlobs();
   return NextResponse.json({
     ok: true,

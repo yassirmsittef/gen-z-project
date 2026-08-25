@@ -3,6 +3,7 @@ import { deleteOwnBlob, listOwnBlobs, statOwnBlob } from "@/lib/blob";
 import {
   MAX_TOTAL_VIDEO_BYTES,
   MAX_VIDEO_BYTES,
+  MAX_UPLOAD_TICKETS_PER_DAY,
   MAX_VIDEOS_PER_DAY,
   ORPHAN_BLOB_GRACE_MS,
   VIDEO_BLOB_PREFIX,
@@ -47,24 +48,73 @@ const APPEL = {
 } as const;
 
 /**
- * Où en est le stockage vidéo face au plafond global. La somme ne compte que
- * les fichiers VIVANTS (url non nulle) : un témoignage retiré garde sa ligne
- * mais son fichier est supprimé — il ne coûte plus rien. `full` anticipe le
- * pire cas du prochain dépôt (une vidéo au poids maximal) : le plafond est
- * un mur qu'on ne veut jamais toucher, pas une ligne qu'on constate après
- * l'avoir franchie.
+ * Où en est LE MAGASIN face au plafond global — pas seulement les vidéos.
+ *
+ * Les photos de profil habitent le même magasin. Ne compter que les
+ * témoignages laissait le plafond déborder par l'autre bout : 800 Mo de vidéos
+ * plus cent trente photos suffisaient à crever le gigaoctet du plan, et le
+ * garde n'y voyait rien puisqu'il ne regardait qu'une moitié de l'occupation.
+ *
+ * Ne comptent que les fichiers VIVANTS (url non nulle) : un témoignage retiré
+ * garde sa ligne mais son fichier est supprimé — il ne coûte plus rien.
+ * `full` anticipe le pire cas du prochain dépôt (une vidéo au poids maximal) :
+ * le plafond est un mur qu'on ne veut jamais toucher, pas une ligne qu'on
+ * constate après l'avoir franchie.
  */
-export async function videoStorageStatus() {
-  const agg = await prisma.callVideo.aggregate({
-    _sum: { storedBytes: true },
-    where: { url: { not: null } },
-  });
-  const usedBytes = agg._sum.storedBytes ?? 0;
+export async function storageStatus() {
+  const [vidéos, avatars] = await Promise.all([
+    prisma.callVideo.aggregate({
+      _sum: { storedBytes: true },
+      where: { url: { not: null } },
+    }),
+    prisma.user.aggregate({
+      _sum: { avatarBytes: true },
+      where: { avatarUrl: { not: null } },
+    }),
+  ]);
+  const videoBytes = vidéos._sum.storedBytes ?? 0;
+  const avatarBytes = avatars._sum.avatarBytes ?? 0;
+  const usedBytes = videoBytes + avatarBytes;
   return {
     usedBytes,
+    videoBytes,
+    avatarBytes,
     capBytes: MAX_TOTAL_VIDEO_BYTES,
     full: usedBytes + MAX_VIDEO_BYTES > MAX_TOTAL_VIDEO_BYTES,
   };
+}
+
+/**
+ * Enregistre la délivrance d'un jeton d'upload et refuse au-delà de la
+ * cadence autorisée.
+ *
+ * Sans ce compteur, la seule limite par membre portait sur les témoignages
+ * PUBLIÉS : obtenir des jetons sans jamais publier laissait le quota intact
+ * et permettait de remplir le magasin autant de fois que voulu — chaque jeton
+ * valant jusqu'à 30 Mo, payés dès le dépôt. Le balayage des orphelins récupère
+ * ces octets, mais seulement au passage suivant : d'ici là, ils se facturent.
+ *
+ * La ligne est écrite AVANT que le jeton parte : en cas de doute, on compte
+ * un dépôt qui n'a pas eu lieu plutôt que d'en oublier un qui a eu lieu.
+ */
+export async function claimUploadTicket(userId: string): Promise<void> {
+  const depuis = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const délivrés = await prisma.uploadTicket.count({
+    where: { userId, createdAt: { gte: depuis } },
+  });
+  if (délivrés >= MAX_UPLOAD_TICKETS_PER_DAY) {
+    throw new DomainError(
+      "Trop d'envois lancés aujourd'hui. Reviens demain, ou termine ceux qui sont en cours."
+    );
+  }
+  await prisma.uploadTicket.create({ data: { userId } });
+}
+
+/** Purge des jetons sortis de la fenêtre (cron quotidien). */
+export async function purgeStaleUploadTickets(): Promise<void> {
+  await prisma.uploadTicket.deleteMany({
+    where: { createdAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+  });
 }
 
 /**
@@ -74,7 +124,7 @@ export async function videoStorageStatus() {
  * orphelin déjà facturé, hors de toute jauge).
  */
 export async function assertVideoStorageAvailable(): Promise<void> {
-  const { full } = await videoStorageStatus();
+  const { full } = await storageStatus();
   if (full) {
     throw new DomainError("Le direct est plein pour le moment — reviens un peu plus tard.");
   }
@@ -215,7 +265,7 @@ export async function postVideo(
     throw new DomainError("Ce fichier n'est pas hébergé par GeniGain. Renvoie ta vidéo.");
   }
   const storedBytes = tailleVideo + (taillePoster ?? 0);
-  const jaugeAvant = (await videoStorageStatus()).usedBytes;
+  const jaugeAvant = (await storageStatus()).usedBytes;
 
   const video = await prisma.callVideo.create({
     data: {
@@ -237,7 +287,7 @@ export async function postVideo(
   // deux dépôts simultanés encadrant un palier le franchissent sans qu'aucun
   // ne le voie — et comme le test de franchissement est à sens unique, plus
   // aucune alerte ne partirait jamais.
-  await alertAdminsOnStorageCrossing(jaugeAvant, (await videoStorageStatus()).usedBytes);
+  await alertAdminsOnStorageCrossing(jaugeAvant, (await storageStatus()).usedBytes);
 
   if (call.authorId !== userId) {
     const auteur = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });

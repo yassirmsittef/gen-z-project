@@ -7,12 +7,14 @@ import {
   assertVideoStorageAvailable,
   getVideo,
   postVideo,
+  claimUploadTicket,
   removeVideo,
   sweepOrphanVideoBlobs,
-  videoStorageStatus,
+  storageStatus,
 } from "../src/lib/call-videos";
 import {
   MAX_TOTAL_VIDEO_BYTES,
+  MAX_UPLOAD_TICKETS_PER_DAY,
   MAX_VIDEO_BYTES,
   ORPHAN_BLOB_GRACE_MS,
   VIDEO_STORAGE_WARN_RATIO,
@@ -152,7 +154,7 @@ describe("l'empreinte d'un dépôt", () => {
 
     const ligne = await prisma.callVideo.findUnique({ where: { id } });
     expect(ligne!.storedBytes).toBe(11 * Mo);
-    expect((await videoStorageStatus()).usedBytes).toBe(11 * Mo);
+    expect((await storageStatus()).usedBytes).toBe(11 * Mo);
   });
 
   it("refuse un fichier que le stockage ne reconnaît pas — la mesure vaut preuve d'appartenance", async () => {
@@ -205,7 +207,7 @@ describe("l'empreinte d'un dépôt", () => {
     ).rejects.toBeInstanceOf(DomainError);
 
     // La vidéo de la victime est intacte, et rien n'a été supprimé.
-    expect((await videoStorageStatus()).usedBytes).toBe(8 * Mo);
+    expect((await storageStatus()).usedBytes).toBe(8 * Mo);
     expect(SUPPRIMES).toHaveLength(0);
   });
 
@@ -214,14 +216,14 @@ describe("l'empreinte d'un dépôt", () => {
     const call = await mkCall(membre.id);
     const garde = await mkVideo(membre.id, call.id, { video: 10 * Mo });
     const retiré = await mkVideo(membre.id, call.id, { video: 7 * Mo });
-    expect((await videoStorageStatus()).usedBytes).toBe(17 * Mo);
+    expect((await storageStatus()).usedBytes).toBe(17 * Mo);
 
     const urlRetirée = (await prisma.callVideo.findUnique({ where: { id: retiré } }))!.url!;
     await removeVideo(membre.id, retiré, { isAdmin: false });
 
     // La ligne retirée garde sa trace mais son fichier n'existe plus : seule
     // la vidéo vivante coûte encore.
-    expect((await videoStorageStatus()).usedBytes).toBe(10 * Mo);
+    expect((await storageStatus()).usedBytes).toBe(10 * Mo);
     // Le FICHIER a réellement été supprimé du stockage — sans quoi la baisse
     // de la jauge serait un mensonge comptable : les octets resteraient
     // facturés, simplement invisibles.
@@ -325,13 +327,13 @@ describe("les fichiers suivent le contenu qui disparaît", () => {
     const call = await mkCall(auteur.id);
     const id = await mkVideo(filmeur.id, call.id, { video: 12 * Mo, poster: 1 * Mo });
     const avant = await prisma.callVideo.findUnique({ where: { id } });
-    expect((await videoStorageStatus()).usedBytes).toBe(13 * Mo);
+    expect((await storageStatus()).usedBytes).toBe(13 * Mo);
 
     await removeCall(auteur.id, call.id, { isAdmin: false });
 
     expect(SUPPRIMES).toContain(avant!.url!);
     expect(SUPPRIMES).toContain(avant!.posterUrl!);
-    expect((await videoStorageStatus()).usedBytes).toBe(0);
+    expect((await storageStatus()).usedBytes).toBe(0);
     const après = await prisma.callVideo.findUnique({ where: { id } });
     expect(après!.url).toBeNull(); // plus rien ne pointe vers le fichier
     expect(après).not.toBeNull(); // mais la trace reste auditable
@@ -355,7 +357,7 @@ describe("les fichiers suivent le contenu qui disparaît", () => {
     // Le témoignage de quelqu'un d'autre n'est pas emporté au passage.
     expect(SUPPRIMES).not.toContain(urlAutre);
     expect(await getVideo(autre)).not.toBeNull();
-    expect((await videoStorageStatus()).usedBytes).toBe(4 * Mo);
+    expect((await storageStatus()).usedBytes).toBe(4 * Mo);
   });
 });
 
@@ -437,5 +439,73 @@ describe("le balayage des fichiers que plus rien ne réclame", () => {
     expect(bilan.octetsLibérés).toBe(4 * Mo);
     expect(SUPPRIMES).toHaveLength(0);
     expect(MAGASIN.has(orphelin)).toBe(true);
+  });
+});
+
+describe("la jauge couvre le magasin entier", () => {
+  it("compte les photos de profil, pas seulement les vidéos", async () => {
+    const membre = await mkUser();
+    const call = await mkCall(membre.id);
+    await mkVideo(membre.id, call.id, { video: 20 * Mo });
+    expect((await storageStatus()).usedBytes).toBe(20 * Mo);
+
+    // Une photo de profil vit dans le MÊME magasin : l'ignorer laissait le
+    // plafond déborder par l'autre bout.
+    await prisma.user.update({
+      where: { id: membre.id },
+      data: { avatarUrl: `${BLOB}/avatars/${RUN}.webp`, avatarBytes: Math.round(1.5 * Mo) },
+    });
+
+    const état = await storageStatus();
+    expect(état.videoBytes).toBe(20 * Mo);
+    expect(état.avatarBytes).toBe(Math.round(1.5 * Mo));
+    expect(état.usedBytes).toBe(20 * Mo + Math.round(1.5 * Mo));
+  });
+
+  it("les photos comptent aussi pour SATURER le magasin", async () => {
+    const membre = await mkUser();
+    // Aucune vidéo : c'est le poids des photos, seul, qui doit fermer la porte.
+    await prisma.user.update({
+      where: { id: membre.id },
+      data: {
+        avatarUrl: `${BLOB}/avatars/${RUN}-gros.webp`,
+        avatarBytes: MAX_TOTAL_VIDEO_BYTES - MAX_VIDEO_BYTES + 1,
+      },
+    });
+
+    await expect(assertVideoStorageAvailable()).rejects.toBeInstanceOf(DomainError);
+  });
+});
+
+describe("la cadence des jetons d'upload", () => {
+  it("coupe au-delà du plafond quotidien, même sans jamais publier", async () => {
+    const membre = await mkUser();
+
+    // Personne ne publie ici : le quota de PUBLICATION reste donc intact.
+    // C'était la faille — obtenir des jetons sans fin, 30 Mo engagés chacun.
+    for (let i = 0; i < MAX_UPLOAD_TICKETS_PER_DAY; i += 1) {
+      await claimUploadTicket(membre.id);
+    }
+    await expect(claimUploadTicket(membre.id)).rejects.toBeInstanceOf(DomainError);
+
+    expect(await prisma.callVideo.count({ where: { authorId: membre.id } })).toBe(0);
+  });
+
+  it("ne compte que les jetons du membre, et seulement ceux du jour", async () => {
+    const membre = await mkUser();
+    const voisin = await mkUser();
+    for (let i = 0; i < MAX_UPLOAD_TICKETS_PER_DAY; i += 1) await claimUploadTicket(voisin.id);
+
+    // Le voisin a épuisé les siens : cela ne doit rien coûter à ce membre.
+    await expect(claimUploadTicket(membre.id)).resolves.toBeUndefined();
+
+    // Et des jetons d'hier ne pèsent plus sur aujourd'hui.
+    await prisma.uploadTicket.updateMany({
+      where: { userId: membre.id },
+      data: { createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000) },
+    });
+    for (let i = 0; i < MAX_UPLOAD_TICKETS_PER_DAY; i += 1) {
+      await expect(claimUploadTicket(membre.id)).resolves.toBeUndefined();
+    }
   });
 });

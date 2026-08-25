@@ -132,11 +132,12 @@ export async function updateProfileAction(
 
   const current = await prisma.user.findUniqueOrThrow({
     where: { id: session.user.id },
-    select: { avatarUrl: true },
+    select: { avatarUrl: true, avatarBytes: true },
   });
 
   // Photo : nouveau fichier > suppression demandée > inchangée.
   let avatarUrl = current.avatarUrl;
+  let avatarBytes: number | null = current.avatarBytes;
   const file = formData.get("avatarFile");
   const removeAvatar = formData.get("removeAvatar") === "1";
 
@@ -156,8 +157,13 @@ export async function updateProfileAction(
       contentType: file.type,
     });
     avatarUrl = blob.url;
+    // Les photos partagent le magasin avec les témoignages : sans cette
+    // mesure, la jauge de stockage ne verrait qu'un des deux producteurs et
+    // le plafond laisserait le magasin déborder par l'autre bout.
+    avatarBytes = file.size;
   } else if (removeAvatar) {
     avatarUrl = null;
+    avatarBytes = null;
   }
 
   await prisma.user.update({
@@ -165,6 +171,7 @@ export async function updateProfileAction(
     data: {
       name: parsed.data.name,
       avatarUrl,
+      avatarBytes,
       bio: parsed.data.bio || null,
       preferredCurrency: parsed.data.preferredCurrency,
       links: parsed.data.links,

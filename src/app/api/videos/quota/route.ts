@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { assertVideoStorageAvailable } from "@/lib/call-videos";
-import { MAX_VIDEOS_PER_DAY } from "@/lib/constants";
+import { MAX_UPLOAD_TICKETS_PER_DAY, MAX_VIDEOS_PER_DAY } from "@/lib/constants";
 import { DomainError } from "@/lib/project-service";
 
 /**
@@ -41,6 +41,19 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({
       ok: false,
       raison: `${MAX_VIDEOS_PER_DAY} témoignages par jour maximum. Reviens demain — un fil se nourrit de voix différentes.`,
+    });
+  }
+
+  const jetons = await prisma.uploadTicket.count({
+    where: {
+      userId: session.user.id,
+      createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+    },
+  });
+  if (jetons >= MAX_UPLOAD_TICKETS_PER_DAY) {
+    return NextResponse.json({
+      ok: false,
+      raison: "Trop d'envois lancés aujourd'hui. Reviens demain, ou termine ceux qui sont en cours.",
     });
   }
 

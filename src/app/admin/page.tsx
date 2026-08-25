@@ -16,7 +16,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { auth } from "@/auth";
 import { liveAnswer } from "@/lib/boycott";
-import { videoStorageStatus } from "@/lib/call-videos";
+import { storageStatus } from "@/lib/call-videos";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/moderation";
 import { STATUS_LABELS, VIDEO_STORAGE_WARN_RATIO } from "@/lib/constants";
@@ -106,7 +106,7 @@ export default async function AdminCockpitPage() {
     // par un projet échoué gonfle le « taux de transformation », qui ne peut
     // alors que monter — et contredit le tri « Sans remplaçant » du fil.
     prisma.boycottCall.count({ where: { removedAt: null, answers: { some: liveAnswer } } }),
-    videoStorageStatus(),
+    storageStatus(),
   ]);
 
   // ----- Collecte par jour (30 j) en équivalent USD — seule échelle commune.
@@ -336,7 +336,7 @@ export default async function AdminCockpitPage() {
               tuile dit combien de marge il reste. */}
           <Tile
             Icon={Clapperboard}
-            label="Stockage du direct"
+            label="Stockage hébergé"
             value={
               storage.full
                 ? "saturé"
@@ -356,7 +356,7 @@ export default async function AdminCockpitPage() {
           >
             {storage.usedBytes === 0
               ? `aucun fichier hébergé · plafond ${Math.round(storage.capBytes / (1024 * 1024))} Mo`
-              : `${Math.round(storage.usedBytes / (1024 * 1024))} Mo sur ${Math.round(storage.capBytes / (1024 * 1024))} Mo${storage.full ? " — dépôts refusés" : ""}`}
+              : `${Math.round(storage.usedBytes / (1024 * 1024))} Mo sur ${Math.round(storage.capBytes / (1024 * 1024))} Mo · ${Math.round(storage.videoBytes / (1024 * 1024))} de vidéo, ${Math.round(storage.avatarBytes / (1024 * 1024))} de photos${storage.full ? " — dépôts refusés" : ""}`}
           </Tile>
         </section>
       </div>

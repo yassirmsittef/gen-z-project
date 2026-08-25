@@ -306,6 +306,19 @@ export const VIDEO_CONTENT_TYPES = ["video/mp4", "video/webm"] as const;
 export const MAX_VIDEOS_PER_DAY = 5;
 
 /**
+ * Jetons d'upload délivrés à un membre par tranche de 24 h.
+ *
+ * Le quota ci-dessus compte les témoignages PUBLIÉS. Quelqu'un qui obtient un
+ * jeton sans jamais publier gardait donc un quota intact et pouvait déposer
+ * sans fin : chaque jeton engage jusqu'à 30 Mo de stockage, payés dès le
+ * dépôt. C'est la délivrance qu'il faut compter, pas ce qui en ressort.
+ *
+ * Quatre fois le quota de publication : de quoi rater son envoi, changer
+ * d'avis, recommencer une vignette — sans ouvrir la porte à un remplissage.
+ */
+export const MAX_UPLOAD_TICKETS_PER_DAY = MAX_VIDEOS_PER_DAY * 4;
+
+/**
  * Plafond GLOBAL du stockage vidéo — la limite que les plafonds par membre ne
  * donnent pas : mille membres sages remplissent le disque aussi sûrement
  * qu'un seul qui triche. Le plan Vercel Hobby inclut 1 Go de Blob puis coupe

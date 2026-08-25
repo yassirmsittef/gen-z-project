@@ -21,6 +21,11 @@ model User {
   id               String    @id @default(cuid())
   email            String    @unique
   role             Role      @default(MEMBER)
+  /// Octets occupés par la photo de profil sur le stockage, mesurés à l'envoi.
+  /// Les photos vivent dans le MÊME magasin que les témoignages : sans ce
+  /// champ, la jauge ne voyait qu'un des deux producteurs et le plafond
+  /// laissait le magasin déborder par l'autre bout.
+  avatarBytes      Int?
   name             String?
   avatarUrl        String?
   bio              String? // courte présentation affichée sur le profil public
@@ -72,6 +77,7 @@ model User {
   boycottSupports  BoycottSupport[]
   callComments     CallComment[]
   callVideos       CallVideo[]
+  uploadTickets    UploadTicket[]
 }
 
 model Account {
@@ -770,4 +776,21 @@ model ReputationEvent {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+/// Un jeton d'upload délivré à un membre. On garde la trace parce que le
+/// quota quotidien compte les TÉMOIGNAGES PUBLIÉS : quelqu'un qui obtient des
+/// jetons sans jamais publier gardait un quota intact et pouvait déposer sans
+/// fin. Chaque jeton engage 30 Mo de stockage — c'est donc lui qu'il faut
+/// compter, pas seulement ce qui en est ressorti.
+/// Purgé par le cron quotidien.
+model UploadTicket {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
 }
