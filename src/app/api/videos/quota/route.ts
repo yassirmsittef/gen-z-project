@@ -26,6 +26,13 @@ import { DomainError } from "@/lib/project-service";
  * Ce n'est PAS le garde : les vraies limites restent posées sur le jeton
  * d'upload, côté serveur, où un client trafiqué ne peut pas les desserrer.
  * Ici on ne fait qu'annoncer la couleur.
+ *
+ * Pas de limite de cadence propre, et c'est délibéré : la route exige une
+ * session, n'écrit rien, ne coûte pas plus que n'importe quelle page, et ne
+ * dit au membre que ce qu'il apprendrait de toute façon en tentant un dépôt —
+ * son propre quota, et si le direct est plein. Lui adjoindre un compteur
+ * reviendrait à ÉCRIRE en base à chaque appel pour protéger des lectures :
+ * le remède coûterait plus que le mal.
  */
 export const runtime = "nodejs";
 

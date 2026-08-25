@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { deleteOwnBlob, isVideoBlob, listOwnBlobs, statOwnBlob } from "@/lib/blob";
 import {
   AVATAR_BLOB_PREFIX,
+  JETONS_PAR_PUBLICATION,
   MAX_TOTAL_VIDEO_BYTES,
   MAX_VIDEO_BYTES,
   MAX_UPLOAD_TICKETS_PER_DAY,
@@ -101,10 +102,24 @@ export async function storageStatus() {
  */
 export async function claimUploadTicket(userId: string): Promise<void> {
   const depuis = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  // Lue HORS transaction : la garder dedans allongeait la section critique de
+  // deux agrégats, et sous rafale le pool de connexions expirait avant que
+  // quiconque obtienne son jeton. Le plafond global est de toute façon un
+  // ordre de grandeur, pas une comptabilité.
+  const { usedBytes, capBytes } = await storageStatus();
 
-  // Un VERROU par membre, tenu jusqu'à la fin de la transaction : les
-  // demandes du même compte passent une par une, celles des autres ne sont
-  // jamais gênées.
+  // Un VERROU PAR MEMBRE, tenu jusqu'à la fin de la transaction : les demandes
+  // d'un même compte passent une par une, celles des autres ne sont jamais
+  // gênées.
+  //
+  // Un verrou UNIQUE pour tout le monde a été essayé, pour rendre le plafond
+  // global exact lui aussi : il sature le pool de connexions dès qu'une
+  // poignée de demandes arrivent ensemble — mesuré, trente tentatives
+  // simultanées échouaient TOUTES par expiration. La précision est donc mise
+  // là où elle protège un membre honnête (son quota, exact), et le plafond
+  // global se contente d'être approché : il ne sert qu'à arrêter un abus, et
+  // la marge sous le plan absorbe la poignée de jetons qu'une rafale pourrait
+  // lui voler.
   //
   // Ni compter-puis-écrire ni écrire-puis-compter ne suffisent : en lecture
   // validée (le défaut de PostgreSQL), deux transactions simultanées ne voient
@@ -126,7 +141,47 @@ export async function claimUploadTicket(userId: string): Promise<void> {
         "Trop d'envois lancés aujourd'hui. Reviens demain, ou termine ceux qui sont en cours."
       );
     }
+
+    // Le plafond GLOBAL — celui que la limite par membre ne donne pas. Sans
+    // lui, trois comptes suffisaient à engager 1,8 Go : chacun restait dans
+    // ses droits, et la somme crevait le plan. On ne compte que les jetons
+    // ENCORE EN VOL : ceux qui ont abouti à une ligne pèsent déjà dans la
+    // jauge, et les compter deux fois aurait bloqué les dépôts après quelques
+    // publications parfaitement normales.
+    const enVol = await tx.uploadTicket.count({
+      where: { consumedAt: null, createdAt: { gte: new Date(Date.now() - ORPHAN_BLOB_GRACE_MS) } },
+    });
+    if (usedBytes + (enVol + 1) * MAX_VIDEO_BYTES > capBytes) {
+      throw new DomainError(
+        "Le direct reçoit trop d'envois en ce moment — réessaie dans quelques minutes."
+      );
+    }
+
     await tx.uploadTicket.create({ data: { userId } });
+  });
+}
+
+/**
+ * Marque les jetons qu'une publication vient d'honorer. Appelé quand la ligne
+ * existe : à partir de là, ces octets sont dans la jauge et ne doivent plus
+ * compter comme « en vol ».
+ *
+ * On solde les plus anciens jetons ouverts du membre — sans chercher lesquels
+ * correspondent exactement, ce que rien ne permet de savoir : le jeton ne sait
+ * pas quel fichier il a servi à déposer. Ce qui compte est que le nombre de
+ * jetons en vol retombe du bon nombre.
+ */
+async function consumeUploadTickets(userId: string, combien: number): Promise<void> {
+  const ouverts = await prisma.uploadTicket.findMany({
+    where: { userId, consumedAt: null },
+    orderBy: { createdAt: "asc" },
+    take: combien,
+    select: { id: true },
+  });
+  if (ouverts.length === 0) return;
+  await prisma.uploadTicket.updateMany({
+    where: { id: { in: ouverts.map((t) => t.id) } },
+    data: { consumedAt: new Date() },
   });
 }
 
@@ -350,6 +405,11 @@ export async function postVideo(
     },
     select: { id: true },
   });
+
+  // Les jetons que ce dépôt honore ne sont plus « en vol » : leurs octets
+  // viennent d'entrer dans la jauge. Sans ce solde, chaque publication
+  // réussie rapprochait le plafond global de la fermeture.
+  await consumeUploadTickets(userId, JETONS_PAR_PUBLICATION);
 
   // La jauge est RELUE après le commit, jamais extrapolée : un dépôt
   // concurrent enregistré entre-temps doit compter dans l'« après ». Sinon

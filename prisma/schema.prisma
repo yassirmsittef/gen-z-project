@@ -788,9 +788,15 @@ model UploadTicket {
   id        String   @id @default(cuid())
   userId    String
   createdAt DateTime @default(now())
+  /// Posé quand le fichier promis par ce jeton est devenu une ligne CallVideo.
+  /// Un jeton consommé pèse déjà dans la jauge : le compter une seconde fois
+  /// comme « en vol » bloquerait les dépôts après quelques publications
+  /// parfaitement normales.
+  consumedAt DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([createdAt])
+  @@index([consumedAt, createdAt])
 }

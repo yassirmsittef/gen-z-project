@@ -13,7 +13,9 @@ import {
   storageStatus,
 } from "../src/lib/call-videos";
 import {
+  JETONS_PAR_PUBLICATION,
   MAX_TOTAL_VIDEO_BYTES,
+  MAX_VIDEOS_PER_DAY,
   MAX_UPLOAD_TICKETS_PER_DAY,
   MAX_VIDEO_BYTES,
   ORPHAN_BLOB_GRACE_MS,
@@ -131,6 +133,17 @@ beforeEach(async () => {
     where: { storedBytes: { not: null } },
     data: { storedBytes: null },
   });
+  // Les photos comptent dans la MÊME jauge : un test qui en pose une lourde
+  // (celui de la saturation en pose une de 770 Mo) fermerait la porte à tous
+  // les suivants s'il ne la reprenait pas.
+  await prisma.user.updateMany({
+    where: { avatarBytes: { not: null } },
+    data: { avatarBytes: null, avatarUrl: null },
+  });
+  // Les jetons aussi : ils pèsent maintenant sur un plafond GLOBAL, donc un
+  // test qui en laisse traîner ferme la porte au suivant. C'est le pendant
+  // exact de la remise à zéro de la jauge ci-dessus.
+  await prisma.uploadTicket.deleteMany({});
   TAILLES.clear();
   SUPPRIMES.length = 0;
   MAGASIN.clear();
@@ -142,6 +155,7 @@ afterAll(async () => {
   await prisma.notification.deleteMany({
     where: { type: "STORAGE_ALERT", createdAt: { gte: DEBUT } },
   });
+  await prisma.uploadTicket.deleteMany({});
   await prisma.$disconnect();
 });
 
@@ -522,6 +536,13 @@ describe("la cadence des jetons d'upload", () => {
     const membre = await mkUser();
     const voisin = await mkUser();
     for (let i = 0; i < MAX_UPLOAD_TICKETS_PER_DAY; i += 1) await claimUploadTicket(voisin.id);
+    // Le voisin a publié : ses jetons sont honorés, donc ils ne pèsent plus
+    // sur le plafond global. Sans ce solde, c'est lui qu'on testerait ici, et
+    // non l'isolation entre membres.
+    await prisma.uploadTicket.updateMany({
+      where: { userId: voisin.id },
+      data: { consumedAt: new Date() },
+    });
 
     // Le voisin a épuisé les siens : cela ne doit rien coûter à ce membre.
     await expect(claimUploadTicket(membre.id)).resolves.toBeUndefined();
@@ -531,7 +552,11 @@ describe("la cadence des jetons d'upload", () => {
       where: { userId: membre.id },
       data: { createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000) },
     });
-    for (let i = 0; i < MAX_UPLOAD_TICKETS_PER_DAY; i += 1) {
+    // Un jeton d'hier ne pèse ni sur le quota du jour, ni sur les octets en
+    // vol (le balayage a eu le temps de passer). On en reprend donc autant
+    // que le plafond global peut en porter.
+    const portables = Math.floor(MAX_TOTAL_VIDEO_BYTES / MAX_VIDEO_BYTES) - 1;
+    for (let i = 0; i < Math.min(MAX_UPLOAD_TICKETS_PER_DAY, portables); i += 1) {
       await expect(claimUploadTicket(membre.id)).resolves.toBeUndefined();
     }
   });
@@ -614,5 +639,57 @@ describe("la cadence tient sous la rafale", () => {
 
     expect(acceptées).toBeLessThanOrEqual(MAX_UPLOAD_TICKETS_PER_DAY);
     expect(acceptées).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Le plafond GLOBAL de délivrance. La limite par membre ne protège de rien
+ * contre plusieurs comptes : chacun reste dans ses droits et la somme crève
+ * le plan. Ce qu'on borne ici, c'est le total d'octets ENGAGÉS mais pas
+ * encore visibles dans la jauge.
+ */
+describe("le plafond global de délivrance", () => {
+  it("refuse quand les jetons en vol des AUTRES ne laissent plus la place", async () => {
+    const glouton = await mkUser();
+    const arrivant = await mkUser();
+
+    // Un premier compte engage tout ce que le magasin peut encore encaisser.
+    const place = Math.floor(MAX_TOTAL_VIDEO_BYTES / MAX_VIDEO_BYTES);
+    for (let i = 0; i < Math.min(place, MAX_UPLOAD_TICKETS_PER_DAY); i += 1) {
+      await claimUploadTicket(glouton.id);
+    }
+    // ... puis d'autres comptes prennent le relais, chacun dans ses droits.
+    for (let n = 0; n < 2; n += 1) {
+      const complice = await mkUser();
+      for (let i = 0; i < MAX_UPLOAD_TICKETS_PER_DAY; i += 1) {
+        await claimUploadTicket(complice.id).catch(() => undefined);
+      }
+    }
+
+    // Un membre tout neuf, quota personnel intact : c'est le plafond GLOBAL
+    // qui doit lui répondre, sans quoi trois comptes suffisaient à engager
+    // 1,8 Go sur un plan qui en offre un.
+    await expect(claimUploadTicket(arrivant.id)).rejects.toBeInstanceOf(DomainError);
+  });
+
+  it("ne bloque PAS les publications normales : un jeton honoré sort du décompte", async () => {
+    const membre = await mkUser();
+    const call = await mkCall(membre.id);
+
+    // Publier consomme des jetons, et ces octets rejoignent la jauge : les
+    // compter une seconde fois comme « en vol » fermerait le direct après
+    // quelques dépôts parfaitement réguliers.
+    for (let i = 0; i < MAX_VIDEOS_PER_DAY; i += 1) {
+      await claimUploadTicket(membre.id);
+      await claimUploadTicket(membre.id);
+      await mkVideo(membre.id, call.id, { video: 2 * Mo });
+    }
+
+    const enVol = await prisma.uploadTicket.count({ where: { consumedAt: null } });
+    expect(enVol).toBe(0); // tout a été honoré
+    expect(await prisma.callVideo.count({ where: { authorId: membre.id } })).toBe(
+      MAX_VIDEOS_PER_DAY
+    );
+    expect(JETONS_PAR_PUBLICATION).toBe(2);
   });
 });
