@@ -15,7 +15,7 @@ import type { Prisma } from "@prisma/client";
  * pas avoir à traverser du JSX pour ça.
  */
 export const PROJECT_CARD_INCLUDE = {
-  owner: { select: { id: true, name: true, avatarUrl: true, reputation: true } },
+  owner: { select: { id: true, name: true, avatarUrl: true, reputation: true, role: true } },
   _count: { select: { contributions: true } },
 } satisfies Prisma.ProjectInclude;
 

@@ -56,6 +56,7 @@ export default async function CommunityPage({
         country: true,
         skills: true,
         reputation: true,
+        role: true,
         contributedUsdCents: true,
         _count: { select: { projects: true, contributions: true } },
       },
@@ -285,7 +286,7 @@ export default async function CommunityPage({
                         )}
 
                         <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2 gap-y-2 border-t border-white/[0.06] pt-3">
-                          <ReputationBadge reputation={member.reputation} showScore={false} />
+                          <ReputationBadge reputation={member.reputation} admin={member.role === "ADMIN"} showScore={false} />
                           <p
                             className="min-w-0 truncate font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground"
                             title={`${member._count.projects} projets · ${member._count.contributions} soutiens · ${formatMoney(member.contributedUsdCents, "usd")} investis`}

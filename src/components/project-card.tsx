@@ -95,6 +95,7 @@ export function ProjectCard({
           <span className="truncate font-medium">{project.owner.name}</span>
           <ReputationBadge
             reputation={project.owner.reputation}
+            admin={project.owner.role === "ADMIN"}
             showScore={false}
             className="ml-auto"
           />

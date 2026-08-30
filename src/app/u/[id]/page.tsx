@@ -90,13 +90,13 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
   return (
     <div className="container space-y-10 py-10">
       <div className="flex flex-wrap items-center gap-5">
-        <ReputationRing reputation={user.reputation}>
+        <ReputationRing reputation={user.reputation} admin={user.role === "ADMIN"}>
           <UserAvatar name={user.name} avatarUrl={user.avatarUrl} className="h-20 w-20 border-0 text-2xl" />
         </ReputationRing>
         <div className="space-y-2">
           <h1 className="text-4xl font-semibold tracking-tight">{user.name}</h1>
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-            <ReputationBadge reputation={user.reputation} />
+            <ReputationBadge reputation={user.reputation} admin={user.role === "ADMIN"} />
             {user.city && (
               <Link
                 href={`/communaute?ville=${encodeURIComponent(user.city)}`}

@@ -3,14 +3,16 @@ import { reputationLevel } from "@/lib/reputation";
 
 export function ReputationBadge({
   reputation,
+  admin = false,
   showScore = true,
   className,
 }: {
   reputation: number;
+  admin?: boolean;
   showScore?: boolean;
   className?: string;
 }) {
-  const level = reputationLevel(reputation);
+  const level = reputationLevel(reputation, admin);
   return (
     <span
       className={cn(

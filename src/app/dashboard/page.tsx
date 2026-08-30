@@ -178,7 +178,7 @@ export default async function DashboardPage({
           {/* La photo mène à la carte « Mon profil » plus bas : le premier
               réflexe pour changer sa photo est d'appuyer dessus. */}
           <Link href="#profil" title="Modifier mon profil" className="rounded-full">
-            <ReputationRing reputation={user.reputation}>
+            <ReputationRing reputation={user.reputation} admin={user.role === "ADMIN"}>
               <UserAvatar name={user.name} avatarUrl={user.avatarUrl} className="h-16 w-16 border-0 text-xl" />
             </ReputationRing>
           </Link>
@@ -193,7 +193,7 @@ export default async function DashboardPage({
               Modifier mon profil
             </Link>
           </div>
-          <ReputationBadge reputation={user.reputation} className="ml-auto" />
+          <ReputationBadge reputation={user.reputation} admin={user.role === "ADMIN"} className="ml-auto" />
         </div>
 
         {user.role === "ADMIN" && (

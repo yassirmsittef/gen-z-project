@@ -26,7 +26,7 @@ import type { CreateGroupInput } from "@/lib/validation";
  *   ne reste jamais sans animateur, et il n'est dissous que s'il se vide.
  */
 
-const senderSelect = { id: true, name: true, avatarUrl: true, reputation: true } as const;
+const senderSelect = { id: true, name: true, avatarUrl: true, reputation: true, role: true } as const;
 
 export type GroupMessageAuthor = {
   id: string;

@@ -35,7 +35,7 @@ export default async function ChatThreadPage({
 
   const partner = await prisma.user.findUnique({
     where: { id: partnerId },
-    select: { id: true, name: true, avatarUrl: true, reputation: true, skills: true },
+    select: { id: true, name: true, avatarUrl: true, reputation: true, role: true, skills: true },
   });
   if (!partner) notFound();
 
@@ -79,7 +79,7 @@ export default async function ChatThreadPage({
               <div>
                 <p className="font-semibold">{partner.name}</p>
                 <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                  <ReputationBadge reputation={partner.reputation} showScore={false} />
+                  <ReputationBadge reputation={partner.reputation} admin={partner.role === "ADMIN"} showScore={false} />
                   {partner.skills.slice(0, 3).map((skill) => (
                     <SkillTag key={skill} skill={skill} />
                   ))}

@@ -60,7 +60,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       // Select explicite : seuls ces quatre champs sont rendus. Charger la
       // ligne User entière ferait transiter passwordHash et email par l'arbre
       // de rendu d'une page publique.
-      owner: { select: { id: true, name: true, avatarUrl: true, reputation: true } },
+      owner: { select: { id: true, name: true, avatarUrl: true, reputation: true, role: true } },
       milestones: {
         orderBy: { order: "asc" },
         include: { proofs: { include: { votes: true } } },
@@ -69,7 +69,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       updates: { orderBy: { createdAt: "desc" } },
       comments: {
         orderBy: { createdAt: "desc" },
-        include: { user: { select: { id: true, name: true, avatarUrl: true, reputation: true } } },
+        include: { user: { select: { id: true, name: true, avatarUrl: true, reputation: true, role: true } } },
       },
       follows: { select: { userId: true } },
       _count: { select: { follows: true } },
@@ -190,13 +190,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         <p className="max-w-3xl text-lg font-medium text-muted-foreground">{project.pitch}</p>
         <div className="flex flex-wrap items-center gap-3">
           <Link href={`/u/${project.owner.id}`} className="group inline-flex items-center gap-2">
-            <ReputationRing reputation={project.owner.reputation}>
+            <ReputationRing reputation={project.owner.reputation} admin={project.owner.role === "ADMIN"}>
               <UserAvatar name={project.owner.name} avatarUrl={project.owner.avatarUrl} className="border-0" />
             </ReputationRing>
             <span className="font-semibold transition-colors duration-200 group-hover:text-primary">
               {project.owner.name}
             </span>
-            <ReputationBadge reputation={project.owner.reputation} />
+            <ReputationBadge reputation={project.owner.reputation} admin={project.owner.role === "ADMIN"} />
           </Link>
           {viewerId && !isOwner ? (
             <FollowButton
@@ -428,7 +428,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                           >
                             {comment.user.name}
                           </Link>
-                          <ReputationBadge reputation={comment.user.reputation} showScore={false} />
+                          <ReputationBadge reputation={comment.user.reputation} admin={comment.user.role === "ADMIN"} showScore={false} />
                           <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                             {formatDate(comment.createdAt)}
                           </span>

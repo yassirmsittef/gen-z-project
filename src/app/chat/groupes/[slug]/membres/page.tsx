@@ -80,7 +80,7 @@ export default async function GroupMembersPage({
                       )}
                     </p>
                     <div className="mt-0.5 flex items-center gap-2">
-                      <ReputationBadge reputation={user.reputation} showScore={false} />
+                      <ReputationBadge reputation={user.reputation} admin={user.role === "ADMIN"} showScore={false} />
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                         depuis le {formatDate(joinedAt)}
                       </span>

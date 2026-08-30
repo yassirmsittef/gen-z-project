@@ -8,15 +8,17 @@ import { reputationLevel } from "@/lib/reputation";
  */
 export function ReputationRing({
   reputation,
+  admin = false,
   children,
   className,
 }: {
   reputation: number;
+  admin?: boolean;
   children: React.ReactNode;
   className?: string;
 }) {
   const gradientId = useId();
-  const level = reputationLevel(reputation);
+  const level = reputationLevel(reputation, admin);
 
   return (
     <span className={cn("relative inline-flex p-1.5", className)}>

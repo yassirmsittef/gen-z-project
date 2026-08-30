@@ -1,4 +1,4 @@
-import { Crown, Hammer, HeartHandshake, Sprout, type LucideIcon } from "lucide-react";
+import { Crown, Hammer, HeartHandshake, ShieldCheck, Sprout, type LucideIcon } from "lucide-react";
 
 export type ReputationLevel = {
   label: string;
@@ -8,8 +8,21 @@ export type ReputationLevel = {
   ring: number;
 };
 
-/** Niveaux de réputation affichés sur les profils et cartes projet. */
-export function reputationLevel(reputation: number): ReputationLevel {
+/**
+ * Niveaux de réputation affichés sur les profils et cartes projet.
+ * Le rôle passe devant le score : l'équipe s'affiche « Admin » (ShieldCheck,
+ * turquoise — le langage du badge Gérant·e), jamais « Rookie » — le grade
+ * d'un compte qui modère ne se mesure pas à ses contributions.
+ */
+export function reputationLevel(reputation: number, admin = false): ReputationLevel {
+  if (admin) {
+    return {
+      label: "Admin",
+      Icon: ShieldCheck,
+      className: "border-primary/40 bg-primary/15 text-primary",
+      ring: 4.5,
+    };
+  }
   if (reputation >= 150) {
     return {
       label: "Légende",
