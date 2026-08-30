@@ -17,7 +17,7 @@ export default async function RegisterPage() {
       where: { id: session.user.id },
       select: { id: true },
     });
-    if (exists) redirect("/projects");
+    if (exists) redirect("/");
   }
 
   return (

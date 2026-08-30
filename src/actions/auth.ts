@@ -60,7 +60,7 @@ export async function registerAction(
   });
 
   // Lance la session puis redirige (signIn lève un NEXT_REDIRECT).
-  await signIn("credentials", { email, password, redirectTo: "/projects" });
+  await signIn("credentials", { email, password, redirectTo: "/" });
   return undefined;
 }
 
@@ -75,7 +75,7 @@ export async function loginAction(
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
   try {
-    await signIn("credentials", { ...parsed.data, redirectTo: "/projects" });
+    await signIn("credentials", { ...parsed.data, redirectTo: "/" });
     return undefined;
   } catch (error) {
     if (error instanceof AuthError) {
@@ -96,7 +96,7 @@ export async function loginAction(
 }
 
 export async function signInWithGoogleAction() {
-  await signIn("google", { redirectTo: "/projects" });
+  await signIn("google", { redirectTo: "/" });
 }
 
 export async function signOutAction() {
