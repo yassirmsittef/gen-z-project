@@ -27,14 +27,20 @@ import {
 
 // Schémas partagés client/serveur (spec : Zod des deux côtés).
 
-export const registerSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Ton pseudo doit faire au moins 2 caractères.")
-    .max(50, "50 caractères max."),
-  email: z.string().email("Adresse email invalide."),
-  password: z.string().min(8, "8 caractères minimum."),
-});
+export const registerSchema = z
+  .object({
+    name: z
+      .string()
+      .min(2, "Ton pseudo doit faire au moins 2 caractères.")
+      .max(50, "50 caractères max."),
+    email: z.string().email("Adresse email invalide."),
+    password: z.string().min(8, "8 caractères minimum."),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "La confirmation ne correspond pas au mot de passe.",
+    path: ["confirmPassword"],
+  });
 
 export const loginSchema = z.object({
   email: z.string().email("Adresse email invalide."),

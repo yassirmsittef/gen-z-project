@@ -18,6 +18,7 @@ export async function registerAction(
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 

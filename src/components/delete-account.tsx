@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { TriangleAlert } from "lucide-react";
 import { deleteAccountAction } from "@/actions/users";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 
 /**
@@ -32,10 +32,9 @@ export function DeleteAccount() {
 
         <div className="space-y-1.5">
           <Label htmlFor="delete-password">Confirme avec ton mot de passe</Label>
-          <Input
+          <PasswordInput
             id="delete-password"
             name="password"
-            type="password"
             autoComplete="current-password"
             required
           />

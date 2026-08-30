@@ -6,6 +6,7 @@ import { loginAction, registerAction, signInWithGoogleAction } from "@/actions/a
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { CITIES } from "@/lib/cities";
 import { CURRENCIES } from "@/lib/money";
 
@@ -49,7 +50,7 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
               Mot de passe oublié ?
             </Link>
           </div>
-          <Input id="password" name="password" type="password" autoComplete="current-password" required />
+          <PasswordInput id="password" name="password" autoComplete="current-password" required />
         </div>
 
         {state?.error && <p role="alert" className="text-sm font-medium text-destructive">{state.error}</p>}
@@ -87,8 +88,12 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password">Mot de passe</Label>
-          <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={8} />
+          <PasswordInput id="password" name="password" autoComplete="new-password" required minLength={8} />
           <p className="text-xs text-muted-foreground">8 caractères minimum.</p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="confirmPassword">Confirme le mot de passe</Label>
+          <PasswordInput id="confirmPassword" name="confirmPassword" autoComplete="new-password" required />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="city">

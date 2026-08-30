@@ -3,8 +3,8 @@
 import { useActionState, useEffect, useRef } from "react";
 import { changePasswordAction } from "@/actions/users";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function PasswordForm() {
   const [state, formAction, pending] = useActionState(changePasswordAction, undefined);
@@ -19,10 +19,9 @@ export function PasswordForm() {
     <form ref={formRef} action={formAction} className="space-y-3">
       <div className="space-y-1.5">
         <Label htmlFor="currentPassword">Mot de passe actuel</Label>
-        <Input
+        <PasswordInput
           id="currentPassword"
           name="currentPassword"
-          type="password"
           autoComplete="current-password"
           required
         />
@@ -31,10 +30,9 @@ export function PasswordForm() {
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="newPassword">Nouveau (8 caractères min)</Label>
-          <Input
+          <PasswordInput
             id="newPassword"
             name="newPassword"
-            type="password"
             autoComplete="new-password"
             minLength={8}
             required
@@ -42,10 +40,9 @@ export function PasswordForm() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="confirmPassword">Confirmer</Label>
-          <Input
+          <PasswordInput
             id="confirmPassword"
             name="confirmPassword"
-            type="password"
             autoComplete="new-password"
             required
           />

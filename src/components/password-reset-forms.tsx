@@ -6,6 +6,7 @@ import { MailCheck } from "lucide-react";
 import { requestResetAction, resetPasswordAction } from "@/actions/password-reset";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 
 export function ForgotPasswordForm() {
@@ -76,10 +77,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
       <div className="space-y-1.5">
         <Label htmlFor="newPassword">Nouveau mot de passe (8 caractères min)</Label>
-        <Input
+        <PasswordInput
           id="newPassword"
           name="newPassword"
-          type="password"
           autoComplete="new-password"
           minLength={8}
           required
@@ -87,10 +87,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="confirmPassword">Confirme-le</Label>
-        <Input
+        <PasswordInput
           id="confirmPassword"
           name="confirmPassword"
-          type="password"
           autoComplete="new-password"
           required
         />
