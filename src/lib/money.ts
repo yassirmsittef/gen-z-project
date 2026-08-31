@@ -3,6 +3,7 @@
  * minuscule accepté par Stripe), tous ses montants en unités MINEURES.
  * L'affichage passe par Intl.NumberFormat — jamais de format maison.
  */
+import { localeTag, type Locale } from "@/lib/i18n/locales";
 
 /** Devises proposées à la création de projet (extensible). */
 export const CURRENCIES = [
@@ -50,9 +51,14 @@ export const toMinor = (major: number, currency: string) =>
 
 export const toMajor = (minor: number, currency: string) => minor / minorPerMajor(currency);
 
-/** « 350 CHF », « 210,50 € », « 500 MAD » — entiers sans décimales inutiles. */
-export function formatMoney(minor: number, currency: string): string {
-  return new Intl.NumberFormat("fr-FR", {
+/**
+ * « 350 CHF », « 210,50 € », « 500 MAD » — entiers sans décimales inutiles.
+ * `locale` gouverne l'ÉCRITURE du montant (séparateurs, position du symbole) ;
+ * la devise reste celle du projet. Défaut fr : aucun appelant historique ne
+ * casse, chaque écran threade sa locale à son tour.
+ */
+export function formatMoney(minor: number, currency: string, locale: Locale = "fr"): string {
+  return new Intl.NumberFormat(localeTag(locale), {
     style: "currency",
     currency: currency.toUpperCase(),
     trailingZeroDisplay: "stripIfInteger",
@@ -63,8 +69,8 @@ export function formatMoney(minor: number, currency: string): string {
  * Montant arrondi à l'unité (« 405 $US ») — pour les jauges et espaces
  * étroits où les centimes n'apportent rien. Jamais pour un paiement.
  */
-export function formatMoneyRounded(minor: number, currency: string): string {
-  return new Intl.NumberFormat("fr-FR", {
+export function formatMoneyRounded(minor: number, currency: string, locale: Locale = "fr"): string {
+  return new Intl.NumberFormat(localeTag(locale), {
     style: "currency",
     currency: currency.toUpperCase(),
     maximumFractionDigits: 0,

@@ -1,25 +1,36 @@
 // La monnaie s'affiche via formatMoney (src/lib/money.ts) — argent réel,
 // une devise par projet, Intl.NumberFormat.
 
-export function formatDate(date: Date): string {
-  return date.toLocaleDateString("fr-FR", {
+import { localeTag, type Locale } from "@/lib/i18n/locales";
+
+export function formatDate(date: Date, locale: Locale = "fr"): string {
+  return date.toLocaleDateString(localeTag(locale), {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
 }
 
-/** Temps relatif court en français ("à l'instant", "il y a 3 h", "il y a 2 j"...). */
-export function formatRelative(date: Date): string {
+/**
+ * Temps relatif court (« il y a 3 min », "3 min ago", «قبل ٣ دقائق» en
+ * chiffres latins…). Tout vient d'Intl.RelativeTimeFormat — aucune chaîne
+ * maison : c'est lui qui connaît les 7 langues, pas nous. Sous la minute,
+ * `numeric:"auto"` donne le « maintenant » idiomatique de chaque langue.
+ */
+export function formatRelative(date: Date, locale: Locale = "fr"): string {
   const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
-  if (seconds < 60) return "à l'instant";
+  const relative = new Intl.RelativeTimeFormat(localeTag(locale), {
+    numeric: "auto",
+    style: "short",
+  });
+  if (seconds < 60) return relative.format(0, "second");
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `il y a ${minutes} min`;
+  if (minutes < 60) return relative.format(-minutes, "minute");
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `il y a ${hours} h`;
+  if (hours < 24) return relative.format(-hours, "hour");
   const days = Math.floor(hours / 24);
-  if (days < 7) return `il y a ${days} j`;
-  return formatDate(date);
+  if (days < 7) return relative.format(-days, "day");
+  return formatDate(date, locale);
 }
 
 /** Jours restants avant la deadline (0 si dépassée). */

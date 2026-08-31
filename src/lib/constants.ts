@@ -1,4 +1,13 @@
 import type { NotificationType, ProjectCategory } from "@prisma/client";
+import { labels as LABELS_FR } from "@/messages/fr/labels";
+
+/** Extrait un groupe `prefix.*` du namespace labels (français — les exports
+ * historiques ci-dessous restent en fr ; les autres langues passent par
+ * src/lib/i18n/labels.ts). */
+const labelGroup = <K extends string>(prefix: string, keys: readonly K[]): Record<K, string> =>
+  Object.fromEntries(
+    keys.map((k) => [k, LABELS_FR[`${prefix}.${k}` as keyof typeof LABELS_FR]])
+  ) as Record<K, string>;
 
 /**
  * Domaine sentinelle des comptes anonymisés (RGPD). En `.invalid` (RFC 2606) :
@@ -179,66 +188,29 @@ export const REP = {
 
 // ---------- Libellés ----------
 
-export const CATEGORY_LABELS: Record<ProjectCategory, string> = {
-  TECH: "Tech",
-  ECOMMERCE: "E-commerce",
-  SERVICES: "Services",
-  CREATIF: "Créatif",
-  MUSIQUE: "Musique",
-  MODE: "Mode",
-  GAMING: "Gaming",
-  FOOD: "Food",
-  EDUCATION: "Éducation",
-  SANTE: "Santé & bien-être",
-  FINANCE: "Finance",
-  IMPACT: "Impact",
-  SPORT: "Sport",
-  MEDIA: "Médias",
-  ARTISANAT: "Artisanat",
-  IMMOBILIER: "Immobilier",
-  AUTRE: "Autre",
-};
+// Les valeurs vivent dans src/messages/fr/labels.ts (source unique des 7
+// langues) ; ces exports en dérivent pour les consommateurs historiques.
+const CATEGORY_KEYS = [
+  "TECH", "ECOMMERCE", "SERVICES", "CREATIF", "MUSIQUE", "MODE", "GAMING",
+  "FOOD", "EDUCATION", "SANTE", "FINANCE", "IMPACT", "SPORT", "MEDIA",
+  "ARTISANAT", "IMMOBILIER", "AUTRE",
+] as const satisfies readonly ProjectCategory[];
+
+export const CATEGORY_LABELS: Record<ProjectCategory, string> =
+  labelGroup("category", CATEGORY_KEYS);
 
 /** Ce qu'on trouve dans chaque catégorie — affiché quand elle est filtrée. */
-export const CATEGORY_DESCRIPTIONS: Record<ProjectCategory, string> = {
-  TECH: "Apps, SaaS, hardware, IA, outils pour développeurs et no-code.",
-  ECOMMERCE: "Boutiques en ligne, marques D2C, marketplaces et drops.",
-  SERVICES: "Agences, freelancing, conciergerie, services de proximité.",
-  CREATIF: "Illustration, BD/webtoon, photo, vidéo, design et écriture.",
-  MUSIQUE: "EP, albums, clips, labels indés, matériel de production.",
-  MODE: "Marques de vêtements, upcycling, accessoires, sneakers.",
-  GAMING: "Jeux vidéo, studios indés, esport, streaming et communautés.",
-  FOOD: "Street-food, restaurants, produits alimentaires, food-trucks.",
-  EDUCATION: "Cours en ligne, tutorat, contenus pédagogiques, bootcamps.",
-  SANTE: "Bien-être, fitness, santé mentale, nutrition, self-care.",
-  FINANCE: "Fintech, éducation financière, outils de gestion et d'épargne.",
-  IMPACT: "Écologie, solidarité, associations, économie circulaire.",
-  SPORT: "Clubs, équipements, événements sportifs, coaching.",
-  MEDIA: "Podcasts, chaînes vidéo, newsletters, magazines, journalisme.",
-  ARTISANAT: "Fait-main, céramique, bois, bijoux, petites séries locales.",
-  IMMOBILIER: "Coliving, tiers-lieux, rénovation, projets d'espaces.",
-  AUTRE: "Tout ce qui ne rentre pas (encore) dans une case.",
-};
+export const CATEGORY_DESCRIPTIONS: Record<ProjectCategory, string> =
+  labelGroup("categoryDesc", CATEGORY_KEYS);
 
-export const STATUS_LABELS = {
-  ACTIVE: "En campagne",
-  FUNDED: "Financé",
-  COMPLETED: "Réalisé",
-  FAILED: "Non abouti",
-} as const;
+export const STATUS_LABELS =
+  labelGroup("status", ["ACTIVE", "FUNDED", "COMPLETED", "FAILED"] as const);
 
-export const PARTNERSHIP_COMPENSATION_LABELS = {
-  MONEY: "Rémunération en argent",
-  PRODUCT: "Produits / dotation",
-  VISIBILITY: "Visibilité uniquement",
-  MIXED: "Argent + produits",
-} as const;
+export const PARTNERSHIP_COMPENSATION_LABELS =
+  labelGroup("compensation", ["MONEY", "PRODUCT", "VISIBILITY", "MIXED"] as const);
 
-export const PARTNERSHIP_STATUS_LABELS = {
-  PENDING: "En attente",
-  ACCEPTED: "Acceptée",
-  DECLINED: "Refusée",
-} as const;
+export const PARTNERSHIP_STATUS_LABELS =
+  labelGroup("partnershipStatus", ["PENDING", "ACCEPTED", "DECLINED"] as const);
 
 // ---------- Appels au remplacement ----------
 // Le fil où les membres nomment eux-mêmes les marques dont ils ne veulent
@@ -423,25 +395,15 @@ export const REPORT_REASONS = [
   "Autre",
 ] as const;
 
-export const NOTIFICATION_TYPE_LABELS = {
-  CONTRIBUTION: "Contribution reçue sur mes projets",
-  CONTRIBUTION_CONFIRMED: "Confirmation de mes contributions",
-  PROJECT_FUNDED: "Objectif atteint",
-  PROJECT_FAILED: "Campagne non aboutie",
-  REFUND: "Remboursements",
-  PROOF_TO_VOTE: "Preuve à examiner (vote)",
-  MILESTONE_RELEASED: "Étape validée, fonds débloqués",
-  PROOF_REJECTED: "Preuve refusée",
-  MESSAGE: "Nouveaux messages privés",
-  GROUP_MESSAGE: "Nouveaux messages dans mes groupes",
-  PARTNERSHIP: "Demandes de partenariat",
-  COMMENT: "Commentaires sur mes projets",
-  PROJECT_UPDATE: "Actus des projets que je soutiens ou suis",
-  BOYCOTT_ANSWERED: "Un remplaçant se lance sur un appel que je soutiens",
-  BOYCOTT_REMOVED: "Retrait d'un de mes appels par la modération",
-  CALL_COMMENT: "Réponses sous mes appels",
-  CALL_VIDEO: "Témoignages vidéo sous mes appels",
-  // Non masquable, donc jamais listé dans les préférences ; seuls les admins
-  // en reçoivent.
-  STORAGE_ALERT: "Alerte de stockage hébergé (équipe)",
-} as const satisfies Record<NotificationType, string>;
+export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = labelGroup(
+  "notifType",
+  [
+    "CONTRIBUTION", "CONTRIBUTION_CONFIRMED", "PROJECT_FUNDED", "PROJECT_FAILED",
+    "REFUND", "PROOF_TO_VOTE", "MILESTONE_RELEASED", "PROOF_REJECTED", "MESSAGE",
+    "GROUP_MESSAGE", "PARTNERSHIP", "COMMENT", "PROJECT_UPDATE", "BOYCOTT_ANSWERED",
+    "BOYCOTT_REMOVED", "CALL_COMMENT", "CALL_VIDEO",
+    // STORAGE_ALERT : non masquable, donc jamais listé dans les préférences ;
+    // seuls les admins en reçoivent.
+    "STORAGE_ALERT",
+  ] as const satisfies readonly NotificationType[]
+);
