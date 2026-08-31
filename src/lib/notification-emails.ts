@@ -1,8 +1,10 @@
 import type { NotificationType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
-import { isLocale } from "@/lib/i18n/locales";
+import { dirOf, isLocale, type Locale } from "@/lib/i18n/locales";
+import { makeT } from "@/lib/i18n/t";
 import { renderNotification } from "@/lib/notification-render";
+import { MESSAGES } from "@/messages";
 import { appUrl } from "@/lib/stripe";
 
 /**
@@ -51,31 +53,35 @@ function escapeHtml(value: string): string {
 }
 
 function renderEmail(params: {
+  locale: Locale;
   name: string | null;
   title: string;
   body: string | null;
   link: string;
   prefsLink: string;
 }) {
-  const { name, title, body, link, prefsLink } = params;
-  const hello = name ? `Salut ${name} — ` : "";
-  // La version texte n'a pas besoin d'échappement ; le HTML, si.
+  const { locale, name, title, body, link, prefsLink } = params;
+  const t = makeT(MESSAGES[locale].email, locale);
+  const dir = dirOf(locale);
+  const hello = name ? t("hello", { name }) : "";
+  // La version texte n'a pas besoin d'échappement ; le HTML, si — et
+  // TOUJOURS APRÈS interpolation (le texte membre traverse les gabarits).
   const titleHtml = escapeHtml(title);
   const bodyHtml = body ? escapeHtml(body) : null;
   const linkHtml = escapeHtml(link);
   const prefsHtml = escapeHtml(prefsLink);
-  const text = `${hello}${title}\n\n${body ?? ""}\n\nVoir sur GeniGain :\n${link}\n\nTu reçois cet email parce qu'un événement important concerne tes projets ou tes contributions. Gère tes préférences : ${prefsLink}\n\n— GeniGain, la communauté qui finance ta génération`;
-  const html = `<!doctype html><html><body style="margin:0;padding:0;background-color:#0B0E14;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  const text = `${hello}${title}\n\n${body ?? ""}\n\n${t("ctaText")}\n${link}\n\n${t("why")} ${t("managePrefsText", { link: prefsLink })}\n\n— ${t("signature")}`;
+  const html = `<!doctype html><html dir="${dir}"><body style="margin:0;padding:0;background-color:#0B0E14;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0B0E14;padding:32px 16px;"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#131826;border:1px solid rgba(255,255,255,0.08);border-radius:16px;">
-<tr><td style="padding:32px;">
+<tr><td dir="${dir}" style="padding:32px;">
 <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#94A3B8;font-family:'SF Mono',Menlo,Consolas,monospace;">GeniGain</p>
 <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#F1F5F9;">${titleHtml}</h1>
 ${bodyHtml ? `<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#94A3B8;">${bodyHtml}</p>` : ""}
-<p style="margin:0 0 24px;"><a href="${linkHtml}" style="display:inline-block;padding:12px 24px;background:linear-gradient(120deg,#5EEAD4,#38BDF8);color:#0B0E14;font-weight:600;font-size:14px;text-decoration:none;border-radius:12px;">Voir sur GeniGain</a></p>
-<p style="margin:0;font-size:12px;line-height:1.6;color:#64748B;">Tu reçois cet email parce qu'un événement important concerne tes projets ou tes contributions. <a href="${prefsHtml}" style="color:#5EEAD4;text-decoration:none;">Gérer mes préférences</a></p>
+<p style="margin:0 0 24px;"><a href="${linkHtml}" style="display:inline-block;padding:12px 24px;background:linear-gradient(120deg,#5EEAD4,#38BDF8);color:#0B0E14;font-weight:600;font-size:14px;text-decoration:none;border-radius:12px;">${escapeHtml(t("cta"))}</a></p>
+<p style="margin:0;font-size:12px;line-height:1.6;color:#64748B;">${escapeHtml(t("why"))} <a href="${prefsHtml}" style="color:#5EEAD4;text-decoration:none;">${escapeHtml(t("managePrefs"))}</a></p>
 </td></tr></table>
-<p style="margin:16px 0 0;font-size:11px;color:#64748B;">GeniGain — la communauté qui finance ta génération</p>
+<p style="margin:16px 0 0;font-size:11px;color:#64748B;">${escapeHtml(t("signature"))}</p>
 </td></tr></table></body></html>`;
   return { text, html };
 }
@@ -118,6 +124,7 @@ export async function sendPendingNotificationEmails(sender: Sender = sendEmail) 
       : "fr";
     const rendered = renderNotification(locale, notification);
     const { text, html } = renderEmail({
+      locale,
       name: notification.user.name,
       title: rendered.title,
       body: rendered.body,

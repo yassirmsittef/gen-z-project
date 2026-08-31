@@ -1,4 +1,5 @@
 import type { Messages } from "../types";
+import { email } from "./email";
 import { err } from "./err";
 import { labels } from "./labels";
 import { meta } from "./meta";
@@ -7,6 +8,7 @@ import { notif } from "./notif";
 import { v } from "./v";
 
 export const ar = {
+  email,
   err,
   common: {
     someone: "شخص ما",

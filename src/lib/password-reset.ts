@@ -3,6 +3,9 @@ import bcrypt from "bcryptjs";
 import { ERASED_EMAIL_DOMAIN } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { dirOf, isLocale } from "@/lib/i18n/locales";
+import { makeT } from "@/lib/i18n/t";
+import { MESSAGES } from "@/messages";
 import { DomainError } from "@/lib/project-service";
 import { appUrl } from "@/lib/stripe";
 
@@ -52,34 +55,62 @@ export async function createResetToken(userId: string): Promise<string> {
   return token;
 }
 
-/** Demande de réinitialisation : silencieuse si l'email est inconnu. */
-export async function requestPasswordReset(email: string): Promise<void> {
+type ResetSender = (input: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}) => Promise<{ sent: boolean }>;
+
+/**
+ * Demande de réinitialisation : silencieuse si l'email est inconnu.
+ * L'utilisateur n'est PAS connecté — la langue vient de SON COMPTE, jamais
+ * de la requête. `sender` injectable pour les tests (aucun réseau).
+ */
+export async function requestPasswordReset(
+  email: string,
+  sender: ResetSender = sendEmail
+): Promise<void> {
   const user = await prisma.user.findUnique({
     where: { email: email.trim().toLowerCase() },
-    select: { id: true, email: true, name: true },
+    select: { id: true, email: true, name: true, preferredLanguage: true },
   });
   if (!user) return; // même réponse qu'en cas de succès — pas d'énumération
 
+  const locale = isLocale(user.preferredLanguage) ? user.preferredLanguage : "fr";
+  const t = makeT(MESSAGES[locale].email, locale);
+  const dir = dirOf(locale);
   const token = await createResetToken(user.id);
   const link = `${appUrl()}/reinitialiser/${token}`;
+  const hello = user.name ? t("hello", { name: user.name }) : "";
 
-  await sendEmail({
+  await sender({
     to: user.email,
-    subject: "Réinitialise ton mot de passe GeniGain",
-    text: `Salut ${user.name ?? ""},\n\nQuelqu'un (toi, normalement) a demandé à réinitialiser ton mot de passe GeniGain.\n\nLe lien est valable 1 heure et ne sert qu'une fois :\n${link}\n\nSi ce n'était pas toi, ignore cet email — ton mot de passe reste inchangé.\n\n— GeniGain, la communauté qui finance ta génération`,
-    html: `<!doctype html><html><body style="margin:0;padding:0;background-color:#0B0E14;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    subject: t("reset.subject"),
+    text: `${hello}${t("reset.intro")}\n\n${t("reset.validity")}\n${link}\n\n${t("reset.ignore")}\n\n— ${t("signature")}`,
+    html: `<!doctype html><html dir="${dir}"><body style="margin:0;padding:0;background-color:#0B0E14;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0B0E14;padding:32px 16px;"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#131826;border:1px solid rgba(255,255,255,0.08);border-radius:16px;">
-<tr><td style="padding:32px;">
+<tr><td dir="${dir}" style="padding:32px;">
 <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#94A3B8;font-family:'SF Mono',Menlo,Consolas,monospace;">GeniGain</p>
-<h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#F1F5F9;">Réinitialise ton mot de passe</h1>
-<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#94A3B8;">Salut ${user.name ?? ""} — quelqu'un (toi, normalement) a demandé à réinitialiser ton mot de passe. Le lien est valable <strong style="color:#F1F5F9;">1&nbsp;heure</strong> et ne sert qu'une fois.</p>
-<p style="margin:0 0 24px;"><a href="${link}" style="display:inline-block;padding:12px 24px;background:linear-gradient(120deg,#5EEAD4,#38BDF8);color:#0B0E14;font-weight:600;font-size:14px;text-decoration:none;border-radius:12px;">Choisir un nouveau mot de passe</a></p>
-<p style="margin:0;font-size:12px;line-height:1.6;color:#64748B;">Si ce n'était pas toi, ignore cet email — ton mot de passe reste inchangé.</p>
+<h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#F1F5F9;">${escapeHtmlReset(t("reset.heading"))}</h1>
+<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#94A3B8;">${escapeHtmlReset(`${hello}${t("reset.intro")} ${t("reset.validity")}`)}</p>
+<p style="margin:0 0 24px;"><a href="${link}" style="display:inline-block;padding:12px 24px;background:linear-gradient(120deg,#5EEAD4,#38BDF8);color:#0B0E14;font-weight:600;font-size:14px;text-decoration:none;border-radius:12px;">${escapeHtmlReset(t("reset.cta"))}</a></p>
+<p style="margin:0;font-size:12px;line-height:1.6;color:#64748B;">${escapeHtmlReset(t("reset.ignore"))}</p>
 </td></tr></table>
-<p style="margin:16px 0 0;font-size:11px;color:#64748B;">GeniGain — la communauté qui finance ta génération</p>
+<p style="margin:16px 0 0;font-size:11px;color:#64748B;">${escapeHtmlReset(t("signature"))}</p>
 </td></tr></table></body></html>`,
   });
+}
+
+/** Échappement local (le nom du membre traverse le gabarit — toujours APRÈS interpolation). */
+function escapeHtmlReset(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /** Consomme un token valide et pose le nouveau mot de passe. */
