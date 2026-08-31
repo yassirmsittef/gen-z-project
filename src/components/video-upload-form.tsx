@@ -4,6 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 import { Video } from "lucide-react";
 import { postVideoAction } from "@/actions/call-videos";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,7 +24,7 @@ type Mesures = { durationMs: number; width: number; height: number; poster: Blob
  * monter 30 Mo pour rien — et la vignette donne au fil une image nette avant
  * que la lecture démarre, au lieu d'un rectangle noir.
  */
-function mesurer(file: File): Promise<Mesures> {
+function mesurer(file: File, messageIllisible: string): Promise<Mesures> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const video = document.createElement("video");
@@ -33,7 +34,7 @@ function mesurer(file: File): Promise<Mesures> {
 
     const échouer = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("Vidéo illisible — essaie un autre fichier (MP4 ou WebM)."));
+      reject(new Error(messageIllisible));
     };
     video.onerror = échouer;
 
@@ -80,6 +81,7 @@ function mesurer(file: File): Promise<Mesures> {
  * et les mesures.
  */
 export function VideoUploadForm({ callId, target }: { callId: string; target: string }) {
+  const t = useT("calls");
   const [state, formAction, pending] = useActionState(postVideoAction, undefined);
   const [fichier, setFichier] = useState<File | null>(null);
   const [mesures, setMesures] = useState<Mesures | null>(null);
@@ -108,32 +110,38 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
     if (!file) return;
 
     if (!(VIDEO_CONTENT_TYPES as readonly string[]).includes(file.type)) {
-      return setErreur("Format non accepté — il faut un MP4 ou un WebM. Depuis un iPhone, choisis la vidéo dans la photothèque : elle sera convertie automatiquement.");
+      return setErreur(t("videoUploadForm.formatRejected"));
     }
     if (file.size > MAX_VIDEO_BYTES) {
       return setErreur(
-        `Vidéo trop lourde (${Math.round(file.size / 1e6)} Mo). Maximum ${Math.round(MAX_VIDEO_BYTES / 1e6)} Mo — filme plus court ou en qualité moindre.`
+        t("videoUploadForm.tooHeavy", {
+          size: Math.round(file.size / 1e6),
+          max: Math.round(MAX_VIDEO_BYTES / 1e6),
+        })
       );
     }
 
     try {
-      const m = await mesurer(file);
+      const m = await mesurer(file, t("videoUploadForm.unreadableRetry"));
       if (m.durationMs > MAX_VIDEO_SECONDS * 1000) {
         return setErreur(
-          `${Math.round(m.durationMs / 1000)} secondes, c'est trop long. ${MAX_VIDEO_SECONDS} secondes maximum.`
+          t("videoUploadForm.tooLong", {
+            seconds: Math.round(m.durationMs / 1000),
+            max: MAX_VIDEO_SECONDS,
+          })
         );
       }
       setFichier(file);
       setMesures(m);
     } catch (e) {
-      setErreur(e instanceof Error ? e.message : "Vidéo illisible.");
+      setErreur(e instanceof Error ? e.message : t("videoUploadForm.unreadable"));
     }
   }
 
   async function envoyer(event: React.FormEvent<HTMLFormElement>) {
     if (urls) return; // déjà téléversé : on laisse l'action serveur enregistrer
     event.preventDefault();
-    if (!fichier || !mesures) return setErreur("Choisis d'abord une vidéo.");
+    if (!fichier || !mesures) return setErreur(t("videoUploadForm.chooseFirst"));
 
     setErreur(null);
     setEnvoi("televersement");
@@ -145,7 +153,7 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
       const permission = await fetch("/api/videos/quota").then((r) => r.json());
       if (!permission.ok) {
         setEnvoi("repos");
-        return setErreur(permission.raison ?? "Publication impossible pour le moment.");
+        return setErreur(permission.raison ?? t("videoUploadForm.publishImpossible"));
       }
 
       const blob = await upload(`temoignages/${Date.now()}-${fichier.name}`, fichier, {
@@ -168,19 +176,21 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
       requestAnimationFrame(() => formRef.current?.requestSubmit());
     } catch (e) {
       setEnvoi("repos");
-      setErreur(e instanceof Error ? e.message : "Envoi impossible.");
+      setErreur(e instanceof Error ? e.message : t("videoUploadForm.sendImpossible"));
     }
   }
 
   if (state?.success) {
     return (
       <div className="glass rounded-2xl rounded-tr-sm p-5">
-        <p className="font-display text-lg font-semibold text-success">Ton témoignage est en ligne.</p>
+        <p className="font-display text-lg font-semibold text-success">
+          {t("videoUploadForm.successHeading")}
+        </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Il apparaît dans le direct, rattaché à l&apos;appel sur {target}.
+          {t("videoUploadForm.successBody", { target })}
         </p>
         <Button asChild className="mt-4">
-          <a href="/direct">Voir le direct</a>
+          <a href="/direct">{t("videoUploadForm.seeLive")}</a>
         </Button>
       </div>
     );
@@ -190,12 +200,13 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
     <form ref={formRef} action={formAction} onSubmit={envoyer} className="glass rounded-2xl rounded-tr-sm p-5">
       <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
         <Video aria-hidden className="h-5 w-5 text-secondary" />
-        Filme ton témoignage
+        {t("videoUploadForm.heading")}
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        {MAX_VIDEO_SECONDS} secondes maximum, {Math.round(MAX_VIDEO_BYTES / 1e6)} Mo max. Ta vidéo
-        est publiée sous ton nom, rattachée à cet appel — et tu restes responsable de ce que tu y
-        affirmes, exactement comme pour un appel écrit.
+        {t("videoUploadForm.intro", {
+          maxSeconds: MAX_VIDEO_SECONDS,
+          maxMb: Math.round(MAX_VIDEO_BYTES / 1e6),
+        })}
       </p>
 
       <input type="hidden" name="callId" value={callId} />
@@ -206,7 +217,7 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
       <input type="hidden" name="height" value={mesures?.height ?? ""} />
 
       <div className="mt-4 space-y-1.5">
-        <Label htmlFor="video-fichier">Ta vidéo</Label>
+        <Label htmlFor="video-fichier">{t("videoUploadForm.fileLabel")}</Label>
         <input
           id="video-fichier"
           type="file"
@@ -216,14 +227,20 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
         />
         {mesures && (
           <p className="text-xs text-muted-foreground">
-            {Math.round(mesures.durationMs / 1000)} s · {mesures.width}×{mesures.height}
-            {mesures.poster ? " · vignette capturée" : " · pas de vignette"}
+            {t(
+              mesures.poster ? "videoUploadForm.fileMetaPoster" : "videoUploadForm.fileMetaNoPoster",
+              {
+                seconds: Math.round(mesures.durationMs / 1000),
+                width: mesures.width,
+                height: mesures.height,
+              }
+            )}
           </p>
         )}
       </div>
 
       <div className="mt-4 space-y-1.5">
-        <Label htmlFor="video-legende">Ce que montre ta vidéo</Label>
+        <Label htmlFor="video-legende">{t("videoUploadForm.captionLabel")}</Label>
         <Textarea
           id="video-legende"
           name="caption"
@@ -231,7 +248,7 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
           rows={3}
           minLength={MIN_VIDEO_CAPTION}
           maxLength={MAX_VIDEO_CAPTION}
-          placeholder="Dis en une phrase ce qu'on voit et ce que ça prouve…"
+          placeholder={t("videoUploadForm.captionPlaceholder")}
         />
       </div>
 
@@ -243,10 +260,10 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
 
       <Button type="submit" disabled={pending || envoi !== "repos" || !fichier} className="mt-4">
         {envoi === "televersement"
-          ? "Envoi de la vidéo…"
+          ? t("videoUploadForm.uploading")
           : envoi === "enregistrement" || pending
-            ? "Publication…"
-            : "Publier mon témoignage"}
+            ? t("videoUploadForm.publishing")
+            : t("videoUploadForm.submit")}
       </Button>
     </form>
   );

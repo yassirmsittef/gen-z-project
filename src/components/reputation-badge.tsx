@@ -1,7 +1,8 @@
+import { getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 import { reputationLevel } from "@/lib/reputation";
 
-export function ReputationBadge({
+export async function ReputationBadge({
   reputation,
   admin = false,
   showScore = true,
@@ -12,6 +13,8 @@ export function ReputationBadge({
   showScore?: boolean;
   className?: string;
 }) {
+  const t = await getT("ui");
+  const tLabels = await getT("labels");
   const level = reputationLevel(reputation, admin);
   return (
     <span
@@ -20,10 +23,10 @@ export function ReputationBadge({
         level.className,
         className
       )}
-      title={`Réputation : ${reputation}`}
+      title={t("reputationBadge.title", { reputation })}
     >
       <level.Icon className="h-3.5 w-3.5" aria-hidden />
-      {level.label}
+      {tLabels(level.labelKey)}
       {showScore && <span className="opacity-70">· {reputation}</span>}
     </span>
   );

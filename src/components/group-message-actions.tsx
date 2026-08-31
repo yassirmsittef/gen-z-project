@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { deleteGroupMessageAction } from "@/actions/chat-groups";
+import { useT } from "@/components/i18n-provider";
 import { ReportButton } from "@/components/report-button";
 
 /**
@@ -19,6 +20,7 @@ export function GroupMessageActions({
   canDelete: boolean;
   canReport: boolean;
 }) {
+  const t = useT("chat");
   const [state, formAction, pending] = useActionState(deleteGroupMessageAction, undefined);
   const [armed, setArmed] = useState(false);
 
@@ -44,25 +46,25 @@ export function GroupMessageActions({
               disabled={pending}
               className="cursor-pointer font-mono text-[10px] uppercase tracking-[0.14em] text-destructive hover:underline"
             >
-              {pending ? "Retrait…" : "Confirmer"}
+              {pending ? t("groupMessageActions.pending") : t("groupMessageActions.confirm")}
             </button>
             <button
               type="button"
               onClick={() => setArmed(false)}
               className="cursor-pointer font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:underline"
             >
-              Annuler
+              {t("groupMessageActions.cancel")}
             </button>
           </form>
         ) : (
           <button
             type="button"
             onClick={() => setArmed(true)}
-            title="Retirer ce message"
+            title={t("groupMessageActions.remove")}
             className="cursor-pointer text-muted-foreground opacity-60 transition-opacity duration-200 hover:text-destructive hover:opacity-100"
           >
             <Trash2 className="h-3.5 w-3.5" aria-hidden />
-            <span className="sr-only">Retirer ce message</span>
+            <span className="sr-only">{t("groupMessageActions.remove")}</span>
           </button>
         ))}
 

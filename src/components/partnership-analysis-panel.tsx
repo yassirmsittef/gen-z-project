@@ -1,5 +1,6 @@
 import { Sparkles } from "lucide-react";
 import { StatRing } from "@/components/stat-ring";
+import { getT } from "@/lib/i18n/server";
 import type { PartnershipAnalysis } from "@/lib/partnership-ai";
 import { cn } from "@/lib/utils";
 
@@ -8,14 +9,17 @@ import { cn } from "@/lib/utils";
  * questions à poser — le porteur décide, le copilote éclaire.
  */
 
-const VERDICT_STYLES: Record<
-  PartnershipAnalysis["verdict"],
-  { label: string; tone: string }
-> = {
-  favorable: { label: "Offre a priori saine", tone: "border-success/40 bg-success/10 text-success" },
-  prudence: { label: "À clarifier avant de s'engager", tone: "border-amber-400/40 bg-amber-400/10 text-amber-300" },
-  deconseille: { label: "Signaux d'arnaque — déconseillé", tone: "border-destructive/40 bg-destructive/10 text-destructive" },
+const VERDICT_TONES: Record<PartnershipAnalysis["verdict"], string> = {
+  favorable: "border-success/40 bg-success/10 text-success",
+  prudence: "border-amber-400/40 bg-amber-400/10 text-amber-300",
+  deconseille: "border-destructive/40 bg-destructive/10 text-destructive",
 };
+
+const VERDICT_KEYS = {
+  favorable: "partnershipAnalysisPanel.verdictFavorable",
+  prudence: "partnershipAnalysisPanel.verdictPrudence",
+  deconseille: "partnershipAnalysisPanel.verdictDeconseille",
+} as const;
 
 const SIGNAL_DOTS: Record<PartnershipAnalysis["signaux"][number]["niveau"], string> = {
   danger: "bg-destructive",
@@ -23,56 +27,58 @@ const SIGNAL_DOTS: Record<PartnershipAnalysis["signaux"][number]["niveau"], stri
   info: "bg-primary",
 };
 
-const SIGNAL_LABELS: Record<PartnershipAnalysis["signaux"][number]["niveau"], string> = {
-  danger: "Danger",
-  attention: "Attention",
-  info: "Info",
-};
+const SIGNAL_KEYS = {
+  danger: "partnershipAnalysisPanel.signalDanger",
+  attention: "partnershipAnalysisPanel.signalAttention",
+  info: "partnershipAnalysisPanel.signalInfo",
+} as const;
 
-export function PartnershipAnalysisPanel({ analysis }: { analysis: PartnershipAnalysis }) {
-  const verdict = VERDICT_STYLES[analysis.verdict];
+export async function PartnershipAnalysisPanel({ analysis }: { analysis: PartnershipAnalysis }) {
+  const t = await getT("calls");
 
   return (
     <section data-spotlight className="glass space-y-6 rounded-2xl rounded-tr-sm p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
           <Sparkles className="h-5 w-5 text-primary" aria-hidden />
-          Copilote IA
+          {t("partnershipAnalysisPanel.heading")}
         </h2>
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-          {analysis.moteur === "claude" ? "Analyse approfondie · Claude" : "Analyse rapide"}
+          {analysis.moteur === "claude"
+            ? t("partnershipAnalysisPanel.engineDeep")
+            : t("partnershipAnalysisPanel.engineQuick")}
         </p>
       </div>
 
       <p
         className={cn(
           "inline-flex items-center rounded-full border px-3 py-1 font-mono text-[11px] font-medium uppercase tracking-[0.14em]",
-          verdict.tone
+          VERDICT_TONES[analysis.verdict]
         )}
       >
-        {verdict.label}
+        {t(VERDICT_KEYS[analysis.verdict])}
       </p>
 
       <div className="grid gap-6 sm:grid-cols-[auto_auto_1fr] sm:items-center">
         <StatRing
           value={String(analysis.fiabilite)}
           percent={analysis.fiabilite / 100}
-          label="Fiabilité"
-          sublabel="La marque semble-t-elle réelle ?"
+          label={t("partnershipAnalysisPanel.reliabilityLabel")}
+          sublabel={t("partnershipAnalysisPanel.reliabilitySub")}
         />
         <StatRing
           tint="violet"
           value={String(analysis.equite)}
           percent={analysis.equite / 100}
-          label="Équité"
-          sublabel="Contrepartie vs travail demandé"
+          label={t("partnershipAnalysisPanel.fairnessLabel")}
+          sublabel={t("partnershipAnalysisPanel.fairnessSub")}
         />
         <p className="text-sm leading-relaxed text-foreground/90">{analysis.resume}</p>
       </div>
 
       {analysis.signaux.length > 0 && (
         <div className="space-y-2">
-          <h3 className="data-label">Signaux détectés</h3>
+          <h3 className="data-label">{t("partnershipAnalysisPanel.signalsHeading")}</h3>
           <ul className="space-y-2">
             {analysis.signaux.map((signal, index) => (
               <li key={index} className="flex items-start gap-2.5 text-sm">
@@ -82,7 +88,7 @@ export function PartnershipAnalysisPanel({ analysis }: { analysis: PartnershipAn
                 />
                 <span>
                   <span className="mr-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                    {SIGNAL_LABELS[signal.niveau]}
+                    {t(SIGNAL_KEYS[signal.niveau])}
                   </span>
                   {signal.texte}
                 </span>
@@ -94,7 +100,7 @@ export function PartnershipAnalysisPanel({ analysis }: { analysis: PartnershipAn
 
       {analysis.questions.length > 0 && (
         <div className="space-y-2">
-          <h3 className="data-label">À demander avant de t&apos;engager</h3>
+          <h3 className="data-label">{t("partnershipAnalysisPanel.questionsHeading")}</h3>
           <ol className="list-inside list-decimal space-y-1.5 text-sm text-foreground/90">
             {analysis.questions.map((question, index) => (
               <li key={index}>{question}</li>

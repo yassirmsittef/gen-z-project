@@ -1,5 +1,6 @@
 "use server";
 import { domainErrorMessage } from "@/lib/action-errors";
+import { REPORT_REASON_KEYS, reportReasonFr } from "@/lib/constants";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -22,7 +23,9 @@ const reportSchema = z.object({
     "CALL_VIDEO",
   ]),
   targetId: z.string().min(1),
-  reason: z.string().min(1, "Choisis un motif."),
+  // La CLÉ du motif (affichée traduite au formulaire) ; le rendu français
+  // part en base — l'équipe modère en français.
+  reason: z.enum(REPORT_REASON_KEYS, { errorMap: () => ({ message: "Choisis un motif." }) }),
   detail: z.string().trim().max(500, "500 caractères max.").optional(),
 });
 
@@ -42,7 +45,10 @@ export async function reportAction(
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
   try {
-    await createReport(session.user.id, parsed.data);
+    await createReport(session.user.id, {
+      ...parsed.data,
+      reason: reportReasonFr(parsed.data.reason),
+    });
   } catch (error) {
     if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;

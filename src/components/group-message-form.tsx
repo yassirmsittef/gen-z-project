@@ -3,10 +3,12 @@
 import { useActionState, useEffect, useRef } from "react";
 import { SendHorizontal } from "lucide-react";
 import { sendGroupMessageAction } from "@/actions/chat-groups";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function GroupMessageForm({ groupId, groupName }: { groupId: string; groupName: string }) {
+  const t = useT("chat");
   const [state, formAction, pending] = useActionState(sendGroupMessageAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -21,16 +23,16 @@ export function GroupMessageForm({ groupId, groupName }: { groupId: string; grou
         <input type="hidden" name="groupId" value={groupId} />
         <Input
           name="body"
-          aria-label={`Ton message dans ${groupName}`}
-          placeholder={`Écris dans ${groupName}…`}
+          aria-label={t("groupMessageForm.bodyLabel", { group: groupName })}
+          placeholder={t("groupMessageForm.bodyPlaceholder", { group: groupName })}
           maxLength={1000}
           autoComplete="off"
           required
           className="flex-1"
         />
-        <Button type="submit" size="icon" disabled={pending} title="Envoyer">
+        <Button type="submit" size="icon" disabled={pending} title={t("groupMessageForm.send")}>
           <SendHorizontal aria-hidden />
-          <span className="sr-only">Envoyer</span>
+          <span className="sr-only">{t("groupMessageForm.send")}</span>
         </Button>
       </div>
       {state?.error && (

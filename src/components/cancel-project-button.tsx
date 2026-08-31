@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { OctagonX } from "lucide-react";
 import { cancelProjectAction } from "@/actions/projects";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -22,6 +23,7 @@ export function CancelProjectButton({
   refundLabel: string;
   contributorCount: number;
 }) {
+  const t = useT("project");
   const [state, formAction, pending] = useActionState(cancelProjectAction, undefined);
   const [armed, setArmed] = useState(false);
 
@@ -39,25 +41,21 @@ export function CancelProjectButton({
       {armed ? (
         <div className="space-y-3">
           <p className="rounded-xl border border-destructive/30 bg-destructive/[0.07] p-3 text-sm text-foreground/90">
-            En confirmant, le projet passe définitivement <strong>« non abouti »</strong> et
-            jusqu&apos;à <strong>{refundLabel}</strong> repart vers{" "}
-            {contributorCount > 0 ? (
-              <>
-                {contributorCount} contributeur{contributorCount > 1 ? "s" : ""}
-              </>
-            ) : (
-              <>les contributeurs</>
-            )}{" "}
-            (net des frais de carte, quelques jours selon leur banque). Il n&apos;y a pas de retour
-            en arrière.
+            {t("cancelProjectButton.confirmBody", {
+              amount: refundLabel,
+              contributors:
+                contributorCount > 0
+                  ? t("cancelProjectButton.contributorCount", { count: contributorCount })
+                  : t("cancelProjectButton.contributorsGeneric"),
+            })}
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" variant="destructive" size="sm" disabled={pending}>
               <OctagonX aria-hidden />
-              {pending ? "Arrêt en cours…" : "Oui, arrêter et rembourser"}
+              {pending ? t("cancelProjectButton.confirmPending") : t("cancelProjectButton.confirmSubmit")}
             </Button>
             <Button type="button" variant="ghost" size="sm" onClick={() => setArmed(false)}>
-              Annuler
+              {t("cancelProjectButton.cancel")}
             </Button>
           </div>
         </div>
@@ -70,7 +68,7 @@ export function CancelProjectButton({
           onClick={() => setArmed(true)}
         >
           <OctagonX aria-hidden />
-          Arrêter le projet
+          {t("cancelProjectButton.arm")}
         </Button>
       )}
     </form>

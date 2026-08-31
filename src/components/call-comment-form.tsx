@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { postCallCommentAction } from "@/actions/boycott";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -11,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
  * et c'est exactement ce qui exposerait la plateforme.
  */
 export function CallCommentForm({ callId }: { callId: string }) {
+  const t = useT("calls");
   const [state, formAction, pending] = useActionState(postCallCommentAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -26,8 +28,8 @@ export function CallCommentForm({ callId }: { callId: string }) {
         required
         rows={3}
         maxLength={1000}
-        placeholder="Apporte une précision, une source, une nuance — ou dis pourquoi tu n'es pas d'accord…"
-        aria-label="Ta réponse"
+        placeholder={t("callCommentForm.placeholder")}
+        aria-label={t("callCommentForm.replyAria")}
       />
       {state?.error && (
         <p role="alert" className="text-sm font-medium text-destructive">
@@ -36,11 +38,9 @@ export function CallCommentForm({ callId }: { callId: string }) {
       )}
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" variant="outline" size="sm" disabled={pending}>
-          {pending ? "Envoi…" : "Répondre"}
+          {pending ? t("callCommentForm.pending") : t("callCommentForm.submit")}
         </Button>
-        <p className="text-xs text-muted-foreground">
-          Publié sous ton nom. La contradiction est bienvenue, l&apos;attaque personnelle non.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("callCommentForm.disclaimer")}</p>
       </div>
     </form>
   );

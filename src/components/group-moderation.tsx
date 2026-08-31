@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { ShieldCheck, ShieldMinus, UserMinus, UserPlus } from "lucide-react";
 import { groupModerationAction } from "@/actions/chat-groups";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -24,6 +25,7 @@ export function MemberActions({
   /** Animateur (ou ADMIN) : peut nommer et démettre, pas seulement exclure. */
   canManage: boolean;
 }) {
+  const t = useT("chat");
   const [state, formAction, pending] = useActionState(groupModerationAction, undefined);
   const [armed, setArmed] = useState(false);
 
@@ -49,7 +51,7 @@ export function MemberActions({
             disabled={pending}
           >
             <ShieldMinus aria-hidden />
-            Retirer la gérance
+            {t("memberActions.demote")}
           </Button>
         ) : (
           <Button
@@ -61,7 +63,7 @@ export function MemberActions({
             disabled={pending}
           >
             <ShieldCheck aria-hidden />
-            Nommer gérant·e
+            {t("memberActions.promote")}
           </Button>
         ))}
 
@@ -76,10 +78,12 @@ export function MemberActions({
             disabled={pending}
           >
             <UserMinus aria-hidden />
-            {pending ? "Exclusion…" : `Oui, exclure ${targetName}`}
+            {pending
+              ? t("memberActions.excludePending")
+              : t("memberActions.excludeConfirm", { name: targetName })}
           </Button>
           <Button type="button" variant="ghost" size="sm" onClick={() => setArmed(false)}>
-            Annuler
+            {t("memberActions.cancel")}
           </Button>
         </>
       ) : (
@@ -91,7 +95,7 @@ export function MemberActions({
           onClick={() => setArmed(true)}
         >
           <UserMinus aria-hidden />
-          Exclure
+          {t("memberActions.exclude")}
         </Button>
       )}
     </form>
@@ -100,6 +104,7 @@ export function MemberActions({
 
 /** Lever une exclusion : la personne peut à nouveau rejoindre le salon. */
 export function ReadmitButton({ slug, targetId }: { slug: string; targetId: string }) {
+  const t = useT("chat");
   const [state, formAction, pending] = useActionState(groupModerationAction, undefined);
 
   return (
@@ -120,7 +125,7 @@ export function ReadmitButton({ slug, targetId }: { slug: string; targetId: stri
         disabled={pending}
       >
         <UserPlus aria-hidden />
-        {pending ? "Réadmission…" : "Réadmettre"}
+        {pending ? t("readmitButton.pending") : t("readmitButton.readmit")}
       </Button>
     </form>
   );

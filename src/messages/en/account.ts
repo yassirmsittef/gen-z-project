@@ -1,3 +1,179 @@
 import type { Messages } from "../types";
 
-export const account = {} satisfies Messages["account"];
+/**
+ * Namespace `account` — account and profile: login, sign-up, password
+ * (change + reset), account deletion, profile, city, skills,
+ * notification preferences, Stripe payouts.
+ */
+export const account = {
+  // ── auth-forms.tsx · GoogleButton ─────────────────────────────────────
+  "googleButton.or": "or",
+  "googleButton.continueWithGoogle": "Continue with Google",
+
+  // ── auth-forms.tsx · LoginForm ────────────────────────────────────────
+  "loginForm.emailLabel": "Email",
+  "loginForm.emailPlaceholder": "you@example.com",
+  "loginForm.passwordLabel": "Password",
+  "loginForm.forgotPassword": "Forgot your password?",
+  "loginForm.submitPending": "Logging in…",
+  "loginForm.submit": "Log in",
+  "loginForm.noAccount": "No account yet?",
+  "loginForm.signUpLink": "Sign up",
+
+  // ── auth-forms.tsx · RegisterForm ─────────────────────────────────────
+  "registerForm.nameLabel": "Username",
+  "registerForm.namePlaceholder": "Your username",
+  "registerForm.emailLabel": "Email",
+  "registerForm.emailPlaceholder": "you@example.com",
+  "registerForm.passwordLabel": "Password",
+  "registerForm.passwordHint": "8 characters minimum.",
+  "registerForm.confirmPasswordLabel": "Confirm your password",
+  "registerForm.cityLabel": "Your city",
+  "registerForm.cityOptional": "(optional)",
+  "registerForm.cityPlaceholder": "e.g. London — to appear on the globe",
+  "registerForm.cityHint":
+    "The city's position on the Community globe, never your exact location. Changeable anytime.",
+  "registerForm.languageLabel": "Your language",
+  "registerForm.languageHint":
+    "The interface, notifications and emails will speak to you in this language.",
+  "registerForm.currencyLabel": "Your currency",
+  "registerForm.currencyHint":
+    "Your amounts will display in this currency. The right to post a project stays counted in dollars ($20 contributed): your contributions convert automatically at the day's rate.",
+  "registerForm.acceptPrefix": "I accept the",
+  "registerForm.termsLink": "terms of service",
+  "registerForm.acceptMiddle": "and the",
+  "registerForm.privacyLink": "privacy policy",
+  "registerForm.acceptSuffix": ".",
+  "registerForm.googleAcceptPrefix": "By continuing with Google, you accept the",
+  "registerForm.submitPending": "Creating…",
+  "registerForm.submit": "Create my account",
+  "registerForm.alreadyAccount": "Already have an account?",
+  "registerForm.signInLink": "Log in",
+
+  // ── password-form.tsx · PasswordForm ──────────────────────────────────
+  "passwordForm.currentLabel": "Current password",
+  "passwordForm.newLabel": "New (8 characters min)",
+  "passwordForm.confirmLabel": "Confirm",
+  "passwordForm.success": "Password changed.",
+  "passwordForm.submitPending": "Changing…",
+  "passwordForm.submit": "Change password",
+
+  // ── password-reset-forms.tsx · ForgotPasswordForm ─────────────────────
+  "forgotPasswordForm.sentTitle": "Email sent",
+  "forgotPasswordForm.sentBody":
+    "If an account exists with this address, a reset link is on its way — it's valid for 1 hour. Remember to check your spam folder.",
+  "forgotPasswordForm.backToLogin": "Back to login",
+  "forgotPasswordForm.emailLabel": "Your account email",
+  "forgotPasswordForm.emailPlaceholder": "you@example.com",
+  "forgotPasswordForm.submitPending": "Sending…",
+  "forgotPasswordForm.submit": "Send me a reset link",
+
+  // ── password-reset-forms.tsx · ResetPasswordForm ──────────────────────
+  "resetPasswordForm.success": "Password changed — you can log in.",
+  "resetPasswordForm.signIn": "Log in",
+  "resetPasswordForm.newLabel": "New password (8 characters min)",
+  "resetPasswordForm.confirmLabel": "Confirm it",
+  "resetPasswordForm.retryLink": "Request a new link",
+  "resetPasswordForm.submitPending": "Saving…",
+  "resetPasswordForm.submit": "Change my password",
+
+  // ── delete-account.tsx · DeleteAccount ────────────────────────────────
+  "deleteAccount.summary": "Delete my account",
+  "deleteAccount.bodyBefore":
+    "Your personal data is erased (profile, avatar, bio, city, preferences) and your access permanently cut off.",
+  "deleteAccount.bodyStrong":
+    "Your filmed testimonies are removed from the Live feed and their files deleted",
+  "deleteAccount.bodyAfter":
+    ": your face is in them, they can't outlive you — there's no way back. Your contributions and the history of projects you've backed remain, under the name “Removed member” — the community's books never lie. Not possible while a campaign you've backed is still running.",
+  "deleteAccount.passwordLabel": "Confirm with your password",
+  "deleteAccount.submitPending": "Deleting…",
+  "deleteAccount.submit": "Permanently delete my account",
+
+  // ── profile-form.tsx · ProfileForm ────────────────────────────────────
+  "profileForm.fileTooHeavy": "Image too heavy — pick a photo under 1 MB.",
+  "profileForm.avatarLabel": "Profile photo",
+  "profileForm.changeAvatarAria": "Change profile photo",
+  "profileForm.addAvatarAria": "Add a profile photo",
+  "profileForm.changePhoto": "Change photo",
+  "profileForm.addPhoto": "Add a photo",
+  "profileForm.removePhoto": "Remove",
+  "profileForm.avatarHint":
+    "Automatically cropped to a square. Visible on your profile, your projects and your messages.",
+  "profileForm.nameLabel": "Username",
+  "profileForm.bioLabel": "Bio (280 characters max, optional)",
+  "profileForm.bioPlaceholder": "Who you are, what you make, what you're looking for.",
+  "profileForm.bioHint":
+    "Shown on your public profile, next to your reputation and your projects.",
+  "profileForm.linksLabel": "Your links (3 max, optional)",
+  "profileForm.linkPlaceholder1": "https://instagram.com/you",
+  "profileForm.linkPlaceholder2": "https://tiktok.com/@you",
+  "profileForm.linkPlaceholder3": "https://yoursite.com",
+  "profileForm.linkAria": "Link {num}",
+  "profileForm.linksHint":
+    "Site, socials, portfolio — shown on your public profile (https only).",
+  "profileForm.languageLabel": "My language",
+  "profileForm.languageHint":
+    "Interface, notifications and emails — even your history rereads in the language you choose.",
+  "profileForm.currencyLabel": "My currency",
+  "profileForm.currencyHint":
+    "Your dashboard amounts display in this currency (indicative conversion at the day's rate). Only the $20 gauge for posting stays in dollars.",
+  "profileForm.success": "Profile saved.",
+  "profileForm.submitPending": "Saving…",
+  "profileForm.submit": "Save",
+
+  // ── location-form.tsx · LocationForm ──────────────────────────────────
+  "locationForm.cityLabel": "Your city",
+  "locationForm.cityPlaceholder": "e.g. New York — start typing",
+  "locationForm.hintBefore": "It places you on the globe of the",
+  "locationForm.hintLink": "Community page",
+  "locationForm.hintAfter":
+    "(the city's position, never your exact location). Leave empty to stay off it.",
+  "locationForm.removedSuccess": "You no longer appear on the globe.",
+  "locationForm.savedSuccess": "City saved.",
+  "locationForm.submitPending": "Saving…",
+  "locationForm.submit": "Save",
+
+  // ── skills-form.tsx · SkillsForm ──────────────────────────────────────
+  "skillsForm.label": "Your skills",
+  "skillsForm.placeholder": "e.g. editing, react, photo — separated by commas",
+  "skillsForm.hint":
+    "They help us recommend projects looking for a hand like yours.",
+  "skillsForm.success": "Skills saved.",
+  "skillsForm.submitPending": "Saving…",
+  "skillsForm.submit": "Save",
+
+  // ── notification-prefs.tsx · NotificationPrefs ────────────────────────
+  "notificationPrefs.summary": "Preferences — choose what I receive",
+  "notificationPrefs.success": "Preferences saved.",
+  "notificationPrefs.submitPending": "Saving…",
+  "notificationPrefs.submit": "Save",
+
+  // ── connect-form.tsx · PayoutTotals ───────────────────────────────────
+  "payoutTotals.due": "Awaiting payout",
+  "payoutTotals.sent": "Already paid out",
+  "payoutTotals.autoActive": "Transfers go out automatically — within 24 hours at the latest.",
+  "payoutTotals.autoPending":
+    "They'll go out automatically as soon as your setup is complete.",
+
+  // ── connect-form.tsx · ConnectForm ────────────────────────────────────
+  "connectForm.stripeDisabled":
+    "Real payouts come with Stripe — not configured on this environment.",
+  "connectForm.activeTitle": "Payouts active",
+  "connectForm.activeBodyLive":
+    "When the community approves a milestone on one of your projects, its amount is transferred to your Stripe account, net of card fees.",
+  "connectForm.activeBodyTest":
+    "When the community approves a milestone on one of your projects, its amount is transferred to your Stripe account (test mode for now — no real money moves).",
+  "connectForm.resumeBody":
+    "Your Stripe setup is incomplete — finish it to receive the funds from your approved milestones.",
+  "connectForm.setupBodyLive":
+    "Set up your Stripe account to receive the funds from your approved milestones (2 minutes).",
+  "connectForm.setupBodyTest":
+    "Set up your Stripe account to receive the funds from your approved milestones (test mode, 2 minutes).",
+  "connectForm.submitPending": "Redirecting to Stripe…",
+  "connectForm.resume": "Resume setup",
+  "connectForm.setup": "Set up my payouts",
+
+  // ── ui/password-input.tsx · PasswordInput ─────────────────────────────
+  "passwordInput.show": "Show password",
+  "passwordInput.hide": "Hide password",
+} satisfies Messages["account"];

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Megaphone, Pause, Play, Target, Volume2, VolumeX } from "lucide-react";
+import { useT } from "@/components/i18n-provider";
 import { ReportButton } from "@/components/report-button";
 import { UserAvatar } from "@/components/user-avatar";
 import { removeVideoAction } from "@/actions/call-videos";
@@ -44,6 +45,7 @@ export function VideoFeed({
   curseurInitial: string | null;
   autoriseSuite?: boolean;
 }) {
+  const t = useT("calls");
   const [videos, setVideos] = useState(initiales);
   const [curseur, setCurseur] = useState(curseurInitial);
 
@@ -135,13 +137,10 @@ export function VideoFeed({
   if (videos.length === 0) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-        <p className="text-lg font-semibold">Personne n&apos;a encore filmé.</p>
-        <p className="max-w-md text-sm text-muted-foreground">
-          Un témoignage se rattache toujours à un appel : ouvre un appel du fil et raconte, face
-          caméra, pourquoi tu ne veux plus de cette marque.
-        </p>
+        <p className="text-lg font-semibold">{t("videoFeed.emptyHeading")}</p>
+        <p className="max-w-md text-sm text-muted-foreground">{t("videoFeed.emptyBody")}</p>
         <Button asChild variant="outline" className="mt-2">
-          <Link href="/appels">Voir les appels</Link>
+          <Link href="/appels">{t("videoFeed.seeCalls")}</Link>
         </Button>
       </div>
     );
@@ -157,11 +156,11 @@ export function VideoFeed({
           variant="outline"
           className="pointer-events-auto"
           aria-pressed={!muet}
-          title={muet ? "Activer le son" : "Couper le son"}
+          title={muet ? t("videoFeed.soundOn") : t("videoFeed.soundOff")}
           onClick={() => setMuet((m) => !m)}
         >
           {muet ? <VolumeX aria-hidden /> : <Volume2 aria-hidden />}
-          <span className="sr-only">{muet ? "Activer le son" : "Couper le son"}</span>
+          <span className="sr-only">{muet ? t("videoFeed.soundOn") : t("videoFeed.soundOff")}</span>
         </Button>
         <Button
           type="button"
@@ -169,11 +168,13 @@ export function VideoFeed({
           variant="outline"
           className="pointer-events-auto"
           aria-pressed={enPause}
-          title={enPause ? "Reprendre" : "Mettre en pause"}
+          title={enPause ? t("videoFeed.resume") : t("videoFeed.pause")}
           onClick={() => setEnPause((p) => !p)}
         >
           {enPause ? <Play aria-hidden /> : <Pause aria-hidden />}
-          <span className="sr-only">{enPause ? "Reprendre la lecture" : "Mettre en pause"}</span>
+          <span className="sr-only">
+            {enPause ? t("videoFeed.resumePlayback") : t("videoFeed.pause")}
+          </span>
         </Button>
       </div>
 
@@ -198,16 +199,14 @@ export function VideoFeed({
                     className="absolute inset-0 h-full w-full object-contain opacity-40"
                   />
                 )}
-                <p className="relative text-sm font-semibold">
-                  Ton navigateur ne sait pas lire cette vidéo.
-                </p>
+                <p className="relative text-sm font-semibold">{t("videoFeed.unreadable")}</p>
                 <a
                   href={video.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="relative text-sm text-secondary underline-offset-4 hover:underline"
                 >
-                  L&apos;ouvrir dans un nouvel onglet
+                  {t("videoFeed.openInNewTab")}
                 </a>
               </div>
             )}
@@ -254,7 +253,7 @@ export function VideoFeed({
                 className="inline-flex max-w-full items-center gap-2 rounded-full border border-secondary/40 bg-secondary/20 px-3.5 py-1.5 backdrop-blur-md transition-colors duration-200 hover:bg-secondary/30"
               >
                 <Target aria-hidden className="h-3.5 w-3.5 shrink-0 text-secondary" />
-                <span className="data-label text-secondary">Ne veut plus de</span>
+                <span className="data-label text-secondary">{t("videoFeed.noLongerWants")}</span>
                 <span translate="no" className="truncate font-semibold text-foreground">
                   {video.call.target}
                 </span>
@@ -274,12 +273,14 @@ export function VideoFeed({
                     avatarUrl={video.author.avatarUrl}
                     className="h-8 w-8"
                   />
-                  <span className="font-medium">{video.author.name ?? "Membre"}</span>
+                  <span className="font-medium">
+                    {video.author.name ?? t("videoFeed.memberFallback")}
+                  </span>
                 </Link>
                 <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Megaphone aria-hidden className="h-3.5 w-3.5" />
-                  <span className="font-mono tabular-nums">{video.call.voix}</span> voix sur cet
-                  appel
+                  <span className="font-mono tabular-nums">{video.call.voix}</span>{" "}
+                  {t("videoFeed.voicesOnCall", { count: video.call.voix })}
                 </span>
                 <span className="rounded-full border border-white/[0.12] px-2.5 py-0.5 text-xs text-muted-foreground">
                   {CATEGORY_LABELS[video.call.category as keyof typeof CATEGORY_LABELS]}
@@ -291,23 +292,22 @@ export function VideoFeed({
                     <form action={removeVideoAction}>
                       <input type="hidden" name="videoId" value={video.id} />
                       <Button type="submit" variant="ghost" size="sm">
-                        Retirer
+                        {t("videoFeed.withdraw")}
                       </Button>
                     </form>
                   )}
                 </span>
               </div>
 
-              <p className="text-[11px] text-muted-foreground">
-                Témoignage publié par un membre. GeniGain héberge ce contenu et n&apos;en est pas
-                l&apos;auteur.
-              </p>
+              <p className="text-[11px] text-muted-foreground">{t("videoFeed.hostDisclaimer")}</p>
             </div>
           </article>
         ))}
 
         {chargeEnCours && (
-          <p className={cn("py-6 text-center text-sm text-muted-foreground")}>Chargement…</p>
+          <p className={cn("py-6 text-center text-sm text-muted-foreground")}>
+            {t("videoFeed.loading")}
+          </p>
         )}
       </div>
     </div>

@@ -2,11 +2,13 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { addCommentAction } from "@/actions/project-feed";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 /** Commenter un projet (membres connectés). */
 export function CommentForm({ projectId }: { projectId: string }) {
+  const t = useT("project");
   const [state, formAction, pending] = useActionState(addCommentAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -22,8 +24,8 @@ export function CommentForm({ projectId }: { projectId: string }) {
         required
         rows={3}
         maxLength={1000}
-        placeholder="Encourage, pose une question, propose un coup de main…"
-        aria-label="Ton commentaire"
+        placeholder={t("commentForm.placeholder")}
+        aria-label={t("commentForm.ariaLabel")}
       />
       {state?.error && (
         <p role="alert" className="text-sm font-medium text-destructive">
@@ -31,7 +33,7 @@ export function CommentForm({ projectId }: { projectId: string }) {
         </p>
       )}
       <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "Envoi…" : "Commenter"}
+        {pending ? t("commentForm.submitPending") : t("commentForm.submit")}
       </Button>
     </form>
   );

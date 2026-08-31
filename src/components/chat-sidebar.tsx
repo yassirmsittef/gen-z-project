@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Hash, MessagesSquare, Plus, Users } from "lucide-react";
+import { useT } from "@/components/i18n-provider";
 import { UserAvatar } from "@/components/user-avatar";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -13,8 +14,8 @@ type Conversations = Awaited<ReturnType<typeof getConversations>>;
 type Groups = Awaited<ReturnType<typeof getMyGroups>>;
 
 const TABS = [
-  { key: "prive", label: "Privé" },
-  { key: "groupes", label: "Groupes" },
+  { key: "prive", labelKey: "chatSidebar.tabPrivate" },
+  { key: "groupes", labelKey: "chatSidebar.tabGroups" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -35,13 +36,18 @@ export function ChatSidebar({
   activePartnerId?: string;
   activeGroupSlug?: string;
 }) {
+  const t = useT("chat");
   const [tab, setTab] = useState<TabKey>(activeGroupSlug ? "groupes" : "prive");
   const unreadGroups = groups.filter((group) => group.unread).length;
 
   return (
     <nav className="glass overflow-hidden rounded-2xl">
-      <div role="tablist" aria-label="Conversations" className="flex border-b border-white/[0.06]">
-        {TABS.map(({ key, label }) => (
+      <div
+        role="tablist"
+        aria-label={t("chatSidebar.tablistLabel")}
+        className="flex border-b border-white/[0.06]"
+      >
+        {TABS.map(({ key, labelKey }) => (
           <button
             key={key}
             type="button"
@@ -63,7 +69,7 @@ export function ChatSidebar({
               tab === key ? "text-foreground" : "text-muted-foreground hover:text-foreground"
             )}
           >
-            {label}
+            {t(labelKey)}
             {key === "prive" && conversations.length > 0 && (
               <span className="ml-1.5 font-mono text-[11px] tabular-nums opacity-60">
                 {conversations.length}
@@ -77,7 +83,7 @@ export function ChatSidebar({
             {key === "groupes" && unreadGroups > 0 && tab !== "groupes" && (
               <span
                 className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-accent-gradient align-middle shadow-glow"
-                aria-label={`${unreadGroups} groupe(s) avec des messages non lus`}
+                aria-label={t("chatSidebar.unreadGroupsDot", { count: unreadGroups })}
               />
             )}
             {tab === key && (
@@ -94,8 +100,7 @@ export function ChatSidebar({
         <div role="tabpanel" id="chat-panel-prive" aria-labelledby="chat-tab-prive">
           {conversations.length === 0 ? (
             <EmptyPanel icon={<MessagesSquare className="h-7 w-7" aria-hidden />}>
-              Aucune conversation privée. Écris à un·e porteur·se depuis sa page projet ou son
-              profil — ou passe par un groupe de ta catégorie.
+              {t("chatSidebar.emptyPrivate")}
             </EmptyPanel>
           ) : (
             <ul className="divide-y divide-white/[0.06]">
@@ -116,7 +121,7 @@ export function ChatSidebar({
                     <div className="min-w-0">
                       <p className="truncate font-semibold">{partner.name}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {lastFromMe ? "Toi : " : ""}
+                        {lastFromMe ? t("chatSidebar.youPrefix") : ""}
                         {lastBody}
                       </p>
                     </div>
@@ -130,8 +135,7 @@ export function ChatSidebar({
         <div role="tabpanel" id="chat-panel-groupes" aria-labelledby="chat-tab-groupes">
           {groups.length === 0 ? (
             <EmptyPanel icon={<Users className="h-7 w-7" aria-hidden />}>
-              Tu n&apos;as encore rejoint aucun groupe. Chaque catégorie a les siens — ouvre le
-              tien ou entre dans un salon existant.
+              {t("chatSidebar.emptyGroups")}
             </EmptyPanel>
           ) : (
             <ul className="divide-y divide-white/[0.06]">
@@ -158,14 +162,22 @@ export function ChatSidebar({
                         {group.unread && (
                           <span
                             className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent-gradient shadow-glow"
-                            aria-label="Messages non lus"
+                            aria-label={t("chatSidebar.unreadDot")}
                           />
                         )}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
                         {group.lastBody
-                          ? `${group.lastFromMe ? "Toi" : (group.lastSenderName ?? "Un membre")} : ${group.lastBody}`
-                          : `${CATEGORY_LABELS[group.category]} · ${group.memberCount} membre${group.memberCount > 1 ? "s" : ""}`}
+                          ? t("chatSidebar.lastMessageLine", {
+                              name: group.lastFromMe
+                                ? t("chatSidebar.you")
+                                : (group.lastSenderName ?? t("chatSidebar.someMember")),
+                              body: group.lastBody,
+                            })
+                          : t("chatSidebar.groupMeta", {
+                              category: CATEGORY_LABELS[group.category],
+                              count: group.memberCount,
+                            })}
                       </p>
                     </div>
                   </Link>
@@ -179,7 +191,7 @@ export function ChatSidebar({
               className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-primary transition-colors duration-200 hover:bg-accent"
             >
               <Plus className="h-4 w-4" aria-hidden />
-              Explorer et créer des groupes
+              {t("chatSidebar.exploreGroups")}
             </Link>
           </div>
         </div>

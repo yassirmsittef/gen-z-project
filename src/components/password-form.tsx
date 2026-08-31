@@ -5,8 +5,10 @@ import { changePasswordAction } from "@/actions/users";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
+import { useT } from "@/components/i18n-provider";
 
 export function PasswordForm() {
+  const t = useT("account");
   const [state, formAction, pending] = useActionState(changePasswordAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -18,7 +20,7 @@ export function PasswordForm() {
   return (
     <form ref={formRef} action={formAction} className="space-y-3">
       <div className="space-y-1.5">
-        <Label htmlFor="currentPassword">Mot de passe actuel</Label>
+        <Label htmlFor="currentPassword">{t("passwordForm.currentLabel")}</Label>
         <PasswordInput
           id="currentPassword"
           name="currentPassword"
@@ -29,7 +31,7 @@ export function PasswordForm() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="newPassword">Nouveau (8 caractères min)</Label>
+          <Label htmlFor="newPassword">{t("passwordForm.newLabel")}</Label>
           <PasswordInput
             id="newPassword"
             name="newPassword"
@@ -39,7 +41,7 @@ export function PasswordForm() {
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="confirmPassword">Confirmer</Label>
+          <Label htmlFor="confirmPassword">{t("passwordForm.confirmLabel")}</Label>
           <PasswordInput
             id="confirmPassword"
             name="confirmPassword"
@@ -55,11 +57,11 @@ export function PasswordForm() {
         </p>
       )}
       {state?.success && (
-        <p className="text-sm font-medium text-success">Mot de passe modifié.</p>
+        <p className="text-sm font-medium text-success">{t("passwordForm.success")}</p>
       )}
 
       <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "Modification…" : "Changer le mot de passe"}
+        {pending ? t("passwordForm.submitPending") : t("passwordForm.submit")}
       </Button>
     </form>
   );

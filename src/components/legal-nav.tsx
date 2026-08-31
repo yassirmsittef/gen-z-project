@@ -2,21 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useT } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
-
-const PAGES = [
-  { href: "/cgu", label: "Conditions d'utilisation" },
-  { href: "/confidentialite", label: "Confidentialité" },
-  { href: "/mentions-legales", label: "Mentions légales" },
-] as const;
 
 /** Navigation entre les trois pages du cadre légal (chips, page active en accent). */
 export function LegalNav() {
+  const t = useT("ui");
   const pathname = usePathname();
 
+  const pages = [
+    { href: "/cgu", label: t("legalNav.terms") },
+    { href: "/confidentialite", label: t("legalNav.privacy") },
+    { href: "/mentions-legales", label: t("legalNav.legalNotice") },
+  ] as const;
+
   return (
-    <nav aria-label="Pages légales" className="mt-4 flex flex-wrap gap-2">
-      {PAGES.map(({ href, label }) => {
+    <nav aria-label={t("legalNav.ariaLabel")} className="mt-4 flex flex-wrap gap-2">
+      {pages.map(({ href, label }) => {
         const active = pathname === href;
         return (
           <Link

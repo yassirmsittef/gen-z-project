@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/user-avatar";
+import { useT } from "@/components/i18n-provider";
 import { LOCALES, type Locale } from "@/lib/i18n/locales";
 import { CURRENCIES } from "@/lib/money";
 
@@ -64,6 +65,7 @@ export function ProfileForm({
   initialCurrency: string;
   initialLinks: string[];
 }) {
+  const t = useT("account");
   const [state, formAction, pending] = useActionState(updateProfileAction, undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Aperçu local de la photo choisie + drapeau « retirer » (exclusifs).
@@ -89,7 +91,7 @@ export function ProfileForm({
     } else if (original.size > 900_000) {
       // Pas de recadrage possible ET fichier trop lourd pour l'action serveur.
       input.value = "";
-      setFileError("Image trop lourde — choisis une photo de moins de 1 Mo.");
+      setFileError(t("profileForm.fileTooHeavy"));
       return;
     }
 
@@ -103,14 +105,14 @@ export function ProfileForm({
   return (
     <form action={formAction} className="space-y-3">
       <div className="space-y-1.5">
-        <Label htmlFor="avatarFile">Photo de profil</Label>
+        <Label htmlFor="avatarFile">{t("profileForm.avatarLabel")}</Label>
         <div className="flex items-center gap-4">
           {/* La photo elle-même est le bouton : le geste que tout le monde
               tente en premier. Voile caméra au survol et au focus clavier. */}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            aria-label={shownAvatar ? "Changer la photo de profil" : "Ajouter une photo de profil"}
+            aria-label={shownAvatar ? t("profileForm.changeAvatarAria") : t("profileForm.addAvatarAria")}
             className="group relative shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <UserAvatar
@@ -133,7 +135,7 @@ export function ProfileForm({
               onClick={() => fileInputRef.current?.click()}
             >
               <Camera aria-hidden />
-              {shownAvatar ? "Changer la photo" : "Ajouter une photo"}
+              {shownAvatar ? t("profileForm.changePhoto") : t("profileForm.addPhoto")}
             </Button>
             {shownAvatar && (
               <Button
@@ -150,7 +152,7 @@ export function ProfileForm({
                 }}
               >
                 <Trash2 aria-hidden />
-                Retirer
+                {t("profileForm.removePhoto")}
               </Button>
             )}
           </div>
@@ -167,8 +169,7 @@ export function ProfileForm({
         />
         <input type="hidden" name="removeAvatar" value={removed ? "1" : ""} />
         <p id="avatar-hint" className="text-xs text-muted-foreground">
-          Recadrée en carré automatiquement. Visible sur ton profil, tes projets et tes
-          messages.
+          {t("profileForm.avatarHint")}
         </p>
         {fileError && (
           <p role="alert" className="text-sm font-medium text-destructive">
@@ -178,7 +179,7 @@ export function ProfileForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="name">Pseudo</Label>
+        <Label htmlFor="name">{t("profileForm.nameLabel")}</Label>
         <Input
           id="name"
           name="name"
@@ -189,22 +190,22 @@ export function ProfileForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="bio">Bio (280 caractères max, optionnel)</Label>
+        <Label htmlFor="bio">{t("profileForm.bioLabel")}</Label>
         <Textarea
           id="bio"
           name="bio"
           rows={3}
           defaultValue={initialBio ?? ""}
           maxLength={280}
-          placeholder="Qui tu es, ce que tu crées, ce que tu cherches."
+          placeholder={t("profileForm.bioPlaceholder")}
         />
         <p className="text-xs text-muted-foreground">
-          Affichée sur ton profil public, à côté de ta réputation et de tes projets.
+          {t("profileForm.bioHint")}
         </p>
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="link-1">Tes liens (3 max, optionnel)</Label>
+        <Label htmlFor="link-1">{t("profileForm.linksLabel")}</Label>
         {[0, 1, 2].map((i) => (
           <Input
             key={i}
@@ -213,18 +214,22 @@ export function ProfileForm({
             type="url"
             defaultValue={initialLinks[i] ?? ""}
             placeholder={
-              ["https://instagram.com/toi", "https://tiktok.com/@toi", "https://tonsite.fr"][i]
+              [
+                t("profileForm.linkPlaceholder1"),
+                t("profileForm.linkPlaceholder2"),
+                t("profileForm.linkPlaceholder3"),
+              ][i]
             }
-            aria-label={`Lien ${i + 1}`}
+            aria-label={t("profileForm.linkAria", { num: i + 1 })}
           />
         ))}
         <p className="text-xs text-muted-foreground">
-          Site, réseaux, portfolio — affichés sur ton profil public (https uniquement).
+          {t("profileForm.linksHint")}
         </p>
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="preferredLanguage">Ma langue</Label>
+        <Label htmlFor="preferredLanguage">{t("profileForm.languageLabel")}</Label>
         {/* Chaque langue s'affiche dans sa propre langue — un menu de langues
             doit rester lisible quelle que soit celle de l'interface. */}
         <select
@@ -240,13 +245,12 @@ export function ProfileForm({
           ))}
         </select>
         <p className="text-xs text-muted-foreground">
-          Interface, notifications et emails — même l&apos;historique se relit dans la
-          langue choisie.
+          {t("profileForm.languageHint")}
         </p>
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="preferredCurrency">Ma devise</Label>
+        <Label htmlFor="preferredCurrency">{t("profileForm.currencyLabel")}</Label>
         <select
           id="preferredCurrency"
           name="preferredCurrency"
@@ -260,9 +264,7 @@ export function ProfileForm({
           ))}
         </select>
         <p className="text-xs text-muted-foreground">
-          Les montants de ton dashboard s&apos;affichent dans cette devise (conversion
-          indicative au taux du jour). Seule la jauge des 50&nbsp;$ pour poster reste en
-          dollars.
+          {t("profileForm.currencyHint")}
         </p>
       </div>
 
@@ -271,10 +273,10 @@ export function ProfileForm({
           {state.error}
         </p>
       )}
-      {state?.success && <p className="text-sm font-medium text-success">Profil enregistré.</p>}
+      {state?.success && <p className="text-sm font-medium text-success">{t("profileForm.success")}</p>}
 
       <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "Enregistrement…" : "Enregistrer"}
+        {pending ? t("profileForm.submitPending") : t("profileForm.submit")}
       </Button>
     </form>
   );

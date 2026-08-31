@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import type { ProjectCategory } from "@prisma/client";
 import { Plus, X } from "lucide-react";
 import { createGroupAction } from "@/actions/chat-groups";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ const selectClass =
  * filtrée est déjà choisie dans le formulaire.
  */
 export function CreateGroupForm({ defaultCategory }: { defaultCategory?: ProjectCategory }) {
+  const t = useT("chat");
   const [state, formAction, pending] = useActionState(createGroupAction, undefined);
   const [open, setOpen] = useState(false);
 
@@ -25,7 +27,9 @@ export function CreateGroupForm({ defaultCategory }: { defaultCategory?: Project
     return (
       <Button type="button" onClick={() => setOpen(true)}>
         <Plus aria-hidden />
-        {defaultCategory ? `Créer un groupe ${CATEGORY_LABELS[defaultCategory]}` : "Créer un groupe"}
+        {defaultCategory
+          ? t("createGroupForm.openWithCategory", { category: CATEGORY_LABELS[defaultCategory] })
+          : t("createGroupForm.open")}
       </Button>
     );
   }
@@ -34,21 +38,18 @@ export function CreateGroupForm({ defaultCategory }: { defaultCategory?: Project
     <form action={formAction} className="glass rounded-2xl rounded-tr-sm p-5">
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-display text-lg font-semibold">Ouvrir un groupe</h2>
-          <p className="text-sm text-muted-foreground">
-            Un salon public, rangé dans sa catégorie. Tu l&apos;animes, tout le monde peut le
-            rejoindre.
-          </p>
+          <h2 className="font-display text-lg font-semibold">{t("createGroupForm.heading")}</h2>
+          <p className="text-sm text-muted-foreground">{t("createGroupForm.intro")}</p>
         </div>
         <Button type="button" variant="ghost" size="icon" onClick={() => setOpen(false)}>
           <X aria-hidden />
-          <span className="sr-only">Fermer</span>
+          <span className="sr-only">{t("createGroupForm.close")}</span>
         </Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="group-name">Nom du groupe</Label>
+          <Label htmlFor="group-name">{t("createGroupForm.nameLabel")}</Label>
           <Input
             id="group-name"
             name="name"
@@ -56,12 +57,12 @@ export function CreateGroupForm({ defaultCategory }: { defaultCategory?: Project
             minLength={3}
             maxLength={40}
             autoComplete="off"
-            placeholder="Les devs du dimanche"
+            placeholder={t("createGroupForm.namePlaceholder")}
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="group-category">Catégorie</Label>
+          <Label htmlFor="group-category">{t("createGroupForm.categoryLabel")}</Label>
           <select
             id="group-category"
             name="category"
@@ -70,7 +71,7 @@ export function CreateGroupForm({ defaultCategory }: { defaultCategory?: Project
             className={selectClass}
           >
             <option value="" disabled>
-              Choisir…
+              {t("createGroupForm.categoryPlaceholder")}
             </option>
             {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
@@ -81,7 +82,7 @@ export function CreateGroupForm({ defaultCategory }: { defaultCategory?: Project
         </div>
 
         <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="group-purpose">À quoi sert ce groupe ?</Label>
+          <Label htmlFor="group-purpose">{t("createGroupForm.purposeLabel")}</Label>
           <Input
             id="group-purpose"
             name="purpose"
@@ -89,7 +90,7 @@ export function CreateGroupForm({ defaultCategory }: { defaultCategory?: Project
             minLength={10}
             maxLength={140}
             autoComplete="off"
-            placeholder="On s'entraide sur les lancements de jeux indés : retours, playtests, contacts."
+            placeholder={t("createGroupForm.purposePlaceholder")}
           />
         </div>
       </div>
@@ -102,9 +103,9 @@ export function CreateGroupForm({ defaultCategory }: { defaultCategory?: Project
 
       <div className="mt-4 flex items-center gap-3">
         <Button type="submit" disabled={pending}>
-          {pending ? "Création…" : "Créer le groupe"}
+          {pending ? t("createGroupForm.pending") : t("createGroupForm.submit")}
         </Button>
-        <p className="text-xs text-muted-foreground">Tu en deviens le premier membre.</p>
+        <p className="text-xs text-muted-foreground">{t("createGroupForm.firstMember")}</p>
       </div>
     </form>
   );

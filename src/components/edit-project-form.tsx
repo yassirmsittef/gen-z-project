@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Save } from "lucide-react";
 import { updateProjectAction } from "@/actions/projects";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,7 @@ type EditableProject = {
  * il est figé, affiché par la page dans un panneau verrouillé.
  */
 export function EditProjectForm({ project }: { project: EditableProject }) {
+  const t = useT("project");
   const [state, formAction, pending] = useActionState(updateProjectAction, undefined);
   const [clientError, setClientError] = useState<string | null>(null);
 
@@ -48,20 +50,20 @@ export function EditProjectForm({ project }: { project: EditableProject }) {
       <input type="hidden" name="projectId" value={project.id} />
 
       <div className="space-y-1.5">
-        <Label htmlFor="title">Titre</Label>
+        <Label htmlFor="title">{t("editProjectForm.titleLabel")}</Label>
         <Input id="title" name="title" defaultValue={project.title} required />
         <p className="text-xs text-muted-foreground">
-          L&apos;adresse de la page ne change pas : les liens déjà partagés continuent de marcher.
+          {t("editProjectForm.titleHelp")}
         </p>
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="pitch">Pitch (140 caractères max)</Label>
+        <Label htmlFor="pitch">{t("editProjectForm.pitchLabel")}</Label>
         <Input id="pitch" name="pitch" defaultValue={project.pitch} maxLength={140} required />
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">{t("editProjectForm.descriptionLabel")}</Label>
         <Textarea
           id="description"
           name="description"
@@ -73,7 +75,7 @@ export function EditProjectForm({ project }: { project: EditableProject }) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="category">Catégorie</Label>
+          <Label htmlFor="category">{t("editProjectForm.categoryLabel")}</Label>
           <select
             id="category"
             name="category"
@@ -90,7 +92,7 @@ export function EditProjectForm({ project }: { project: EditableProject }) {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="coverUrl">Visuel de couverture (URL, optionnel)</Label>
+          <Label htmlFor="coverUrl">{t("editProjectForm.coverLabel")}</Label>
           <Input
             id="coverUrl"
             name="coverUrl"
@@ -102,12 +104,12 @@ export function EditProjectForm({ project }: { project: EditableProject }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="neededSkills">Compétences recherchées (optionnel)</Label>
+        <Label htmlFor="neededSkills">{t("editProjectForm.skillsLabel")}</Label>
         <Input
           id="neededSkills"
           name="neededSkills"
           defaultValue={project.neededSkills.join(", ")}
-          placeholder="ex : montage, mix, photo — séparées par des virgules"
+          placeholder={t("editProjectForm.skillsPlaceholder")}
         />
       </div>
 
@@ -119,7 +121,7 @@ export function EditProjectForm({ project }: { project: EditableProject }) {
 
       <Button type="submit" disabled={pending}>
         <Save aria-hidden />
-        {pending ? "Enregistrement…" : "Enregistrer les modifications"}
+        {pending ? t("editProjectForm.submitPending") : t("editProjectForm.submit")}
       </Button>
     </form>
   );

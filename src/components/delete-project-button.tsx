@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { deleteProjectAction } from "@/actions/projects";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button";
  * l'irréversibilité.
  */
 export function DeleteProjectButton({ projectId }: { projectId: string }) {
+  const t = useT("project");
   const [state, formAction, pending] = useActionState(deleteProjectAction, undefined);
   const [armed, setArmed] = useState(false);
 
@@ -28,10 +30,10 @@ export function DeleteProjectButton({ projectId }: { projectId: string }) {
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" variant="destructive" size="sm" disabled={pending}>
             <Trash2 aria-hidden />
-            {pending ? "Retrait…" : "Oui, retirer définitivement"}
+            {pending ? t("deleteProjectButton.confirmPending") : t("deleteProjectButton.confirmSubmit")}
           </Button>
           <Button type="button" variant="ghost" size="sm" onClick={() => setArmed(false)}>
-            Annuler
+            {t("deleteProjectButton.cancel")}
           </Button>
         </div>
       ) : (
@@ -43,7 +45,7 @@ export function DeleteProjectButton({ projectId }: { projectId: string }) {
           onClick={() => setArmed(true)}
         >
           <Trash2 aria-hidden />
-          Retirer le projet
+          {t("deleteProjectButton.arm")}
         </Button>
       )}
     </form>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -18,6 +19,7 @@ export function NavbarBell({
   initialUnread: number;
   className?: string;
 }) {
+  const t = useT("ui");
   const [unread, setUnread] = useState(initialUnread);
   const pathname = usePathname();
 
@@ -58,7 +60,7 @@ export function NavbarBell({
   }, []);
 
   return (
-    <Button variant="ghost" size="icon" asChild title="Notifications" className={className}>
+    <Button variant="ghost" size="icon" asChild title={t("navbarBell.title")} className={className}>
       <Link href="/notifications">
         <Bell aria-hidden />
         {unread > 0 && (
@@ -66,11 +68,11 @@ export function NavbarBell({
             className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono text-[9px] font-bold text-primary-foreground shadow-glow"
             aria-hidden
           >
-            {unread > 9 ? "9+" : unread}
+            {unread > 9 ? t("navbarBell.overflow") : unread}
           </span>
         )}
         <span className="sr-only">
-          Notifications{unread > 0 ? ` (${unread} non lues)` : ""}
+          {unread > 0 ? t("navbarBell.srUnread", { count: unread }) : t("navbarBell.title")}
         </span>
       </Link>
     </Button>

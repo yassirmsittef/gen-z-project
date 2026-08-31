@@ -3,6 +3,7 @@
 import { startTransition, useActionState, useOptimistic } from "react";
 import { Megaphone } from "lucide-react";
 import { toggleSupportAction } from "@/actions/boycott";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -27,6 +28,7 @@ export function CallSupportButton({
   authenticated: boolean;
   className?: string;
 }) {
+  const t = useT("calls");
   const [state, formAction] = useActionState(toggleSupportAction, undefined);
   const [voice, setVoice] = useOptimistic(
     { count, supporting },
@@ -56,22 +58,22 @@ export function CallSupportButton({
         aria-pressed={voice.supporting}
         aria-label={
           voice.supporting
-            ? `Retirer ma voix — ${voice.count} soutien${voice.count > 1 ? "s" : ""}`
-            : `Je veux ça remplacé aussi — ${voice.count} soutien${voice.count > 1 ? "s" : ""}`
+            ? t("callSupportButton.removeVoiceAria", { count: voice.count })
+            : t("callSupportButton.supportAria", { count: voice.count })
         }
         title={
           authenticated
             ? voice.supporting
-              ? "Retirer ma voix"
-              : "Je veux ça remplacé aussi"
-            : "Connecte-toi pour soutenir cet appel"
+              ? t("callSupportButton.removeVoice")
+              : t("callSupportButton.support")
+            : t("callSupportButton.signInToSupport")
         }
         className="gap-2"
       >
         <Megaphone aria-hidden />
         <span aria-hidden className="font-mono tabular-nums">{voice.count}</span>
         <span aria-hidden className="hidden sm:inline">
-          {voice.supporting ? "Soutenu" : "Je veux ça remplacé"}
+          {voice.supporting ? t("callSupportButton.supported") : t("callSupportButton.supportShort")}
         </span>
       </Button>
       {state?.error && (

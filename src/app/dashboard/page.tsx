@@ -5,6 +5,7 @@ import { FileDown, Handshake, PenLine, ShieldAlert, Sparkles, Star, Swords } fro
 import { auth } from "@/auth";
 import { liveAnswer } from "@/lib/boycott";
 import { isLocale } from "@/lib/i18n/locales";
+import { getT } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -153,6 +154,7 @@ export default async function DashboardPage({
 
   const failedProjects = myProjects.filter((p) => p.status === "FAILED");
   const nextLevel = nextReputationTarget(user.reputation);
+  const tLabels = await getT("labels");
   // Le rôle ADMIN poste sans le gate (démarrage à froid, décision fondateur).
   const gateExempt = user.role === "ADMIN";
   // L'accès au cockpit vit ici depuis que la barre de navigation ne le porte
@@ -243,7 +245,7 @@ export default async function DashboardPage({
               label="Réputation"
               sublabel={
                 nextLevel
-                  ? `${nextLevel.nextLabel} à ${nextLevel.target}`
+                  ? `${tLabels(nextLevel.nextLabelKey)} à ${nextLevel.target}`
                   : "Niveau maximal atteint"
               }
             />

@@ -3,11 +3,13 @@
 import { useActionState } from "react";
 import { Paperclip } from "lucide-react";
 import { submitProofAction } from "@/actions/milestones";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 export function ProofForm({ milestoneId, lastAttempt }: { milestoneId: string; lastAttempt: boolean }) {
+  const t = useT("project");
   const [state, formAction, pending] = useActionState(submitProofAction, undefined);
 
   return (
@@ -19,18 +21,18 @@ export function ProofForm({ milestoneId, lastAttempt }: { milestoneId: string; l
 
       <p className="flex items-center gap-2 text-sm font-semibold">
         <Paperclip className="h-4 w-4" aria-hidden />
-        Soumets ta preuve d&apos;avancement
+        {t("proofForm.heading")}
         {lastAttempt && (
-          <span className="text-destructive">Dernière tentative — sois convaincant·e !</span>
+          <span className="text-destructive">{t("proofForm.lastAttempt")}</span>
         )}
       </p>
 
       <div className="space-y-1.5">
-        <Label htmlFor={`content-${milestoneId}`}>Ce que tu as réalisé</Label>
+        <Label htmlFor={`content-${milestoneId}`}>{t("proofForm.contentLabel")}</Label>
         <Textarea
           id={`content-${milestoneId}`}
           name="content"
-          placeholder="Décris concrètement ce qui a été fait pour cette étape (20 caractères min)…"
+          placeholder={t("proofForm.contentPlaceholder")}
           rows={4}
           required
         />
@@ -38,21 +40,21 @@ export function ProofForm({ milestoneId, lastAttempt }: { milestoneId: string; l
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor={`links-${milestoneId}`}>Liens (un par ligne, optionnel)</Label>
+          <Label htmlFor={`links-${milestoneId}`}>{t("proofForm.linksLabel")}</Label>
           <Textarea
             id={`links-${milestoneId}`}
             name="links"
             rows={2}
-            placeholder={"https://demo.exemple.fr\nhttps://github.com/…"}
+            placeholder={t("proofForm.linksPlaceholder")}
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor={`imageUrls-${milestoneId}`}>Images (une URL par ligne, optionnel)</Label>
+          <Label htmlFor={`imageUrls-${milestoneId}`}>{t("proofForm.imagesLabel")}</Label>
           <Textarea
             id={`imageUrls-${milestoneId}`}
             name="imageUrls"
             rows={2}
-            placeholder={"https://.../photo-atelier.jpg"}
+            placeholder={t("proofForm.imagesPlaceholder")}
           />
         </div>
       </div>
@@ -60,7 +62,7 @@ export function ProofForm({ milestoneId, lastAttempt }: { milestoneId: string; l
       {state?.error && <p role="alert" className="text-sm font-medium text-destructive">{state.error}</p>}
 
       <Button type="submit" size="sm" disabled={pending}>
-        {pending ? "Envoi…" : "Envoyer la preuve au vote"}
+        {pending ? t("proofForm.submitPending") : t("proofForm.submit")}
       </Button>
     </form>
   );

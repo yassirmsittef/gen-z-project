@@ -6,6 +6,7 @@ import { updateLocationAction } from "@/actions/users";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/components/i18n-provider";
 import { CITIES } from "@/lib/cities";
 
 /**
@@ -14,18 +15,19 @@ import { CITIES } from "@/lib/cities";
  * un choix, jamais une capture.
  */
 export function LocationForm({ initialCity }: { initialCity: string | null }) {
+  const t = useT("account");
   const [state, formAction, pending] = useActionState(updateLocationAction, undefined);
 
   return (
     <form action={formAction} className="space-y-3">
       <div className="space-y-1.5">
-        <Label htmlFor="city">Ta ville</Label>
+        <Label htmlFor="city">{t("locationForm.cityLabel")}</Label>
         <Input
           id="city"
           name="city"
           list="cities-suggestions"
           defaultValue={initialCity ?? ""}
-          placeholder="ex : Marseille — commence à taper"
+          placeholder={t("locationForm.cityPlaceholder")}
           autoComplete="off"
         />
         <datalist id="cities-suggestions">
@@ -36,12 +38,11 @@ export function LocationForm({ initialCity }: { initialCity: string | null }) {
           ))}
         </datalist>
         <p className="text-xs text-muted-foreground">
-          Elle te place sur le globe de la{" "}
+          {t("locationForm.hintBefore")}{" "}
           <Link href="/communaute" className="font-medium text-primary hover:underline">
-            page Communauté
+            {t("locationForm.hintLink")}
           </Link>{" "}
-          (position de la ville, jamais ta position exacte). Laisse vide pour ne pas y
-          apparaître.
+          {t("locationForm.hintAfter")}
         </p>
       </div>
 
@@ -52,12 +53,12 @@ export function LocationForm({ initialCity }: { initialCity: string | null }) {
       )}
       {state?.success && (
         <p className="text-sm font-medium text-success">
-          {state.removed ? "Tu n'apparais plus sur le globe." : "Ville enregistrée."}
+          {state.removed ? t("locationForm.removedSuccess") : t("locationForm.savedSuccess")}
         </p>
       )}
 
       <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "Enregistrement…" : "Enregistrer"}
+        {pending ? t("locationForm.submitPending") : t("locationForm.submit")}
       </Button>
     </form>
   );

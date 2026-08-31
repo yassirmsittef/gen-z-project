@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 
 /**
@@ -17,6 +18,7 @@ export const PasswordInput = React.forwardRef<
   HTMLInputElement,
   Omit<React.ComponentProps<"input">, "type">
 >(({ className, ...props }, ref) => {
+  const t = useT("account");
   const [visible, setVisible] = React.useState(false);
 
   return (
@@ -30,7 +32,7 @@ export const PasswordInput = React.forwardRef<
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
-        aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+        aria-label={visible ? t("passwordInput.hide") : t("passwordInput.show")}
         aria-pressed={visible}
         className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-muted-foreground transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >

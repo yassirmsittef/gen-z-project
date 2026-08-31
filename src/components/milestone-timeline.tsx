@@ -4,6 +4,7 @@ import { voteProofAction } from "@/actions/milestones";
 import { ProofForm } from "@/components/proof-form";
 import { Button } from "@/components/ui/button";
 import { MAX_PROOF_ATTEMPTS } from "@/lib/constants";
+import { getT } from "@/lib/i18n/server";
 import { formatDate } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
@@ -13,10 +14,22 @@ type MilestoneWithProofs = Prisma.MilestoneGetPayload<{
 }>;
 
 const STATUS_CONFIG = {
-  LOCKED: { label: "Verrouillée", chip: "border-white/[0.12] bg-card/60 text-muted-foreground" },
-  AWAITING_PROOF: { label: "Preuve attendue", chip: "border-primary/30 bg-primary/15 text-primary" },
-  UNDER_REVIEW: { label: "Vote en cours", chip: "border-secondary/30 bg-secondary/15 text-secondary" },
-  RELEASED: { label: "Fonds débloqués", chip: "border-success/30 bg-success/15 text-success" },
+  LOCKED: {
+    labelKey: "milestoneTimeline.statusLocked",
+    chip: "border-white/[0.12] bg-card/60 text-muted-foreground",
+  },
+  AWAITING_PROOF: {
+    labelKey: "milestoneTimeline.statusAwaitingProof",
+    chip: "border-primary/30 bg-primary/15 text-primary",
+  },
+  UNDER_REVIEW: {
+    labelKey: "milestoneTimeline.statusUnderReview",
+    chip: "border-secondary/30 bg-secondary/15 text-secondary",
+  },
+  RELEASED: {
+    labelKey: "milestoneTimeline.statusReleased",
+    chip: "border-success/30 bg-success/15 text-success",
+  },
 } as const;
 
 /**
@@ -24,7 +37,7 @@ const STATUS_CONFIG = {
  * en cours = pulsation lente (seule animation de l'écran), verrouillé = contour.
  * Votes pondérés : le poids d'un vote = crédits contribués par le votant.
  */
-export function MilestoneTimeline({
+export async function MilestoneTimeline({
   milestones,
   project,
   viewerId,
@@ -37,6 +50,7 @@ export function MilestoneTimeline({
   isOwner: boolean;
   isContributor: boolean;
 }) {
+  const t = await getT("project");
   return (
     <ol className="space-y-2">
       {milestones.map((milestone) => {
@@ -86,7 +100,7 @@ export function MilestoneTimeline({
                     config.chip
                   )}
                 >
-                  {config.label}
+                  {t(config.labelKey)}
                 </span>
                 <span className="ml-auto font-mono text-xs text-muted-foreground">
                   {formatMoney(milestone.amount, project.currency)}
@@ -118,23 +132,26 @@ export function MilestoneTimeline({
                   >
                     <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
                       <span>
-                        Preuve {index + 1}/{MAX_PROOF_ATTEMPTS}
+                        {t("milestoneTimeline.proofCounter", {
+                          index: index + 1,
+                          max: MAX_PROOF_ATTEMPTS,
+                        })}
                       </span>
                       <span aria-hidden>·</span>
                       <span>{formatDate(proof.submittedAt)}</span>
                       {proof.status === "REJECTED" && (
                         <span className="inline-flex items-center gap-1 text-destructive">
-                          <X className="h-3 w-3" aria-hidden /> Refusée
+                          <X className="h-3 w-3" aria-hidden /> {t("milestoneTimeline.proofRejected")}
                         </span>
                       )}
                       {proof.status === "APPROVED" && (
                         <span className="inline-flex items-center gap-1 text-success">
-                          <Check className="h-3 w-3" aria-hidden /> Validée
+                          <Check className="h-3 w-3" aria-hidden /> {t("milestoneTimeline.proofApproved")}
                         </span>
                       )}
                       {proof.status === "PENDING" && (
                         <span className="inline-flex items-center gap-1 text-secondary">
-                          <Hourglass className="h-3 w-3" aria-hidden /> Vote en cours
+                          <Hourglass className="h-3 w-3" aria-hidden /> {t("milestoneTimeline.proofPending")}
                         </span>
                       )}
                     </div>
@@ -166,7 +183,7 @@ export function MilestoneTimeline({
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={url}
-                              alt="Preuve d'avancement"
+                              alt={t("milestoneTimeline.proofImageAlt")}
                               loading="lazy"
                               className="aspect-video w-full rounded-lg border border-white/[0.08] object-cover"
                             />
@@ -186,11 +203,13 @@ export function MilestoneTimeline({
                       {proof.status === "PENDING" && (
                         <span className="inline-flex items-center gap-1 text-muted-foreground">
                           <Scale className="h-3.5 w-3.5" aria-hidden />
-                          majorité à {formatMoney(Math.floor(project.raised / 2) + 1, project.currency)}
+                          {t("milestoneTimeline.majorityAt", {
+                            amount: formatMoney(Math.floor(project.raised / 2) + 1, project.currency),
+                          })}
                         </span>
                       )}
                       {alreadyVoted && proof.status === "PENDING" && (
-                        <span className="text-muted-foreground">Tu as voté</span>
+                        <span className="text-muted-foreground">{t("milestoneTimeline.alreadyVoted")}</span>
                       )}
                     </div>
 
@@ -198,12 +217,12 @@ export function MilestoneTimeline({
                       <div className="flex gap-2 pt-1">
                         <form action={voteProofAction.bind(null, proof.id, "APPROVE")}>
                           <Button type="submit" size="sm" variant="success">
-                            <ThumbsUp aria-hidden /> Valider
+                            <ThumbsUp aria-hidden /> {t("milestoneTimeline.approve")}
                           </Button>
                         </form>
                         <form action={voteProofAction.bind(null, proof.id, "REJECT")}>
                           <Button type="submit" size="sm" variant="outline">
-                            <ThumbsDown aria-hidden /> Refuser
+                            <ThumbsDown aria-hidden /> {t("milestoneTimeline.reject")}
                           </Button>
                         </form>
                       </div>
@@ -221,7 +240,7 @@ export function MilestoneTimeline({
                   />
                 ) : (
                   <p className="text-sm italic text-muted-foreground">
-                    En attente de la preuve d&apos;avancement du porteur...
+                    {t("milestoneTimeline.awaitingOwnerProof")}
                   </p>
                 ))}
             </div>

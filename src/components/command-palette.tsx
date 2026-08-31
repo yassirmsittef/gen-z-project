@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CornerDownLeft, Hash, Search, Swords } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/components/i18n-provider";
 import { UserAvatar } from "@/components/user-avatar";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,7 @@ const EMPTY: Results = { projects: [], calls: [], rooms: [], members: [] };
  * Échap pour fermer — le focus revient au déclencheur.
  */
 export function CommandPalette({ className }: { className?: string }) {
+  const t = useT("ui");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Results>(EMPTY);
@@ -130,12 +132,12 @@ export function CommandPalette({ className }: { className?: string }) {
         type="button"
         variant="ghost"
         size="icon"
-        title="Rechercher (⌘K)"
+        title={t("commandPalette.triggerTitle")}
         className={className}
         onClick={() => setOpen(true)}
       >
         <Search aria-hidden />
-        <span className="sr-only">Rechercher projets, salons et membres</span>
+        <span className="sr-only">{t("commandPalette.triggerLabel")}</span>
       </Button>
 
       {open &&
@@ -148,7 +150,7 @@ export function CommandPalette({ className }: { className?: string }) {
             <div
               role="dialog"
               aria-modal="true"
-              aria-label="Recherche globale"
+              aria-label={t("commandPalette.dialogLabel")}
               className="glass mx-auto mt-[12vh] w-full max-w-lg overflow-hidden rounded-2xl rounded-tr-sm border border-white/[0.12] shadow-glow"
               style={{ overscrollBehavior: "contain" }}
               onClick={(event) => event.stopPropagation()}
@@ -160,8 +162,8 @@ export function CommandPalette({ className }: { className?: string }) {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={onInputKeyDown}
-                  placeholder="Chercher un projet, une marque, un salon, un membre…"
-                  aria-label="Chercher un projet, un salon ou un membre"
+                  placeholder={t("commandPalette.inputPlaceholder")}
+                  aria-label={t("commandPalette.inputLabel")}
                   autoComplete="off"
                   spellCheck={false}
                   className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
@@ -173,7 +175,7 @@ export function CommandPalette({ className }: { className?: string }) {
 
               <div className="max-h-[50vh] overflow-y-auto p-2">
                 {results.projects.length > 0 && (
-                  <p className="data-label px-2 pb-1 pt-2">Projets</p>
+                  <p className="data-label px-2 pb-1 pt-2">{t("commandPalette.sectionProjects")}</p>
                 )}
                 {results.projects.map((project) => {
                   index += 1;
@@ -201,7 +203,9 @@ export function CommandPalette({ className }: { className?: string }) {
                   );
                 })}
 
-                {results.calls.length > 0 && <p className="data-label px-2 pb-1 pt-2">Appels</p>}
+                {results.calls.length > 0 && (
+                  <p className="data-label px-2 pb-1 pt-2">{t("commandPalette.sectionCalls")}</p>
+                )}
                 {results.calls.map((call) => {
                   index += 1;
                   const i = index;
@@ -223,13 +227,13 @@ export function CommandPalette({ className }: { className?: string }) {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium">
-                          Remplacer {call.target}
+                          {t("commandPalette.replaceTarget", { target: call.target })}
                         </span>
                         <span className="block truncate text-xs text-muted-foreground">
-                          {call.supportCount} voix ·{" "}
+                          {t("commandPalette.callVotes", { count: call.supportCount })} ·{" "}
                           {call.answerCount > 0
-                            ? `${call.answerCount} remplaçant${call.answerCount > 1 ? "s" : ""}`
-                            : "personne encore"}
+                            ? t("commandPalette.callAnswerers", { count: call.answerCount })
+                            : t("commandPalette.callNoAnswerers")}
                         </span>
                       </span>
                       {active === i && (
@@ -239,7 +243,9 @@ export function CommandPalette({ className }: { className?: string }) {
                   );
                 })}
 
-                {results.rooms.length > 0 && <p className="data-label px-2 pb-1 pt-2">Salons</p>}
+                {results.rooms.length > 0 && (
+                  <p className="data-label px-2 pb-1 pt-2">{t("commandPalette.sectionRooms")}</p>
+                )}
                 {results.rooms.map((room) => {
                   index += 1;
                   const i = index;
@@ -264,7 +270,10 @@ export function CommandPalette({ className }: { className?: string }) {
                           {room.name}
                         </span>
                         <span dir="auto" className="block truncate text-left text-xs text-muted-foreground">
-                          {room.memberCount} membre{room.memberCount > 1 ? "s" : ""} · {room.purpose}
+                          {t("commandPalette.roomMeta", {
+                            count: room.memberCount,
+                            purpose: room.purpose,
+                          })}
                         </span>
                       </span>
                       {active === i && (
@@ -275,7 +284,7 @@ export function CommandPalette({ className }: { className?: string }) {
                 })}
 
                 {results.members.length > 0 && (
-                  <p className="data-label px-2 pb-1 pt-2">Membres</p>
+                  <p className="data-label px-2 pb-1 pt-2">{t("commandPalette.sectionMembers")}</p>
                 )}
                 {results.members.map((member) => {
                   index += 1;
@@ -312,18 +321,18 @@ export function CommandPalette({ className }: { className?: string }) {
 
                 {showEmpty && (
                   <p className="px-2.5 py-6 text-center text-sm text-muted-foreground">
-                    Rien trouvé pour « {query.trim()} ».
+                    {t("commandPalette.noResults", { query: query.trim() })}
                   </p>
                 )}
                 {query.trim().length < 2 && (
                   <p className="px-2.5 py-6 text-center text-sm text-muted-foreground">
-                    Tape au moins 2 caractères — projets par titre ou pitch, membres par nom.
+                    {t("commandPalette.minChars")}
                   </p>
                 )}
               </div>
 
               <p className="border-t border-white/[0.08] px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                ↑↓ naviguer · ↵ ouvrir · esc fermer
+                {t("commandPalette.shortcutsHint")}
               </p>
             </div>
           </div>,

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Languages } from "lucide-react";
 import { openLanguageRoomsAction } from "@/actions/chat-groups";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
  * d'elle-même — le résultat se voit.
  */
 export function LanguageRoomsBanner({ missing }: { missing: number }) {
+  const t = useT("chat");
   const [state, formAction, pending] = useActionState(openLanguageRoomsAction, undefined);
 
   return (
@@ -21,15 +23,14 @@ export function LanguageRoomsBanner({ missing }: { missing: number }) {
         <div className="flex items-start gap-3">
           <Languages className="mt-0.5 h-5 w-5 shrink-0 text-secondary" aria-hidden />
           <div>
-            <p className="font-semibold">Salons de langue</p>
+            <p className="font-semibold">{t("languageRoomsBanner.title")}</p>
             <p className="text-sm text-muted-foreground">
-              {missing} salon{missing > 1 ? "s" : ""} d&apos;accueil à ouvrir — une porte
-              d&apos;entrée pour les membres qui ne parlent pas français.
+              {t("languageRoomsBanner.missing", { count: missing })}
             </p>
           </div>
         </div>
         <Button type="submit" variant="secondary" size="sm" disabled={pending}>
-          {pending ? "Ouverture…" : "Ouvrir les salons"}
+          {pending ? t("languageRoomsBanner.pending") : t("languageRoomsBanner.open")}
         </Button>
       </div>
       {state?.error && (

@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import type { CityMarker } from "@/components/earth-scene";
+import { useT } from "@/components/i18n-provider";
 
 /**
  * Wrapper client du globe : import dynamique (Three.js hors du bundle
@@ -11,13 +12,19 @@ import type { CityMarker } from "@/components/earth-scene";
  * des membres est filtrée côté serveur, URL partageable).
  */
 
+/** Fallback de chargement — composant à part entière pour pouvoir appeler useT. */
+function GlobeLoading() {
+  const t = useT("ui");
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <p className="data-label animate-pulse-slow">{t("communityGlobe.loading")}</p>
+    </div>
+  );
+}
+
 const EarthScene = dynamic(() => import("@/components/earth-scene"), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-full w-full items-center justify-center">
-      <p className="data-label animate-pulse-slow">Initialisation du globe…</p>
-    </div>
-  ),
+  loading: GlobeLoading,
 });
 
 type Props = {

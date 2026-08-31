@@ -854,7 +854,8 @@ describe("ce que l'audit avait trouvé", () => {
     await notify({
       userId: auteur.id,
       type: "BOYCOTT_ANSWERED",
-      title: "Ne doit pas arriver",
+      key: "boycottAnswered",
+      params: { target: "Ne doit pas arriver", projectTitle: "x" },
       href: "/appels",
     });
     expect(

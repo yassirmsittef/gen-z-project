@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getLivelyRoom } from "@/lib/chat-groups";
 import { CATEGORY_LABELS } from "@/lib/constants";
+import { getT } from "@/lib/i18n/server";
 
 /**
  * Le pont entre un projet et les gens qui parlent de la même chose : depuis
@@ -23,13 +24,14 @@ export async function CategoryRoomCard({
   viewerId: string | null;
 }) {
   if (!viewerId) return null;
+  const t = await getT("chat");
   const room = await getLivelyRoom(category, viewerId);
   const label = CATEGORY_LABELS[category];
 
   return (
     <Card>
       <CardContent className="space-y-3 pt-6">
-        <p className="data-label">Le salon {label}</p>
+        <p className="data-label">{t("categoryRoomCard.roomLabel", { category: label })}</p>
 
         {room ? (
           <>
@@ -46,7 +48,7 @@ export async function CategoryRoomCard({
                 </p>
                 <p className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                   <Users className="h-3 w-3" aria-hidden />
-                  {room.memberCount} membre{room.memberCount > 1 ? "s" : ""}
+                  {t("categoryRoomCard.memberCount", { count: room.memberCount })}
                 </p>
               </div>
             </div>
@@ -55,27 +57,26 @@ export async function CategoryRoomCard({
             </p>
             {room.joined ? (
               <Button asChild variant="outline" size="sm" className="w-full">
-                <Link href={`/chat/groupes/${room.slug}`}>Ouvrir le fil</Link>
+                <Link href={`/chat/groupes/${room.slug}`}>{t("categoryRoomCard.openThread")}</Link>
               </Button>
             ) : (
               <JoinGroupButton
                 slug={room.slug}
                 full={room.full}
                 size="sm"
-                label={`Rejoindre le salon ${label}`}
+                label={t("categoryRoomCard.joinRoom", { category: label })}
               />
             )}
           </>
         ) : (
           <>
             <p className="text-sm text-muted-foreground">
-              Aucun salon {label} pour l&apos;instant. Ouvre le premier — c&apos;est souvent lui
-              qui rassemble les porteurs d&apos;une même catégorie.
+              {t("categoryRoomCard.emptyBody", { category: label })}
             </p>
             <Button asChild variant="outline" size="sm" className="w-full">
               <Link href={`/chat/groupes?categorie=${category}`}>
                 <MessagesSquare aria-hidden />
-                Ouvrir le salon {label}
+                {t("categoryRoomCard.openRoom", { category: label })}
               </Link>
             </Button>
           </>

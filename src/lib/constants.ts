@@ -393,14 +393,27 @@ export function isUnmutable(type: NotificationType): boolean {
 }
 
 /** Libellés des types de notifications (préférences + affichage). */
-/** Motifs de signalement proposés (le service refuse tout autre motif). */
-export const REPORT_REASONS = [
-  "Arnaque ou contenu trompeur",
-  "Contenu inapproprié ou haineux",
-  "Spam ou démarchage",
-  "Accusation fausse ou non sourcée",
-  "Autre",
+/**
+ * Motifs de signalement (le service refuse tout autre motif). Le FORMULAIRE
+ * soumet la CLÉ (affichée traduite) ; la base et la file de modération
+ * gardent le rendu français — l'équipe modère en français.
+ */
+export const REPORT_REASON_KEYS = [
+  "scam",
+  "inappropriate",
+  "spam",
+  "unfounded",
+  "other",
 ] as const;
+export type ReportReasonKey = (typeof REPORT_REASON_KEYS)[number];
+
+export const REPORT_REASONS = REPORT_REASON_KEYS.map(
+  (k) => LABELS_FR[`reportReason.${k}`]
+) as readonly string[];
+
+/** Clé de motif → rendu français stocké en base. */
+export const reportReasonFr = (key: ReportReasonKey): string =>
+  LABELS_FR[`reportReason.${key}`];
 
 export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = labelGroup(
   "notifType",

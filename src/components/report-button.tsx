@@ -5,10 +5,11 @@ import { createPortal } from "react-dom";
 import { useActionState } from "react";
 import { Flag } from "lucide-react";
 import { reportAction } from "@/actions/moderation";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { REPORT_REASONS } from "@/lib/constants";
+import { REPORT_REASON_KEYS } from "@/lib/constants";
 
 /**
  * Signaler un contenu à l'équipe : bouton discret → dialogue portal (motif
@@ -18,7 +19,7 @@ import { REPORT_REASONS } from "@/lib/constants";
 export function ReportButton({
   targetType,
   targetId,
-  label = "Signaler",
+  label,
   iconOnly = false,
   className,
 }: {
@@ -28,6 +29,9 @@ export function ReportButton({
   iconOnly?: boolean;
   className?: string;
 }) {
+  const t = useT("ui");
+  const tLabels = useT("labels");
+  const buttonLabel = label ?? t("reportButton.defaultLabel");
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(reportAction, undefined);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -55,12 +59,12 @@ export function ReportButton({
         type="button"
         variant="ghost"
         size={iconOnly ? "icon" : "sm"}
-        title="Signaler à l'équipe"
+        title={t("reportButton.triggerTitle")}
         className={className}
         onClick={() => setOpen(true)}
       >
         <Flag aria-hidden className={iconOnly ? undefined : "h-3.5 w-3.5"} />
-        {iconOnly ? <span className="sr-only">{label}</span> : label}
+        {iconOnly ? <span className="sr-only">{buttonLabel}</span> : buttonLabel}
       </Button>
 
       {open &&
@@ -74,7 +78,7 @@ export function ReportButton({
               ref={dialogRef}
               role="dialog"
               aria-modal="true"
-              aria-label="Signaler ce contenu"
+              aria-label={t("reportButton.dialogLabel")}
               className="glass mx-auto mt-[15vh] w-full max-w-md rounded-2xl rounded-tr-sm border border-white/[0.12] p-5 shadow-glow"
               style={{ overscrollBehavior: "contain" }}
               onClick={(event) => event.stopPropagation()}
@@ -83,14 +87,13 @@ export function ReportButton({
                 <div className="space-y-4">
                   <p className="data-label flex items-center gap-2">
                     <Flag className="h-3.5 w-3.5 text-primary" aria-hidden />
-                    Signalement envoyé
+                    {t("reportButton.sentTitle")}
                   </p>
                   <p className="text-sm leading-relaxed text-muted-foreground">
-                    Merci de veiller sur la communauté — l&apos;équipe va regarder. La personne
-                    visée n&apos;est pas informée de ton signalement.
+                    {t("reportButton.sentBody")}
                   </p>
                   <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)}>
-                    Fermer
+                    {t("reportButton.close")}
                   </Button>
                 </div>
               ) : (
@@ -100,12 +103,12 @@ export function ReportButton({
 
                   <p className="data-label flex items-center gap-2">
                     <Flag className="h-3.5 w-3.5 text-destructive" aria-hidden />
-                    Signaler à l&apos;équipe
+                    {t("reportButton.heading")}
                   </p>
 
                   <fieldset className="space-y-2">
-                    <legend className="text-sm font-medium">Motif</legend>
-                    {REPORT_REASONS.map((reason) => (
+                    <legend className="text-sm font-medium">{t("reportButton.reasonLegend")}</legend>
+                    {REPORT_REASON_KEYS.map((reason) => (
                       <label key={reason} className="flex items-center gap-2.5 text-sm">
                         <input
                           type="radio"
@@ -114,19 +117,19 @@ export function ReportButton({
                           required
                           className="h-4 w-4 accent-[#38BDF8]"
                         />
-                        {reason}
+                        {tLabels(`reportReason.${reason}`)}
                       </label>
                     ))}
                   </fieldset>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor={`report-detail-${targetId}`}>Précision (optionnel)</Label>
+                    <Label htmlFor={`report-detail-${targetId}`}>{t("reportButton.detailLabel")}</Label>
                     <Textarea
                       id={`report-detail-${targetId}`}
                       name="detail"
                       rows={3}
                       maxLength={500}
-                      placeholder="Ce qui t'a alerté·e — liens, contexte…"
+                      placeholder={t("reportButton.detailPlaceholder")}
                     />
                   </div>
 
@@ -138,10 +141,10 @@ export function ReportButton({
 
                   <div className="flex flex-wrap gap-3">
                     <Button type="submit" variant="destructive" size="sm" disabled={pending}>
-                      {pending ? "Envoi…" : "Envoyer le signalement"}
+                      {pending ? t("reportButton.sending") : t("reportButton.submit")}
                     </Button>
                     <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
-                      Annuler
+                      {t("reportButton.cancel")}
                     </Button>
                   </div>
                 </form>

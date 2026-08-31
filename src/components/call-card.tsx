@@ -6,13 +6,14 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { UserAvatar } from "@/components/user-avatar";
 import type { CallListItem } from "@/lib/boycott";
 import { CATEGORY_LABELS } from "@/lib/constants";
+import { getT } from "@/lib/i18n/server";
 
 /**
  * Une carte du fil. Deux informations priment, dans cet ordre : la marque
  * visée (grande, c'est le sujet) et le fait qu'un remplaçant existe ou non —
  * c'est ce vide qui doit donner envie de se lancer.
  */
-export function CallCard({
+export async function CallCard({
   call,
   supporting,
   authenticated,
@@ -21,6 +22,7 @@ export function CallCard({
   supporting: boolean;
   authenticated: boolean;
 }) {
+  const t = await getT("calls");
   const answers = call._count.answers;
 
   return (
@@ -30,15 +32,15 @@ export function CallCard({
           <Badge variant="outline">{CATEGORY_LABELS[call.category]}</Badge>
           {answers > 0 ? (
             <Badge variant="success">
-              {answers} remplaçant{answers > 1 ? "s" : ""}
+              {t("callCard.replacementCount", { count: answers })}
             </Badge>
           ) : (
-            <Badge variant="outline">Personne encore</Badge>
+            <Badge variant="outline">{t("callCard.nobodyYet")}</Badge>
           )}
         </div>
 
         <div className="space-y-1.5">
-          <p className="data-label">Ne veut plus de</p>
+          <p className="data-label">{t("callCard.noLongerWants")}</p>
           {/* `translate="no"` : une page auto-traduite mangerait le nom de la
               marque — sur un fil qui ne parle que de marques, c'est le sens
               même de l'appel qui se perd. */}
@@ -58,7 +60,8 @@ export function CallCard({
 
         <div className="rounded-xl border border-white/[0.08] bg-background/40 p-3">
           <p className="data-label mb-1 flex items-center gap-1.5">
-            <Target aria-hidden className="h-3 w-3" />À la place
+            <Target aria-hidden className="h-3 w-3" />
+            {t("callCard.instead")}
           </p>
           <p className="line-clamp-2 text-sm text-foreground">{call.wanted}</p>
         </div>
@@ -73,7 +76,7 @@ export function CallCard({
               avatarUrl={call.author.avatarUrl}
               className="h-7 w-7"
             />
-            <span className="truncate">{call.author.name ?? "Membre"}</span>
+            <span className="truncate">{call.author.name ?? t("callCard.memberFallback")}</span>
           </Link>
 
           <CallSupportButton
@@ -90,7 +93,7 @@ export function CallCard({
             className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-secondary/30 py-2.5 text-sm font-semibold text-secondary transition-colors duration-200 hover:bg-secondary/10"
           >
             <Rocket aria-hidden className="h-4 w-4" />
-            Prendre cet appel
+            {t("callCard.takeCall")}
           </Link>
         )}
       </CardContent>

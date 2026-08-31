@@ -51,6 +51,18 @@ export const labels = {
   "partnershipStatus.ACCEPTED": "Accettata",
   "partnershipStatus.DECLINED": "Rifiutata",
 
+  "reportReason.scam": "Truffa o contenuto ingannevole",
+  "reportReason.inappropriate": "Contenuto inappropriato o d'odio",
+  "reportReason.spam": "Spam o sollecitazione",
+  "reportReason.unfounded": "Accusa falsa o senza fonti",
+  "reportReason.other": "Altro",
+
+  "reputation.rookie": "Rookie",
+  "reputation.contributor": "Contributore",
+  "reputation.builder": "Costruttore·rice",
+  "reputation.legend": "Leggenda",
+  "reputation.admin": "Admin",
+
   "notifType.CONTRIBUTION": "Contributo ricevuto sui miei progetti",
   "notifType.CONTRIBUTION_CONFIRMED": "Conferma dei miei contributi",
   "notifType.PROJECT_FUNDED": "Obiettivo raggiunto",

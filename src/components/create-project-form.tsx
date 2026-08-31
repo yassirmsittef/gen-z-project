@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Plus, Rocket, Swords, Trash2 } from "lucide-react";
 import { createProjectAction } from "@/actions/projects";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,7 @@ export function CreateProjectForm({
 }: {
   answersCall?: { slug: string; target: string; wanted: string; category: string };
 }) {
+  const t = useT("project");
   const [state, formAction, pending] = useActionState(createProjectAction, undefined);
   const [milestones, setMilestones] = useState<MilestoneDraft[]>([
     { ...EMPTY_MILESTONE },
@@ -75,54 +77,53 @@ export function CreateProjectForm({
           <input type="hidden" name="callSlug" value={answersCall.slug} />
           <p className="data-label flex items-center gap-1.5">
             <Swords aria-hidden className="h-3 w-3" />
-            Tu réponds à un appel
+            {t("createProjectForm.answersCallLabel")}
           </p>
           <p className="mt-1.5 font-display text-xl font-semibold">
-            Remplacer {answersCall.target}
+            {t("createProjectForm.replaceTarget", { target: answersCall.target })}
           </p>
           <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
-            « {answersCall.wanted} »
+            {t("createProjectForm.quotedWanted", { wanted: answersCall.wanted })}
           </p>
           <p className="mt-3 text-xs text-muted-foreground">
-            C&apos;est le cahier des charges écrit par la personne qui a lancé l&apos;appel. Ton
-            projet sera déclaré remplaçant dès sa création, et tous ses soutiens seront prévenus.
+            {t("createProjectForm.answersCallHelp")}
           </p>
         </section>
       )}
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold tracking-tight">Ton projet</h2>
+        <h2 className="text-xl font-semibold tracking-tight">{t("createProjectForm.projectSection")}</h2>
 
         <div className="space-y-1.5">
-          <Label htmlFor="title">Titre</Label>
-          <Input id="title" name="title" placeholder="Ex : EP 5 titres — LUNE NOIRE" required />
+          <Label htmlFor="title">{t("createProjectForm.titleLabel")}</Label>
+          <Input id="title" name="title" placeholder={t("createProjectForm.titlePlaceholder")} required />
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="pitch">Pitch (140 caractères max)</Label>
+          <Label htmlFor="pitch">{t("createProjectForm.pitchLabel")}</Label>
           <Input
             id="pitch"
             name="pitch"
-            placeholder="Une phrase qui donne envie de te financer."
+            placeholder={t("createProjectForm.pitchPlaceholder")}
             maxLength={140}
             required
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description">{t("createProjectForm.descriptionLabel")}</Label>
           <Textarea
             id="description"
             name="description"
             rows={8}
-            placeholder="Raconte : c'est quoi, pour qui, pourquoi toi, et à quoi servira l'argent (50 caractères min)."
+            placeholder={t("createProjectForm.descriptionPlaceholder")}
             required
           />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5">
-            <Label htmlFor="category">Catégorie</Label>
+            <Label htmlFor="category">{t("createProjectForm.categoryLabel")}</Label>
             <select
               id="category"
               name="category"
@@ -131,7 +132,7 @@ export function CreateProjectForm({
               defaultValue={answersCall?.category ?? ""}
             >
               <option value="" disabled>
-                Choisir…
+                {t("createProjectForm.categoryPlaceholder")}
               </option>
               {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -142,7 +143,7 @@ export function CreateProjectForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="currency">Devise du projet</Label>
+            <Label htmlFor="currency">{t("createProjectForm.currencyLabel")}</Label>
             <select
               id="currency"
               name="currency"
@@ -160,7 +161,7 @@ export function CreateProjectForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="goal">Objectif ({currency.toUpperCase()})</Label>
+            <Label htmlFor="goal">{t("createProjectForm.goalLabel", { currency: currency.toUpperCase() })}</Label>
             <Input
               id="goal"
               name="goal"
@@ -175,7 +176,7 @@ export function CreateProjectForm({
 
           <div className="space-y-1.5">
             <Label htmlFor="durationDays">
-              Durée de campagne ({MIN_DURATION_DAYS}–{MAX_DURATION_DAYS} jours)
+              {t("createProjectForm.durationLabel", { min: MIN_DURATION_DAYS, max: MAX_DURATION_DAYS })}
             </Label>
             <Input
               id="durationDays"
@@ -191,18 +192,18 @@ export function CreateProjectForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="neededSkills">Compétences recherchées (optionnel)</Label>
+            <Label htmlFor="neededSkills">{t("createProjectForm.skillsLabel")}</Label>
             <Input
               id="neededSkills"
               name="neededSkills"
-              placeholder="ex : montage, mix, photo — séparées par des virgules"
+              placeholder={t("createProjectForm.skillsPlaceholder")}
             />
             <p className="text-xs text-muted-foreground">
-              On oriente vers ton projet les membres qui ont ces compétences.
+              {t("createProjectForm.skillsHelp")}
             </p>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="coverUrl">Visuel de couverture (URL, optionnel)</Label>
+            <Label htmlFor="coverUrl">{t("createProjectForm.coverLabel")}</Label>
             <Input id="coverUrl" name="coverUrl" type="url" placeholder="https://.../cover.jpg" />
           </div>
         </div>
@@ -211,16 +212,16 @@ export function CreateProjectForm({
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold tracking-tight">Étapes de déblocage</h2>
+            <h2 className="text-xl font-semibold tracking-tight">{t("createProjectForm.milestonesSection")}</h2>
             <p className="text-sm text-muted-foreground">
-              Chaque étape débloque un montant en {currency.toUpperCase()}, sur preuve validée
-              par le vote pondéré de tes contributeurs. La somme doit égaler ton objectif. Une
-              fois financé, tu as {REALIZATION_DAYS} jours pour tout réaliser et faire valider —
-              au-delà, le reste du séquestre est remboursé aux contributeurs.{" "}
+              {t("createProjectForm.milestonesHelp", {
+                currency: currency.toUpperCase(),
+                days: REALIZATION_DAYS,
+              })}{" "}
               <strong className="font-medium text-foreground">
-                0&nbsp;% de commission GeniGain
+                {t("createProjectForm.milestonesHelpStrong")}
               </strong>{" "}
-              — seuls les frais bancaires sont déduits des versements.
+              {t("createProjectForm.milestonesHelpAfterStrong")}
             </p>
           </div>
           <span
@@ -239,7 +240,7 @@ export function CreateProjectForm({
           <Card key={index}>
             <CardContent className="space-y-3 pt-6">
               <div className="flex items-center justify-between">
-                <p className="data-label">Étape {index + 1}</p>
+                <p className="data-label">{t("createProjectForm.milestoneNumber", { number: index + 1 })}</p>
                 {milestones.length > MIN_MILESTONES && (
                   <Button
                     type="button"
@@ -247,7 +248,7 @@ export function CreateProjectForm({
                     size="icon"
                     className="h-8 w-8 text-muted-foreground"
                     onClick={() => setMilestones((prev) => prev.filter((_, i) => i !== index))}
-                    title="Supprimer cette étape"
+                    title={t("createProjectForm.removeMilestoneTitle")}
                   >
                     <Trash2 />
                   </Button>
@@ -256,16 +257,16 @@ export function CreateProjectForm({
 
               <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
                 <div className="space-y-1.5">
-                  <Label htmlFor={`m-title-${index}`}>Titre</Label>
+                  <Label htmlFor={`m-title-${index}`}>{t("createProjectForm.milestoneTitleLabel")}</Label>
                   <Input
                     id={`m-title-${index}`}
                     value={milestone.title}
                     onChange={(e) => updateMilestone(index, { title: e.target.value })}
-                    placeholder="Ex : Maquette terminée"
+                    placeholder={t("createProjectForm.milestoneTitlePlaceholder")}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor={`m-amount-${index}`}>Montant ({currency.toUpperCase()})</Label>
+                  <Label htmlFor={`m-amount-${index}`}>{t("createProjectForm.milestoneAmountLabel", { currency: currency.toUpperCase() })}</Label>
                   <Input
                     id={`m-amount-${index}`}
                     type="number"
@@ -278,13 +279,13 @@ export function CreateProjectForm({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor={`m-desc-${index}`}>Ce que tu livreras</Label>
+                <Label htmlFor={`m-desc-${index}`}>{t("createProjectForm.milestoneDeliverableLabel")}</Label>
                 <Textarea
                   id={`m-desc-${index}`}
                   rows={2}
                   value={milestone.description}
                   onChange={(e) => updateMilestone(index, { description: e.target.value })}
-                  placeholder="Ce que les contributeurs pourront vérifier à cette étape."
+                  placeholder={t("createProjectForm.milestoneDeliverablePlaceholder")}
                 />
               </div>
             </CardContent>
@@ -298,7 +299,7 @@ export function CreateProjectForm({
             onClick={() => setMilestones((prev) => [...prev, { ...EMPTY_MILESTONE }])}
           >
             <Plus />
-            Ajouter une étape
+            {t("createProjectForm.addMilestone")}
           </Button>
         )}
       </section>
@@ -307,7 +308,7 @@ export function CreateProjectForm({
 
       <Button type="submit" size="lg" disabled={pending}>
         <Rocket aria-hidden />
-        {pending ? "Création…" : "Lancer mon projet"}
+        {pending ? t("createProjectForm.submitPending") : t("createProjectForm.submit")}
       </Button>
     </form>
   );

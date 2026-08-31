@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/components/i18n-provider";
 
 export function ForgotPasswordForm() {
+  const t = useT("account");
   const [state, formAction, pending] = useActionState(requestResetAction, undefined);
 
   if (state?.success) {
@@ -17,14 +19,13 @@ export function ForgotPasswordForm() {
       <div className="space-y-3">
         <p className="data-label flex items-center gap-2">
           <MailCheck className="h-4 w-4 text-primary" aria-hidden />
-          Email envoyé
+          {t("forgotPasswordForm.sentTitle")}
         </p>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Si un compte existe avec cette adresse, un lien de réinitialisation vient de partir —
-          il est valable 1&nbsp;heure. Pense à vérifier tes spams.
+          {t("forgotPasswordForm.sentBody")}
         </p>
         <Button variant="outline" size="sm" asChild>
-          <Link href="/login">Retour à la connexion</Link>
+          <Link href="/login">{t("forgotPasswordForm.backToLogin")}</Link>
         </Button>
       </div>
     );
@@ -33,13 +34,13 @@ export function ForgotPasswordForm() {
   return (
     <form action={formAction} className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="email">Ton email de compte</Label>
+        <Label htmlFor="email">{t("forgotPasswordForm.emailLabel")}</Label>
         <Input
           id="email"
           name="email"
           type="email"
           autoComplete="email"
-          placeholder="toi@exemple.fr"
+          placeholder={t("forgotPasswordForm.emailPlaceholder")}
           required
         />
       </div>
@@ -51,21 +52,22 @@ export function ForgotPasswordForm() {
       )}
 
       <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Envoi…" : "M'envoyer un lien de réinitialisation"}
+        {pending ? t("forgotPasswordForm.submitPending") : t("forgotPasswordForm.submit")}
       </Button>
     </form>
   );
 }
 
 export function ResetPasswordForm({ token }: { token: string }) {
+  const t = useT("account");
   const [state, formAction, pending] = useActionState(resetPasswordAction, undefined);
 
   if (state?.success) {
     return (
       <div className="space-y-3">
-        <p className="text-sm font-medium text-success">Mot de passe changé — tu peux te connecter.</p>
+        <p className="text-sm font-medium text-success">{t("resetPasswordForm.success")}</p>
         <Button asChild>
-          <Link href="/login">Se connecter</Link>
+          <Link href="/login">{t("resetPasswordForm.signIn")}</Link>
         </Button>
       </div>
     );
@@ -76,7 +78,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       <input type="hidden" name="token" value={token} />
 
       <div className="space-y-1.5">
-        <Label htmlFor="newPassword">Nouveau mot de passe (8 caractères min)</Label>
+        <Label htmlFor="newPassword">{t("resetPasswordForm.newLabel")}</Label>
         <PasswordInput
           id="newPassword"
           name="newPassword"
@@ -86,7 +88,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="confirmPassword">Confirme-le</Label>
+        <Label htmlFor="confirmPassword">{t("resetPasswordForm.confirmLabel")}</Label>
         <PasswordInput
           id="confirmPassword"
           name="confirmPassword"
@@ -99,13 +101,13 @@ export function ResetPasswordForm({ token }: { token: string }) {
         <p role="alert" className="text-sm font-medium text-destructive">
           {state.error}{" "}
           <Link href="/mot-de-passe-oublie" className="text-primary hover:underline">
-            Refaire une demande
+            {t("resetPasswordForm.retryLink")}
           </Link>
         </p>
       )}
 
       <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Enregistrement…" : "Changer mon mot de passe"}
+        {pending ? t("resetPasswordForm.submitPending") : t("resetPasswordForm.submit")}
       </Button>
     </form>
   );

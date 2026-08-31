@@ -1,4 +1,5 @@
 import { Gauge } from "lucide-react";
+import { getT } from "@/lib/i18n/server";
 import { daysLeft, formatDate } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
 
@@ -26,7 +27,7 @@ function dailyBuckets(contributions: Contribution[], from: Date, to: Date) {
   return buckets;
 }
 
-export function CampaignCockpit({
+export async function CampaignCockpit({
   currency,
   createdAt,
   deadline,
@@ -49,6 +50,7 @@ export function CampaignCockpit({
   followerIds: string[];
   milestones: { status: string }[];
 }) {
+  const t = await getT("project");
   const now = new Date();
   const buckets = dailyBuckets(contributions, createdAt, now < deadline ? now : deadline);
 
@@ -72,21 +74,24 @@ export function CampaignCockpit({
     <section className="glass space-y-4 rounded-2xl rounded-tr-sm p-5">
       <p className="data-label flex items-center gap-2">
         <Gauge className="h-3.5 w-3.5 text-primary" aria-hidden />
-        Pilotage — visible par toi seul·e
+        {t("campaignCockpit.heading")}
       </p>
 
       <div>
-        <p className="mb-1.5 text-xs text-muted-foreground">Collecte par jour</p>
+        <p className="mb-1.5 text-xs text-muted-foreground">{t("campaignCockpit.dailyCollection")}</p>
         {contributions.length === 0 ? (
           <p className="rounded-xl border border-dashed border-white/[0.12] p-3 text-xs text-muted-foreground">
-            Pas encore de contribution — partage ton lien, le compteur démarre ici.
+            {t("campaignCockpit.emptyState")}
           </p>
         ) : (
           <svg
             viewBox={`0 0 ${W} ${H}`}
             className="h-14 w-full"
             role="img"
-            aria-label={`Collecte par jour depuis le lancement : ${formatMoney(raised, currency)} en ${buckets.length} jour${buckets.length > 1 ? "s" : ""}.`}
+            aria-label={t("campaignCockpit.sparklineAria", {
+              amount: formatMoney(raised, currency),
+              count: buckets.length,
+            })}
           >
             <defs>
               <linearGradient id="cockpit-aurora" x1="0" y1="0" x2="1" y2="0">
@@ -142,7 +147,7 @@ export function CampaignCockpit({
                 />
                 <circle cx={W / 2} cy={y(buckets[0].amount)} r="3" fill="#38BDF8" stroke="#0B0E14" strokeWidth="2" />
                 <text x={W / 2 + 10} y={y(buckets[0].amount) + 4} fontSize="11" fill="#94A3B8">
-                  {formatMoney(buckets[0].amount, currency)} aujourd&apos;hui
+                  {t("campaignCockpit.todayPoint", { amount: formatMoney(buckets[0].amount, currency) })}
                 </text>
               </>
             )}
@@ -166,14 +171,16 @@ export function CampaignCockpit({
       <dl className="grid grid-cols-2 gap-3">
         {status === "ACTIVE" ? (
           <div className="rounded-xl border border-white/[0.06] bg-background/40 p-3">
-            <dt className="text-xs text-muted-foreground">Rythme pour y arriver</dt>
+            <dt className="text-xs text-muted-foreground">{t("campaignCockpit.paceLabel")}</dt>
             <dd className="font-display text-lg font-semibold">
-              {neededPerDay > 0 ? `${formatMoney(neededPerDay, currency)}/j` : "Objectif atteint"}
+              {neededPerDay > 0
+                ? t("campaignCockpit.perDay", { amount: formatMoney(neededPerDay, currency) })
+                : t("campaignCockpit.goalReached")}
             </dd>
           </div>
         ) : (
           <div className="rounded-xl border border-white/[0.06] bg-background/40 p-3">
-            <dt className="text-xs text-muted-foreground">Étapes validées</dt>
+            <dt className="text-xs text-muted-foreground">{t("campaignCockpit.milestonesValidated")}</dt>
             <dd className="font-display text-lg font-semibold">
               {released}/{milestones.length}
             </dd>
@@ -181,17 +188,19 @@ export function CampaignCockpit({
         )}
 
         <div className="rounded-xl border border-white/[0.06] bg-background/40 p-3">
-          <dt className="text-xs text-muted-foreground">Contributeur·rices</dt>
+          <dt className="text-xs text-muted-foreground">{t("campaignCockpit.contributorsLabel")}</dt>
           <dd className="font-display text-lg font-semibold">{contributors.size}</dd>
         </div>
 
         <div className="rounded-xl border border-white/[0.06] bg-background/40 p-3">
-          <dt className="text-xs text-muted-foreground">Suiveur·ses</dt>
+          <dt className="text-xs text-muted-foreground">{t("campaignCockpit.followersLabel")}</dt>
           <dd className="font-display text-lg font-semibold">
             {followerIds.length}
             {followerIds.length > 0 && (
               <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                dont {Math.round((converted / followerIds.length) * 100)}&nbsp;% ont contribué
+                {t("campaignCockpit.convertedShare", {
+                  percent: Math.round((converted / followerIds.length) * 100),
+                })}
               </span>
             )}
           </dd>
@@ -199,9 +208,9 @@ export function CampaignCockpit({
 
         {status === "FUNDED" && realizationDeadline && (
           <div className="rounded-xl border border-amber-400/20 bg-amber-400/[0.06] p-3">
-            <dt className="text-xs text-muted-foreground">À réaliser avant</dt>
+            <dt className="text-xs text-muted-foreground">{t("campaignCockpit.realizeBefore")}</dt>
             <dd className="font-display text-lg font-semibold text-amber-300">
-              J-{daysLeft(realizationDeadline)}
+              {t("campaignCockpit.daysToDeadline", { days: daysLeft(realizationDeadline) })}
             </dd>
           </div>
         )}

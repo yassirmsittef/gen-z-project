@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Check, X } from "lucide-react";
 import { respondPartnershipAction } from "@/actions/partnerships";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,12 +20,13 @@ export function PartnershipResponseForm({
   requestId: string;
   suggestedReply: string;
 }) {
+  const t = useT("calls");
   const [state, formAction, pending] = useActionState(respondPartnershipAction, undefined);
 
   if (state?.success) {
     return (
       <p className="rounded-2xl border border-success/30 bg-success/10 p-4 text-sm font-medium text-success">
-        Réponse envoyée — la marque la découvrira sur son lien de suivi.
+        {t("partnershipResponseForm.success")}
       </p>
     );
   }
@@ -33,7 +35,7 @@ export function PartnershipResponseForm({
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="requestId" value={requestId} />
       <div className="space-y-1.5">
-        <Label htmlFor="reply">Ta réponse à la marque</Label>
+        <Label htmlFor="reply">{t("partnershipResponseForm.replyLabel")}</Label>
         {/* key : quand l'analyse approfondie arrive, la suggestion se met à jour */}
         <Textarea
           key={suggestedReply}
@@ -43,9 +45,7 @@ export function PartnershipResponseForm({
           maxLength={3000}
           defaultValue={suggestedReply}
         />
-        <p className="text-xs text-muted-foreground">
-          Pré-rédigée par le copilote — relis, personnalise, puis choisis ta décision.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("partnershipResponseForm.replyHint")}</p>
       </div>
 
       {state?.error && (
@@ -57,11 +57,11 @@ export function PartnershipResponseForm({
       <div className="flex flex-wrap gap-3">
         <Button type="submit" name="decision" value="ACCEPTED" disabled={pending}>
           <Check aria-hidden />
-          {pending ? "Envoi…" : "Accepter le partenariat"}
+          {pending ? t("partnershipResponseForm.pending") : t("partnershipResponseForm.accept")}
         </Button>
         <Button type="submit" name="decision" value="DECLINED" variant="outline" disabled={pending}>
           <X aria-hidden />
-          Refuser
+          {t("partnershipResponseForm.decline")}
         </Button>
       </div>
     </form>

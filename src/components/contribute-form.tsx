@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { BadgePercent, EyeOff, ShieldCheck } from "lucide-react";
 import { contributeAction } from "@/actions/contributions";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,7 @@ export function ContributeForm({
   projectId: string;
   currency: string;
 }) {
+  const t = useT("project");
   const [state, formAction, pending] = useActionState(contributeAction, undefined);
   const [amount, setAmount] = useState(10);
 
@@ -56,7 +58,7 @@ export function ContributeForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="contribute-amount">Montant libre ({currency.toUpperCase()})</Label>
+        <Label htmlFor="contribute-amount">{t("contributeForm.freeAmountLabel", { currency: currency.toUpperCase() })}</Label>
         <Input
           id="contribute-amount"
           type="number"
@@ -75,9 +77,8 @@ export function ContributeForm({
         <span className="inline-flex items-start gap-1.5">
           <EyeOff className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
           <span>
-            <strong className="font-semibold text-foreground">Contribuer anonymement</strong> —
-            ton nom n&apos;apparaîtra ni sur le projet, ni au porteur, ni dans le fil
-            d&apos;activité.
+            <strong className="font-semibold text-foreground">{t("contributeForm.anonymousStrong")}</strong>{" "}
+            {t("contributeForm.anonymousRest")}
           </span>
         </span>
       </label>
@@ -90,30 +91,28 @@ export function ContributeForm({
 
       <Button type="submit" className="w-full" disabled={pending || Boolean(state?.checkoutUrl)}>
         {pending || state?.checkoutUrl
-          ? "Redirection vers le paiement…"
-          : `Contribuer ${formatMoney(toMinor(amount || 0, currency), currency)}`}
+          ? t("contributeForm.redirecting")
+          : t("contributeForm.submit", { amount: formatMoney(toMinor(amount || 0, currency), currency) })}
       </Button>
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <BadgePercent className="h-3.5 w-3.5 shrink-0 text-primary/70" aria-hidden />
         <span>
-          <strong className="font-semibold text-foreground">0&nbsp;% de commission GeniGain</strong>{" "}
-          — seuls les frais de carte (fixés par Stripe, ni vus ni touchés par GeniGain)
-          s&apos;appliquent.
+          <strong className="font-semibold text-foreground">{t("contributeForm.feeStrong")}</strong>{" "}
+          {t("contributeForm.feeRest")}
         </span>
       </p>
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary/70" aria-hidden />
         <span>
-          Paiement sécurisé Stripe. Fonds sous séquestre, débloqués étape par étape par le vote
-          des contributeurs. Si la campagne n&apos;aboutit pas, tu es remboursé
-          <strong className="text-foreground"> net des frais de carte</strong> : Stripe ne les
-          restitue pas, GeniGain n&apos;en garde aucun.{" "}
+          {t("contributeForm.escrowIntro")}
+          <strong className="text-foreground"> {t("contributeForm.escrowStrong")}</strong>{" "}
+          {t("contributeForm.escrowAfterStrong")}{" "}
           <a
             href="/comment-ca-marche#frais"
             target="_blank"
             className="underline decoration-dotted underline-offset-2 hover:text-foreground"
           >
-            Détail des frais
+            {t("contributeForm.feesLink")}
           </a>
           .
         </span>

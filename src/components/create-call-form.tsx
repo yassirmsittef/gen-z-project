@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { ShieldAlert } from "lucide-react";
 import { createCallAction } from "@/actions/boycott";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,7 @@ const selectClass =
  * première touche, pas après l'avoir envoyé.
  */
 export function CreateCallForm() {
+  const t = useT("calls");
   const [state, formAction, pending] = useActionState(createCallAction, undefined);
 
   return (
@@ -33,12 +35,9 @@ export function CreateCallForm() {
       <section className="glass rounded-2xl rounded-tr-sm p-5">
         <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-semibold">
           <ShieldAlert aria-hidden className="h-5 w-5 text-secondary" />
-          Ce que tu signes en publiant
+          {t("createCallForm.charterHeading")}
         </h2>
-        <p className="mb-3 text-sm text-muted-foreground">
-          Ton appel est publié sous ton nom. GeniGain héberge ce fil, ne l&apos;écrit pas et ne
-          le fait pas sien — tu restes responsable de ce que tu affirmes.
-        </p>
+        <p className="mb-3 text-sm text-muted-foreground">{t("createCallForm.charterBody")}</p>
         <ul className="space-y-2">
           {CALL_CHARTER.map((rule) => (
             <li key={rule} className="flex gap-2.5 text-sm text-muted-foreground">
@@ -54,7 +53,7 @@ export function CreateCallForm() {
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="call-target">La marque ou l&apos;entreprise</Label>
+          <Label htmlFor="call-target">{t("createCallForm.targetLabel")}</Label>
           <Input
             id="call-target"
             name="target"
@@ -62,18 +61,16 @@ export function CreateCallForm() {
             minLength={2}
             maxLength={60}
             autoComplete="off"
-            placeholder="Le nom, simplement…"
+            placeholder={t("createCallForm.targetPlaceholder")}
           />
-          <p className="text-xs text-muted-foreground">
-            Une entreprise — jamais une personne ni une communauté.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("createCallForm.targetHint")}</p>
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="call-category">Le secteur à remplacer</Label>
+          <Label htmlFor="call-category">{t("createCallForm.categoryLabel")}</Label>
           <select id="call-category" name="category" required defaultValue="" className={selectClass}>
             <option value="" disabled>
-              Choisir…
+              {t("createCallForm.categoryPlaceholder")}
             </option>
             {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
@@ -81,14 +78,12 @@ export function CreateCallForm() {
               </option>
             ))}
           </select>
-          <p className="text-xs text-muted-foreground">
-            C&apos;est là que les porteurs viendront chercher des appels à prendre.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("createCallForm.categoryHint")}</p>
         </div>
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="call-reason">Pourquoi tu n&apos;en veux plus</Label>
+        <Label htmlFor="call-reason">{t("createCallForm.reasonLabel")}</Label>
         <Textarea
           id="call-reason"
           name="reason"
@@ -96,16 +91,15 @@ export function CreateCallForm() {
           rows={6}
           minLength={MIN_CALL_REASON}
           maxLength={MAX_CALL_REASON}
-          placeholder="Raconte ce que tu as constaté, vécu, lu. Distingue ce que tu sais de ce que tu supposes…"
+          placeholder={t("createCallForm.reasonPlaceholder")}
         />
         <p className="text-xs text-muted-foreground">
-          {MIN_CALL_REASON} caractères minimum. Les faits que tu avances t&apos;engagent — les
-          sources sont là pour ça.
+          {t("createCallForm.reasonHint", { min: MIN_CALL_REASON })}
         </p>
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="call-wanted">Ce que tu veux à la place</Label>
+        <Label htmlFor="call-wanted">{t("createCallForm.wantedLabel")}</Label>
         <Textarea
           id="call-wanted"
           name="wanted"
@@ -113,16 +107,13 @@ export function CreateCallForm() {
           rows={4}
           minLength={MIN_CALL_WANTED}
           maxLength={MAX_CALL_WANTED}
-          placeholder="Le produit ou le service que tu achèterais demain s'il existait — et à quelles conditions…"
+          placeholder={t("createCallForm.wantedPlaceholder")}
         />
-        <p className="text-xs text-muted-foreground">
-          C&apos;est la partie qui fait naître un projet. Sois précis : un porteur doit pouvoir
-          la lire comme un cahier des charges.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("createCallForm.wantedHint")}</p>
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="call-sources">Sources (facultatif)</Label>
+        <Label htmlFor="call-sources">{t("createCallForm.sourcesLabel")}</Label>
         <Textarea
           id="call-sources"
           name="sources"
@@ -132,8 +123,7 @@ export function CreateCallForm() {
           placeholder={"https://…\nhttps://…"}
         />
         <p className="text-xs text-muted-foreground">
-          Un lien par ligne, {MAX_CALL_SOURCES} maximum, en https. Un appel sourcé résiste ; un
-          appel sans source tombe au premier signalement.
+          {t("createCallForm.sourcesHint", { max: MAX_CALL_SOURCES })}
         </p>
       </div>
 
@@ -145,11 +135,9 @@ export function CreateCallForm() {
 
       <div className="flex flex-wrap items-center gap-4">
         <Button type="submit" disabled={pending}>
-          {pending ? "Publication…" : "Publier l'appel"}
+          {pending ? t("createCallForm.pending") : t("createCallForm.submit")}
         </Button>
-        <p className="text-xs text-muted-foreground">
-          Tu pourras le retirer toi-même à tout moment.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("createCallForm.withdrawNote")}</p>
       </div>
     </form>
   );

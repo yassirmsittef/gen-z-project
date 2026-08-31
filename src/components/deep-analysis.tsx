@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useTransition } from "react";
 import { Sparkles } from "lucide-react";
 import { deepAnalyzeAction } from "@/actions/partnerships";
+import { useT } from "@/components/i18n-provider";
 
 /**
  * Déclenche automatiquement l'analyse approfondie (Claude) au montage :
@@ -12,6 +13,7 @@ import { deepAnalyzeAction } from "@/actions/partnerships";
  * l'analyse rapide reste en place.
  */
 export function DeepAnalysis({ requestId }: { requestId: string }) {
+  const t = useT("calls");
   const router = useRouter();
   const [state, formAction] = useActionState(deepAnalyzeAction, undefined);
   const [, startTransition] = useTransition();
@@ -36,7 +38,7 @@ export function DeepAnalysis({ requestId }: { requestId: string }) {
   return (
     <p className="flex animate-pulse-slow items-center gap-2 text-xs text-muted-foreground">
       <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
-      Analyse approfondie par l&apos;IA en cours...
+      {t("deepAnalysis.inProgress")}
     </p>
   );
 }

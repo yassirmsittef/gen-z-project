@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
+import { useT } from "@/components/i18n-provider";
 import { CITIES } from "@/lib/cities";
 import { LOCALES, type Locale } from "@/lib/i18n/locales";
 import { CURRENCIES } from "@/lib/money";
 
 function GoogleButton() {
+  const t = useT("account");
+
   return (
     <>
       <div className="relative my-4">
@@ -19,12 +22,12 @@ function GoogleButton() {
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">ou</span>
+          <span className="bg-background px-2 text-muted-foreground">{t("googleButton.or")}</span>
         </div>
       </div>
       <form action={signInWithGoogleAction}>
         <Button type="submit" variant="outline" className="w-full">
-          Continuer avec Google
+          {t("googleButton.continueWithGoogle")}
         </Button>
       </form>
     </>
@@ -32,23 +35,31 @@ function GoogleButton() {
 }
 
 export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
+  const t = useT("account");
   const [state, formAction, pending] = useActionState(loginAction, undefined);
 
   return (
     <div>
       <form action={formAction} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" autoComplete="email" placeholder="toi@exemple.fr" required />
+          <Label htmlFor="email">{t("loginForm.emailLabel")}</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder={t("loginForm.emailPlaceholder")}
+            required
+          />
         </div>
         <div className="space-y-1.5">
           <div className="flex items-baseline justify-between">
-            <Label htmlFor="password">Mot de passe</Label>
+            <Label htmlFor="password">{t("loginForm.passwordLabel")}</Label>
             <Link
               href="/mot-de-passe-oublie"
               className="text-xs text-muted-foreground transition-colors duration-200 hover:text-primary"
             >
-              Mot de passe oublié ?
+              {t("loginForm.forgotPassword")}
             </Link>
           </div>
           <PasswordInput id="password" name="password" autoComplete="current-password" required />
@@ -57,16 +68,16 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
         {state?.error && <p role="alert" className="text-sm font-medium text-destructive">{state.error}</p>}
 
         <Button type="submit" className="w-full" disabled={pending}>
-          {pending ? "Connexion…" : "Se connecter"}
+          {pending ? t("loginForm.submitPending") : t("loginForm.submit")}
         </Button>
       </form>
 
       {googleEnabled && <GoogleButton />}
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        Pas encore de compte ?{" "}
+        {t("loginForm.noAccount")}{" "}
         <Link href="/register" className="font-medium text-primary hover:underline">
-          Inscris-toi
+          {t("loginForm.signUpLink")}
         </Link>
       </p>
     </div>
@@ -80,38 +91,54 @@ export function RegisterForm({
   googleEnabled: boolean;
   defaultLocale: Locale;
 }) {
+  const t = useT("account");
   const [state, formAction, pending] = useActionState(registerAction, undefined);
 
   return (
     <div>
       <form action={formAction} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="name">Pseudo</Label>
-          <Input id="name" name="name" autoComplete="nickname" placeholder="Ton pseudo" required minLength={2} />
+          <Label htmlFor="name">{t("registerForm.nameLabel")}</Label>
+          <Input
+            id="name"
+            name="name"
+            autoComplete="nickname"
+            placeholder={t("registerForm.namePlaceholder")}
+            required
+            minLength={2}
+          />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" autoComplete="email" placeholder="toi@exemple.fr" required />
+          <Label htmlFor="email">{t("registerForm.emailLabel")}</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder={t("registerForm.emailPlaceholder")}
+            required
+          />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="password">Mot de passe</Label>
+          <Label htmlFor="password">{t("registerForm.passwordLabel")}</Label>
           <PasswordInput id="password" name="password" autoComplete="new-password" required minLength={8} />
-          <p className="text-xs text-muted-foreground">8 caractères minimum.</p>
+          <p className="text-xs text-muted-foreground">{t("registerForm.passwordHint")}</p>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="confirmPassword">Confirme le mot de passe</Label>
+          <Label htmlFor="confirmPassword">{t("registerForm.confirmPasswordLabel")}</Label>
           <PasswordInput id="confirmPassword" name="confirmPassword" autoComplete="new-password" required />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="city">
-            Ta ville <span className="font-normal text-muted-foreground">(optionnel)</span>
+            {t("registerForm.cityLabel")}{" "}
+            <span className="font-normal text-muted-foreground">{t("registerForm.cityOptional")}</span>
           </Label>
           <Input
             id="city"
             name="city"
             list="register-cities"
             autoComplete="off"
-            placeholder="ex : Lyon — pour apparaître sur le globe"
+            placeholder={t("registerForm.cityPlaceholder")}
           />
           <datalist id="register-cities">
             {CITIES.map((city) => (
@@ -120,13 +147,10 @@ export function RegisterForm({
               </option>
             ))}
           </datalist>
-          <p className="text-xs text-muted-foreground">
-            Position de la ville sur le globe Communauté, jamais ta position exacte. Modifiable
-            à tout moment.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("registerForm.cityHint")}</p>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="preferredLanguage">Ta langue</Label>
+          <Label htmlFor="preferredLanguage">{t("registerForm.languageLabel")}</Label>
           {/* Les noms de langue s'affichent CHACUN DANS SA LANGUE : un menu
               de langues doit se lire même quand l'interface parle une autre. */}
           <select
@@ -141,12 +165,10 @@ export function RegisterForm({
               </option>
             ))}
           </select>
-          <p className="text-xs text-muted-foreground">
-            L&apos;interface, les notifications et les emails te parleront dans cette langue.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("registerForm.languageHint")}</p>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="preferredCurrency">Ta devise</Label>
+          <Label htmlFor="preferredCurrency">{t("registerForm.currencyLabel")}</Label>
           <select
             id="preferredCurrency"
             name="preferredCurrency"
@@ -159,11 +181,7 @@ export function RegisterForm({
               </option>
             ))}
           </select>
-          <p className="text-xs text-muted-foreground">
-            Tes montants s&apos;afficheront dans cette devise. Le droit de poster un projet
-            reste compté en dollars (20&nbsp;$ contribués) : tes contributions y sont
-            converties automatiquement au taux du jour.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("registerForm.currencyHint")}</p>
         </div>
 
         <label className="flex items-start gap-2.5 text-xs leading-relaxed text-muted-foreground">
@@ -174,26 +192,26 @@ export function RegisterForm({
             className="mt-0.5 h-4 w-4 shrink-0 rounded accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           />
           <span>
-            J&apos;accepte les{" "}
+            {t("registerForm.acceptPrefix")}{" "}
             <Link href="/cgu" target="_blank" className="font-medium text-primary hover:underline">
-              conditions d&apos;utilisation
+              {t("registerForm.termsLink")}
             </Link>{" "}
-            et la{" "}
+            {t("registerForm.acceptMiddle")}{" "}
             <Link
               href="/confidentialite"
               target="_blank"
               className="font-medium text-primary hover:underline"
             >
-              politique de confidentialité
+              {t("registerForm.privacyLink")}
             </Link>
-            .
+            {t("registerForm.acceptSuffix")}
           </span>
         </label>
 
         {state?.error && <p role="alert" className="text-sm font-medium text-destructive">{state.error}</p>}
 
         <Button type="submit" className="w-full" disabled={pending}>
-          {pending ? "Création…" : "Créer mon compte"}
+          {pending ? t("registerForm.submitPending") : t("registerForm.submit")}
         </Button>
       </form>
 
@@ -201,23 +219,23 @@ export function RegisterForm({
         <>
           <GoogleButton />
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            En continuant avec Google, tu acceptes les{" "}
+            {t("registerForm.googleAcceptPrefix")}{" "}
             <Link href="/cgu" className="text-primary hover:underline">
-              conditions d&apos;utilisation
+              {t("registerForm.termsLink")}
             </Link>{" "}
-            et la{" "}
+            {t("registerForm.acceptMiddle")}{" "}
             <Link href="/confidentialite" className="text-primary hover:underline">
-              politique de confidentialité
+              {t("registerForm.privacyLink")}
             </Link>
-            .
+            {t("registerForm.acceptSuffix")}
           </p>
         </>
       )}
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        Déjà un compte ?{" "}
+        {t("registerForm.alreadyAccount")}{" "}
         <Link href="/login" className="font-medium text-primary hover:underline">
-          Connecte-toi
+          {t("registerForm.signInLink")}
         </Link>
       </p>
     </div>

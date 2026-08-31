@@ -8,6 +8,7 @@ import { ReputationBadge } from "@/components/reputation-badge";
 import { StatusBadge } from "@/components/status-badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { CATEGORY_LABELS } from "@/lib/constants";
+import { getT } from "@/lib/i18n/server";
 import { daysLeft, progressPercent } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
 
@@ -18,13 +19,14 @@ export type { ProjectCardData };
  * fil auxquels il répond). Optionnel — les pages qui n'ont pas fait la
  * requête n'affichent simplement pas le bandeau.
  */
-export function ProjectCard({
+export async function ProjectCard({
   project,
   replaces = [],
 }: {
   project: ProjectCardData;
   replaces?: { target: string }[];
 }) {
+  const t = await getT("project");
   const percent = progressPercent(project.raised, project.goal);
   const remaining = daysLeft(project.deadline);
 
@@ -50,7 +52,7 @@ export function ProjectCard({
           <p className="flex items-center gap-1.5 border-b border-secondary/20 bg-secondary/[0.08] px-6 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-secondary">
             <Swords aria-hidden className="h-3 w-3 shrink-0" />
             <span translate="no" className="truncate">
-              Remplace {replaces.map((call) => call.target).join(", ")}
+              {t("projectCard.replaces", { targets: replaces.map((call) => call.target).join(", ") })}
             </span>
           </p>
         )}
@@ -79,12 +81,12 @@ export function ProjectCard({
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Users className="h-3.5 w-3.5" aria-hidden />
-              {project._count.contributions} contribution{project._count.contributions > 1 ? "s" : ""}
+              {t("projectCard.contributions", { count: project._count.contributions })}
             </span>
             {project.status === "ACTIVE" && (
               <span className="inline-flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5" aria-hidden />
-                {remaining} j restants
+                {t("projectCard.daysLeft", { count: remaining })}
               </span>
             )}
           </div>

@@ -51,6 +51,18 @@ export const labels = {
   "partnershipStatus.ACCEPTED": "مقبولة",
   "partnershipStatus.DECLINED": "مرفوضة",
 
+  "reportReason.scam": "احتيال أو محتوى مضلِّل",
+  "reportReason.inappropriate": "محتوى غير لائق أو يحض على الكراهية",
+  "reportReason.spam": "بريد مزعج أو ترويج",
+  "reportReason.unfounded": "اتهام كاذب أو بلا مصادر",
+  "reportReason.other": "أخرى",
+
+  "reputation.rookie": "مبتدئ",
+  "reputation.contributor": "مساهم",
+  "reputation.builder": "بنّاء",
+  "reputation.legend": "أسطورة",
+  "reputation.admin": "مشرف",
+
   "notifType.CONTRIBUTION": "مساهمة وصلت إلى مشاريعي",
   "notifType.CONTRIBUTION_CONFIRMED": "تأكيد مساهماتي",
   "notifType.PROJECT_FUNDED": "تم بلوغ الهدف",

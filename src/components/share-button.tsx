@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/components/i18n-provider";
 
 /**
  * Partager la page courante : partage natif quand il existe (mobile),
@@ -27,6 +28,7 @@ function legacyCopy(url: string): boolean {
   return ok;
 }
 export function ShareButton({ title, text }: { title: string; text: string }) {
+  const t = useT("ui");
   const [copied, setCopied] = useState(false);
 
   async function share() {
@@ -52,7 +54,7 @@ export function ShareButton({ title, text }: { title: string; text: string }) {
       window.setTimeout(() => setCopied(false), 2000);
     } else {
       // Dernier recours : l'utilisateur copie lui-même.
-      window.prompt("Copie le lien du projet :", url);
+      window.prompt(t("shareButton.copyPrompt"), url);
     }
   }
 
@@ -60,7 +62,7 @@ export function ShareButton({ title, text }: { title: string; text: string }) {
     <Button type="button" variant="outline" size="sm" onClick={share}>
       {copied ? <Check aria-hidden /> : <Share2 aria-hidden />}
       {/* aria-live : la confirmation de copie est annoncée aux lecteurs d'écran. */}
-      <span aria-live="polite">{copied ? "Lien copié !" : "Partager"}</span>
+      <span aria-live="polite">{copied ? t("shareButton.copied") : t("shareButton.share")}</span>
     </Button>
   );
 }

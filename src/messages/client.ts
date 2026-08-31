@@ -8,7 +8,7 @@ import { MESSAGES, type Messages } from "@/messages";
  * N'y mettre QUE ce que des composants "use client" consomment : le reste
  * de l'app se traduit côté serveur et ne pèse rien dans le bundle.
  */
-export const CLIENT_NAMESPACES = ["common", "account", "project", "chat", "calls", "ui", "v"] as const;
+export const CLIENT_NAMESPACES = ["common", "account", "project", "chat", "calls", "ui", "v", "labels"] as const;
 
 export type ClientNamespace = (typeof CLIENT_NAMESPACES)[number];
 

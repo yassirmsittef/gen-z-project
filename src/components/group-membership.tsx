@@ -8,6 +8,7 @@ import {
   leaveGroupAction,
   toggleGroupMuteAction,
 } from "@/actions/chat-groups";
+import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 
 /** Rejoindre un groupe — un seul geste, depuis l'annuaire ou la fiche. */
@@ -15,13 +16,14 @@ export function JoinGroupButton({
   slug,
   full,
   size = "default",
-  label = "Rejoindre",
+  label,
 }: {
   slug: string;
   full?: boolean;
   size?: "default" | "sm";
   label?: string;
 }) {
+  const t = useT("chat");
   const [state, formAction, pending] = useActionState(joinGroupAction, undefined);
 
   return (
@@ -29,7 +31,11 @@ export function JoinGroupButton({
       <input type="hidden" name="slug" value={slug} />
       <Button type="submit" size={size} disabled={pending || full}>
         <LogIn aria-hidden />
-        {full ? "Groupe complet" : pending ? "On t'installe…" : label}
+        {full
+          ? t("joinGroupButton.full")
+          : pending
+            ? t("joinGroupButton.pending")
+            : (label ?? t("joinGroupButton.join"))}
       </Button>
       {state?.error && (
         <p role="alert" className="text-sm font-medium text-destructive">
@@ -45,6 +51,7 @@ export function JoinGroupButton({
  * membre — c'est dit avant, pour que le geste ne surprenne pas.
  */
 export function LeaveGroupButton({ slug, isOwner }: { slug: string; isOwner: boolean }) {
+  const t = useT("chat");
   const [state, formAction, pending] = useActionState(leaveGroupAction, undefined);
   const [armed, setArmed] = useState(false);
 
@@ -55,21 +62,19 @@ export function LeaveGroupButton({ slug, isOwner }: { slug: string; isOwner: boo
         <div className="flex flex-wrap items-center gap-2">
           <Button type="submit" variant="outline" size="sm" disabled={pending}>
             <DoorOpen aria-hidden />
-            {pending ? "Sortie…" : "Oui, quitter"}
+            {pending ? t("leaveGroupButton.pending") : t("leaveGroupButton.confirm")}
           </Button>
           <Button type="button" variant="ghost" size="sm" onClick={() => setArmed(false)}>
-            Annuler
+            {t("leaveGroupButton.cancel")}
           </Button>
           {isOwner && (
-            <p className="text-xs text-muted-foreground">
-              L&apos;animation passe au membre le plus ancien.
-            </p>
+            <p className="text-xs text-muted-foreground">{t("leaveGroupButton.ownerHandover")}</p>
           )}
         </div>
       ) : (
         <Button type="button" variant="ghost" size="sm" onClick={() => setArmed(true)}>
           <DoorOpen aria-hidden />
-          Quitter
+          {t("leaveGroupButton.leave")}
         </Button>
       )}
       {state?.error && (
@@ -86,6 +91,7 @@ export function LeaveGroupButton({ slug, isOwner }: { slug: string; isOwner: boo
  * continue de vivre : se taire n'est pas se cacher ce qui s'y dit.
  */
 export function MuteGroupButton({ slug, muted }: { slug: string; muted: boolean }) {
+  const t = useT("chat");
   const [state, formAction, pending] = useActionState(toggleGroupMuteAction, undefined);
 
   return (
@@ -97,15 +103,11 @@ export function MuteGroupButton({ slug, muted }: { slug: string; muted: boolean 
         variant="ghost"
         size="sm"
         disabled={pending}
-        title={
-          muted
-            ? "Recevoir à nouveau les notifications de ce salon"
-            : "Ne plus être notifié·e de ce salon"
-        }
+        title={muted ? t("muteGroupButton.unmuteTitle") : t("muteGroupButton.muteTitle")}
         className={muted ? "text-primary hover:text-primary" : undefined}
       >
         {muted ? <BellOff aria-hidden /> : <Bell aria-hidden />}
-        {muted ? "En silence" : "Silence"}
+        {muted ? t("muteGroupButton.muted") : t("muteGroupButton.mute")}
       </Button>
       {state?.error && (
         <p role="alert" className="text-sm font-medium text-destructive">
@@ -118,6 +120,7 @@ export function MuteGroupButton({ slug, muted }: { slug: string; muted: boolean 
 
 /** Dissoudre le groupe (animateur) : confirmation en deux temps, irréversible. */
 export function DissolveGroupButton({ slug }: { slug: string }) {
+  const t = useT("chat");
   const [state, formAction, pending] = useActionState(dissolveGroupAction, undefined);
   const [armed, setArmed] = useState(false);
 
@@ -128,12 +131,12 @@ export function DissolveGroupButton({ slug }: { slug: string }) {
         <div className="flex flex-wrap items-center gap-2">
           <Button type="submit" variant="destructive" size="sm" disabled={pending}>
             <Trash2 aria-hidden />
-            {pending ? "Dissolution…" : "Oui, dissoudre le groupe"}
+            {pending ? t("dissolveGroupButton.pending") : t("dissolveGroupButton.confirm")}
           </Button>
           <Button type="button" variant="ghost" size="sm" onClick={() => setArmed(false)}>
-            Annuler
+            {t("dissolveGroupButton.cancel")}
           </Button>
-          <p className="text-xs text-muted-foreground">Le fil et ses messages disparaissent.</p>
+          <p className="text-xs text-muted-foreground">{t("dissolveGroupButton.warning")}</p>
         </div>
       ) : (
         <Button
@@ -144,7 +147,7 @@ export function DissolveGroupButton({ slug }: { slug: string }) {
           onClick={() => setArmed(true)}
         >
           <Trash2 aria-hidden />
-          Dissoudre
+          {t("dissolveGroupButton.dissolve")}
         </Button>
       )}
       {state?.error && (
