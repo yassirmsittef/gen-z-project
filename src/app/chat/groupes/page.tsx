@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ProjectCategory } from "@prisma/client";
 import { Hash, MessagesSquare, Search, Users } from "lucide-react";
 import { auth } from "@/auth";
+import { getRequestLocale } from "@/lib/i18n/server";
 import { ChatSidebar } from "@/components/chat-sidebar";
 import { ChatStream } from "@/components/chat-stream";
 import { CreateGroupForm } from "@/components/create-group-form";
@@ -45,7 +46,7 @@ export default async function GroupsDirectoryPage({
   const [conversations, myGroups, groups, counts, admin] = await Promise.all([
     getConversations(session.user.id),
     getMyGroups(session.user.id),
-    listGroups({ category, query, userId: session.user.id }),
+    listGroups({ category, query, userId: session.user.id, locale: await getRequestLocale() }),
     groupCountsByCategory(),
     isAdmin(session.user.id),
   ]);

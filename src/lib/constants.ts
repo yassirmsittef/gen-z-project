@@ -96,6 +96,7 @@ export const MAX_GROUPS_JOINED = 20;
 export const LANGUAGE_ROOMS = [
   {
     slug: "salon-francais",
+    lang: "fr",
     name: "Français",
     purpose: "Le salon francophone : présente-toi, demande un coup de main, trouve des collabs.",
     welcome: "{nom} a rejoint le salon. Bienvenue !",
@@ -103,6 +104,7 @@ export const LANGUAGE_ROOMS = [
   },
   {
     slug: "salon-english",
+    lang: "en",
     name: "English",
     purpose: "The English-speaking room: say hi, ask for a hand, find people to build with.",
     welcome: "{nom} joined the room. Welcome!",
@@ -110,6 +112,7 @@ export const LANGUAGE_ROOMS = [
   },
   {
     slug: "salon-espanol",
+    lang: "es",
     name: "Español",
     purpose: "La sala en español: preséntate, pide ayuda y encuentra colaboraciones.",
     welcome: "{nom} se ha unido a la sala. ¡Te damos la bienvenida!",
@@ -117,6 +120,7 @@ export const LANGUAGE_ROOMS = [
   },
   {
     slug: "salon-deutsch",
+    lang: "de",
     name: "Deutsch",
     purpose: "Der deutschsprachige Raum: stell dich vor, bitte um Hilfe, finde Mitstreiter.",
     welcome: "{nom} ist dem Raum beigetreten. Willkommen!",
@@ -124,6 +128,7 @@ export const LANGUAGE_ROOMS = [
   },
   {
     slug: "salon-italiano",
+    lang: "it",
     name: "Italiano",
     purpose: "La stanza italiana: presentati, chiedi una mano, trova collaborazioni.",
     welcome: "{nom} entra nella stanza. Diamo il benvenuto!",
@@ -131,6 +136,7 @@ export const LANGUAGE_ROOMS = [
   },
   {
     slug: "salon-portugues",
+    lang: "pt",
     name: "Português",
     purpose: "A sala em português: apresenta-te, pede ajuda e encontra colaborações.",
     welcome: "{nom} juntou-se à sala. Damos-te as boas-vindas!",
@@ -138,6 +144,7 @@ export const LANGUAGE_ROOMS = [
   },
   {
     slug: "salon-arabe",
+    lang: "ar",
     name: "العربية",
     purpose: "غرفة عربية: عرّف بنفسك، اطلب المساعدة، وابحث عن فرص تعاون.",
     welcome: "مرحبًا بـ {nom} في الغرفة!",

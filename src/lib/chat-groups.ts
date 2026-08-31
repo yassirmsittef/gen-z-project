@@ -7,6 +7,7 @@ import {
   MAX_GROUP_MEMBERS,
   roomTexts,
 } from "@/lib/constants";
+import type { Locale } from "@/lib/i18n/locales";
 import { isAdmin } from "@/lib/moderation";
 import { notifyManyOnceUnread } from "@/lib/notifications";
 import { DomainError } from "@/lib/project-service";
@@ -37,11 +38,18 @@ export type GroupMessageAuthor = {
 
 // ---------- Lectures ----------
 
+/** Le salon de langue d'une locale (les 7 langues de l'app ont chacune le leur). */
+export function languageRoomFor(locale: Locale) {
+  return LANGUAGE_ROOMS.find((room) => room.lang === locale) ?? LANGUAGE_ROOMS[0];
+}
+
 /** Un groupe tel qu'affiché dans l'annuaire d'une catégorie. */
 export async function listGroups(params: {
   category?: ProjectCategory;
   query?: string;
   userId: string;
+  /** Épingle le salon de CETTE langue tout en tête des officiels. */
+  locale?: Locale;
 }) {
   const mots = params.query?.trim();
   const groups = await prisma.chatGroup.findMany({
@@ -69,6 +77,14 @@ export async function listGroups(params: {
       messages: { orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
     },
   });
+
+  // Le salon de SA langue passe tout en tête : la porte d'entrée d'un membre
+  // est celle qui parle sa langue, pas celle du premier salon créé. Tri
+  // stable : l'ordre officiels-d'abord du orderBy reste intact derrière.
+  const pinnedSlug = params.locale ? languageRoomFor(params.locale).slug : undefined;
+  if (pinnedSlug) {
+    groups.sort((a, b) => Number(b.slug === pinnedSlug) - Number(a.slug === pinnedSlug));
+  }
 
   return groups.map((group) => ({
     id: group.id,
