@@ -1,5 +1,7 @@
 import type { Messages } from "../types";
 import { labels } from "./labels";
+import { meta } from "./meta";
+import { nav } from "./nav";
 
 export const es = {
   common: {
@@ -7,4 +9,6 @@ export const es = {
     justNow: "ahora mismo",
   },
   labels,
+  meta,
+  nav,
 } satisfies Messages;

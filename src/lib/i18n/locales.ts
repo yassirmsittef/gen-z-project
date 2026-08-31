@@ -37,6 +37,20 @@ export function localeTag(locale: Locale): string {
   return locale === "ar" ? "ar-u-nu-latn" : locale;
 }
 
+/** Locale OpenGraph (og:locale) correspondante. */
+export function ogLocaleOf(locale: Locale): string {
+  const map: Record<Locale, string> = {
+    fr: "fr_FR",
+    en: "en_US",
+    es: "es_ES",
+    de: "de_DE",
+    it: "it_IT",
+    pt: "pt_PT",
+    ar: "ar_AR",
+  };
+  return map[locale];
+}
+
 /**
  * Négociation Accept-Language minimale : première langue supportée dans
  * l'ordre de préférence du navigateur (les q-values arrivent déjà triées

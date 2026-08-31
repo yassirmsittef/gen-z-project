@@ -10,6 +10,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getT } from "@/lib/i18n/server";
 import { signOutAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/command-palette";
@@ -19,6 +20,7 @@ import { NavbarSigilLoader } from "@/components/navbar-sigil-loader";
 import { UserAvatar } from "@/components/user-avatar";
 
 export async function Navbar() {
+  const t = await getT("nav");
   const session = await auth();
   // Une seule requête pour l'identité ET le badge de notifications — la
   // navbar est rendue à chaque page, chaque aller-retour DB compte.
@@ -57,51 +59,51 @@ export async function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-0.5 sm:gap-2">
-          <LienPrincipal href="/projects" label="Projets" Icon={FolderKanban} iconClass={iconButton} />
+          <LienPrincipal href="/projects" label={t("projects")} Icon={FolderKanban} iconClass={iconButton} />
           {/* Le fil des appels : deuxième porte d'entrée du produit, juste
               après les projets — c'est de là que partent les remplaçants. */}
-          <LienPrincipal href="/appels" label="Appels" Icon={Megaphone} iconClass={iconButton} />
+          <LienPrincipal href="/appels" label={t("calls")} Icon={Megaphone} iconClass={iconButton} />
           {/* Le direct : la version filmée du fil, une vidéo par écran. Il
               était masqué sous `sm` — soit invisible sur le seul format où un
               fil vidéo vertical a du sens. */}
-          <LienPrincipal href="/direct" label="Direct" Icon={Clapperboard} iconClass={iconButton} />
+          <LienPrincipal href="/direct" label={t("live")} Icon={Clapperboard} iconClass={iconButton} />
           {/* Icône seule (comme le chat) : la Communauté reste accessible sur mobile. */}
           <Button
             variant="ghost"
             size="icon"
             asChild
-            title="Communauté — le réseau sur le globe"
+            title={t("communityTitle")}
             className={iconButton}
           >
             <Link href="/communaute">
               {/* La Terre miniature qui tourne — écho du globe Communauté */}
               <NavbarGlobe />
-              <span className="sr-only">Communauté</span>
+              <span className="sr-only">{t("community")}</span>
             </Link>
           </Button>
           <CommandPalette className={iconButton} />
           <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex">
-            <Link href="/classements">Classements</Link>
+            <Link href="/classements">{t("rankings")}</Link>
           </Button>
           <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex">
-            <Link href="/projects/new">Lancer un projet</Link>
+            <Link href="/projects/new">{t("launchProject")}</Link>
           </Button>
 
           {user ? (
             <>
               <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-                <Link href="/dashboard">Dashboard</Link>
+                <Link href="/dashboard">{t("dashboard")}</Link>
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 asChild
-                title="Chat — entraide entre porteurs"
+                title={t("chatTitle")}
                 className={iconButton}
               >
                 <Link href="/chat">
                   <MessagesSquare aria-hidden />
-                  <span className="sr-only">Chat</span>
+                  <span className="sr-only">{t("chat")}</span>
                 </Link>
               </Button>
               {user.role === "ADMIN" && (
@@ -109,7 +111,7 @@ export async function Navbar() {
                   variant="ghost"
                   size="icon"
                   asChild
-                  title="Cockpit admin"
+                  title={t("adminCockpit")}
                   /* Hors de la barre sur téléphone : c'est le seul bouton
                      réservé à une poignée de comptes, et il coûtait la place
                      qui manquait à tout le monde. Il est repris en tête du
@@ -127,13 +129,14 @@ export async function Navbar() {
                       </span>
                     )}
                     <span className="sr-only">
-                      Cockpit admin{openReports > 0 ? ` (${openReports} signalements ouverts)` : ""}
+                      {t("adminCockpit")}
+                      {openReports > 0 ? ` (${t("adminOpenReports", { count: openReports })})` : ""}
                     </span>
                   </Link>
                 </Button>
               )}
               <NavbarBell initialUnread={unread} className={`relative ${iconButton}`} />
-                            <Link href={`/u/${user.id}`} title="Ton profil public">
+                            <Link href={`/u/${user.id}`} title={t("profileTitle")}>
                 <UserAvatar name={user.name} avatarUrl={user.avatarUrl} className="h-8 w-8 sm:h-9 sm:w-9" />
               </Link>
               <form action={signOutAction}>
@@ -141,21 +144,21 @@ export async function Navbar() {
                   variant="ghost"
                   size="icon"
                   type="submit"
-                  title="Se déconnecter"
+                  title={t("signOut")}
                   className={iconButton}
                 >
                   <LogOut />
-                  <span className="sr-only">Se déconnecter</span>
+                  <span className="sr-only">{t("signOut")}</span>
                 </Button>
               </form>
             </>
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">Connexion</Link>
+                <Link href="/login">{t("signIn")}</Link>
               </Button>
               <Button variant="default" size="sm" asChild>
-                <Link href="/register">S&apos;inscrire</Link>
+                <Link href="/register">{t("signUp")}</Link>
               </Button>
             </>
           )}
