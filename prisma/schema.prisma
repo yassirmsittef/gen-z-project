@@ -39,6 +39,10 @@ model User {
   // sont convertis dedans (taux du jour, indicatif). Les paiements et le gate
   // 50 $ ne changent pas — c'est une préférence de lecture, pas de compte.
   preferredCurrency   String @default("eur")
+  // Langue de l'interface, choisie dès l'inscription (7 codes, src/lib/i18n).
+  // Comme la devise : une préférence de lecture, relue en base par requête —
+  // jamais embarquée dans le JWT. Les emails partent dans cette langue.
+  preferredLanguage   String @default("fr")
   // Liens publics du profil (site, réseaux…) — 3 max, https uniquement.
   links               String[] @default([])
   reputation       Int       @default(0)
