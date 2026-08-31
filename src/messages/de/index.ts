@@ -3,6 +3,7 @@ import { err } from "./err";
 import { labels } from "./labels";
 import { meta } from "./meta";
 import { nav } from "./nav";
+import { notif } from "./notif";
 import { v } from "./v";
 
 export const de = {
@@ -14,5 +15,6 @@ export const de = {
   labels,
   meta,
   nav,
+  notif,
   v,
 } satisfies Messages;

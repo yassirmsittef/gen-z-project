@@ -1,5 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "../src/lib/prisma";
+import { renderNotification } from "../src/lib/notification-render";
 import {
   answerCall,
   callsAnsweredBy,
@@ -514,14 +515,15 @@ describe("le contenu retiré ne survit nulle part", () => {
 
     const notifs = await prisma.notification.findMany({
       where: { userId: auteur.id, type: "CALL_COMMENT", sourceId: { in: [deB, deC] } },
-      select: { sourceId: true, body: true },
     });
-    const parSource = new Map(notifs.map((n) => [n.sourceId, n.body]));
+    const parSource = new Map(notifs.map((n) => [n.sourceId, n]));
 
-    expect(parSource.get(deB)).toBe("Cette réponse a été retirée.");
+    expect(parSource.get(deB)!.excerpt).toBeNull();
+    expect(renderNotification("fr", parSource.get(deB)!).body).toBe("Cette réponse a été retirée.");
     // Celle de C est TOUJOURS en ligne : annoncer son retrait serait un
     // mensonge, et son extrait serait perdu sans retour.
-    expect(parSource.get(deC)).toBe(memeTexte);
+    expect(parSource.get(deC)!.excerpt).toBe(memeTexte);
+    expect(renderNotification("fr", parSource.get(deC)!).body).toBe(memeTexte);
     const vivante = await prisma.callComment.findUnique({
       where: { id: deC },
       select: { removedAt: true },
@@ -538,22 +540,22 @@ describe("le contenu retiré ne survit nulle part", () => {
     const texte = "Un propos que son auteur regrettera dans trente secondes.";
     const commentaire = await postCallComment(lecteur.id, call!.id, texte);
 
-    const avant = await prisma.notification.findFirst({
+    const avant = await prisma.notification.findFirstOrThrow({
       where: { userId: auteur.id, type: "CALL_COMMENT" },
-      select: { id: true, body: true },
     });
-    expect(avant?.body).toBe(texte);
+    expect(avant.excerpt).toBe(texte);
 
     await deleteCallComment(lecteur.id, commentaire, false);
 
-    const après = await prisma.notification.findUnique({
-      where: { id: avant!.id },
-      select: { body: true },
+    const après = await prisma.notification.findUniqueOrThrow({
+      where: { id: avant.id },
     });
     // La ligne survit — l'auteur doit savoir qu'une réponse a existé — mais
-    // le texte retiré, lui, ne doit plus être lisible nulle part.
-    expect(après!.body).not.toContain("regrettera");
-    expect(après!.body).toBe("Cette réponse a été retirée.");
+    // le texte retiré, lui, ne doit plus être lisible nulle part : NI dans la
+    // ligne brute (extrait effacé), NI dans le rendu (pierre tombale).
+    expect(JSON.stringify(après)).not.toContain("regrettera");
+    expect(après.excerpt).toBeNull();
+    expect(renderNotification("fr", après).body).toBe("Cette réponse a été retirée.");
   });
 });
 

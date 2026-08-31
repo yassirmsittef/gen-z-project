@@ -1,4 +1,5 @@
 import type { NotificationType, Prisma } from "@prisma/client";
+import type { NotificationKey } from "@/lib/notification-catalog";
 import { isUnmutable } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
@@ -16,8 +17,12 @@ type Client = Prisma.TransactionClient | typeof prisma;
 export type NotificationInput = {
   userId: string;
   type: NotificationType;
-  title: string;
-  body?: string;
+  /** Gabarit du catalogue — la base ne stocke JAMAIS de texte rendu. */
+  key: NotificationKey;
+  /** Valeurs BRUTES du gabarit (jamais de texte déjà mis en forme). */
+  params?: Record<string, string | number | null>;
+  /** Extrait de contenu membre cité — neutralisable au retrait (colonne dédiée). */
+  excerpt?: string;
   href: string;
   /**
    * Le contenu qui a déclenché la notification. À renseigner dès que le
@@ -55,8 +60,9 @@ export async function notify(input: NotificationInput, client: Client = prisma) 
     data: {
       userId: input.userId,
       type: input.type,
-      title: input.title,
-      body: input.body,
+      key: input.key,
+      params: input.params ?? undefined,
+      excerpt: input.excerpt,
       href: input.href,
       sourceId: input.sourceId,
     },
@@ -70,8 +76,9 @@ export async function notifyMany(inputs: NotificationInput[], client: Client = p
     data: allowed.map((input) => ({
       userId: input.userId,
       type: input.type,
-      title: input.title,
-      body: input.body,
+      key: input.key,
+      params: input.params ?? undefined,
+      excerpt: input.excerpt,
       href: input.href,
       sourceId: input.sourceId,
     })),
@@ -119,8 +126,9 @@ export async function notifyManyOnceUnread(inputs: NotificationInput[], client: 
     data: fresh.map((input) => ({
       userId: input.userId,
       type: input.type,
-      title: input.title,
-      body: input.body,
+      key: input.key,
+      params: input.params ?? undefined,
+      excerpt: input.excerpt,
       href: input.href,
       sourceId: input.sourceId,
     })),

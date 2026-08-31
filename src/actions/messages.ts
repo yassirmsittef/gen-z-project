@@ -45,7 +45,8 @@ export async function sendMessageAction(
   await notifyOnceUnread({
     userId: parsed.data.recipientId,
     type: "MESSAGE",
-    title: `Nouveau message de ${session.user.name ?? "un membre"}`,
+    key: "message.new",
+    params: { actorName: session.user.name ?? null },
     href: `/chat/${session.user.id}`,
   });
 

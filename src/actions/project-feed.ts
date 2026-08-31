@@ -44,8 +44,10 @@ export async function addCommentAction(
     await notify({
       userId: project.ownerId,
       type: "COMMENT",
-      title: `${session.user.name ?? "Un membre"} a commenté « ${project.title} »`,
-      body: parsed.data.body.length > 120 ? `${parsed.data.body.slice(0, 117)}...` : parsed.data.body,
+      key: "comment",
+      params: { actorName: session.user.name ?? null, projectTitle: project.title },
+      excerpt:
+        parsed.data.body.length > 120 ? `${parsed.data.body.slice(0, 117)}...` : parsed.data.body,
       href: `/projects/${project.slug}#discussion`,
     });
   }
@@ -156,7 +158,8 @@ export async function postUpdateAction(
     [...audience].map((userId) => ({
       userId,
       type: "PROJECT_UPDATE" as const,
-      title: `Actu de « ${project.title} » : ${parsed.data.title}`,
+      key: "projectUpdate" as const,
+      params: { projectTitle: project.title, updateTitle: parsed.data.title },
       href: `/projects/${project.slug}#actus`,
     }))
   );

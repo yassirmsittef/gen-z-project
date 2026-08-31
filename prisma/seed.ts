@@ -596,15 +596,19 @@ async function main() {
       {
         userId: lea.id,
         type: "PARTNERSHIP",
-        title: "Demande de partenariat de Micros & Ondes",
-        body: "Pour « Studio de podcast nomade » · 250 $ proposés. Le copilote IA a préparé son analyse.",
+        key: "partnership.requestBudget",
+        params: {
+          brandName: "Micros & Ondes",
+          projectTitle: "Studio de podcast nomade",
+          budgetUsd: 250,
+        },
         href: `/partenariats/${p1Partnership.id}`,
       },
       {
         userId: lea.id,
         type: "PARTNERSHIP",
-        title: "Demande de partenariat de GlobalPromo Agency",
-        body: "Pour « Studio de podcast nomade ». Le copilote IA a préparé son analyse.",
+        key: "partnership.request",
+        params: { brandName: "GlobalPromo Agency", projectTitle: "Studio de podcast nomade" },
         href: `/partenariats/${p1Scam.id}`,
       },
     ],

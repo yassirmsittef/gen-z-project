@@ -1,6 +1,8 @@
 import type { NotificationType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { isLocale } from "@/lib/i18n/locales";
+import { renderNotification } from "@/lib/notification-render";
 import { appUrl } from "@/lib/stripe";
 
 /**
@@ -101,24 +103,31 @@ export async function sendPendingNotificationEmails(sender: Sender = sendEmail) 
         ],
       },
     },
-    include: { user: { select: { email: true, name: true } } },
+    include: { user: { select: { email: true, name: true, preferredLanguage: true } } },
     orderBy: { createdAt: "asc" },
     take: 50, // le cron quotidien draine le reste si gros volume
   });
 
   const base = appUrl();
   for (const notification of pending) {
+    // Rendu AU MOMENT DE L'ENVOI, dans la langue du destinataire : le cron
+    // qui rejoue rend dans la langue COURANTE du membre — jamais d'email figé
+    // dans une vieille langue.
+    const locale = isLocale(notification.user.preferredLanguage)
+      ? notification.user.preferredLanguage
+      : "fr";
+    const rendered = renderNotification(locale, notification);
     const { text, html } = renderEmail({
       name: notification.user.name,
-      title: notification.title,
-      body: notification.body,
+      title: rendered.title,
+      body: rendered.body,
       link: `${base}${notification.href}`,
       prefsLink: `${base}/notifications`,
     });
     try {
       const { sent } = await sender({
         to: notification.user.email,
-        subject: notification.title,
+        subject: rendered.title,
         html,
         text,
       });

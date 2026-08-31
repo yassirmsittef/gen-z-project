@@ -672,7 +672,8 @@ export async function postGroupMessage(userId: string, input: { groupId: string;
     others.map(({ userId: memberId }) => ({
       userId: memberId,
       type: "GROUP_MESSAGE" as const,
-      title: `${message.sender.name ?? "Un membre"} a écrit dans ${group.name}`,
+      key: "groupMessage" as const,
+      params: { actorName: message.sender.name ?? null, groupName: group.name },
       href: `/chat/groupes/${group.slug}`,
     }))
   );

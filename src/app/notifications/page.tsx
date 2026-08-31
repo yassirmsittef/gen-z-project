@@ -26,6 +26,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NotificationPrefs } from "@/components/notification-prefs";
 import { formatRelative } from "@/lib/format";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { renderNotification } from "@/lib/notification-render";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -58,6 +60,7 @@ const TYPE_STYLES: Record<NotificationType, { Icon: LucideIcon; tone: string }> 
 export default async function NotificationsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+  const locale = await getRequestLocale();
 
   const [notifications, viewer] = await Promise.all([
     prisma.notification.findMany({
@@ -107,6 +110,9 @@ export default async function NotificationsPage() {
             {notifications.map((notification) => {
               const { Icon, tone } = TYPE_STYLES[notification.type];
               const isNew = unreadSet.has(notification.id);
+              // La base ne stocke que la matière : rendu ICI, dans la langue
+              // du lecteur — changer de langue traduit aussi l'historique.
+              const rendered = renderNotification(locale, notification);
               return (
                 <li key={notification.id}>
                   <Link
@@ -127,15 +133,15 @@ export default async function NotificationsPage() {
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline justify-between gap-3">
                         <span className={cn("truncate text-sm", isNew ? "font-semibold" : "font-medium")}>
-                          {notification.title}
+                          {rendered.title}
                         </span>
                         <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                          {formatRelative(notification.createdAt)}
+                          {formatRelative(notification.createdAt, locale)}
                         </span>
                       </span>
-                      {notification.body && (
+                      {rendered.body && (
                         <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
-                          {notification.body}
+                          {rendered.body}
                         </span>
                       )}
                     </span>

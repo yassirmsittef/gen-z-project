@@ -8,7 +8,9 @@ import { splitMilestonePayout } from "@/lib/payout-split";
 import { slugify } from "@/lib/utils";
 import type { CreateProjectInput, UpdateProjectInput } from "@/lib/validation";
 import { makeT, type Vars } from "@/lib/i18n/t";
+import { type FailReasonKey } from "@/lib/notification-catalog";
 import { err as ERR_FR } from "@/messages/fr/err";
+import { notif as NOTIF_FR } from "@/messages/fr/notif";
 
 /**
  * Erreur métier : son message est affichable tel quel à l'utilisateur.
@@ -268,8 +270,8 @@ export async function fulfillContribution(input: {
         {
           userId,
           type: "REFUND",
-          title: `Ta contribution à « ${project.title} » arrive après la clôture`,
-          body: `La campagne s'est terminée entre-temps : ta contribution repart vers ta carte, nette des frais de carte que la banque ne restitue pas (GeniGain n'en garde aucun).`,
+          key: "refund.lateClose",
+          params: { projectTitle: project.title },
           href: `/projects/${project.slug}`,
         },
         tx
@@ -310,7 +312,15 @@ export async function fulfillContribution(input: {
       {
         userId: project.ownerId,
         type: "CONTRIBUTION",
-        title: `${input.anonymous ? "Quelqu'un" : (user.name ?? "Quelqu'un")} a soutenu « ${project.title} » (${formatMoney(amount, project.currency)})`,
+        key: "contribution.received",
+        // `actorName: null` = anonyme AU STOCKAGE : le nom ne doit exister
+        // nulle part en base, pas seulement disparaître du rendu.
+        params: {
+          actorName: input.anonymous ? null : (user.name ?? null),
+          projectTitle: project.title,
+          amountMinor: amount,
+          currency: project.currency,
+        },
         href: `/projects/${project.slug}`,
       },
       tx
@@ -322,9 +332,8 @@ export async function fulfillContribution(input: {
       {
         userId,
         type: "CONTRIBUTION_CONFIRMED",
-        title: `Ta contribution de ${formatMoney(amount, project.currency)} à « ${project.title} » est confirmée`,
-        body:
-          "Les fonds rejoignent le séquestre du projet : ils seront débloqués étape par étape, sous le contrôle du vote des contributeurs — dont le tien. Si le projet n'aboutit pas, la part non débloquée revient automatiquement sur ta carte.",
+        key: "contribution.confirmed",
+        params: { amountMinor: amount, currency: project.currency, projectTitle: project.title },
         href: `/projects/${project.slug}`,
       },
       tx
@@ -356,15 +365,15 @@ export async function fulfillContribution(input: {
           {
             userId: project.ownerId,
             type: "PROJECT_FUNDED" as const,
-            title: `Objectif atteint pour « ${project.title} » !`,
-            body: "La collecte est terminée — soumets la preuve de l'étape 1 pour débloquer les premiers fonds.",
+            key: "projectFunded.owner" as const,
+            params: { projectTitle: project.title },
             href: `/projects/${project.slug}`,
           },
           ...[...audience].map((userId) => ({
             userId,
             type: "PROJECT_FUNDED" as const,
-            title: `« ${project.title} » est financé !`,
-            body: "Les fonds seront débloqués étape par étape, sous le contrôle des contributeurs.",
+            key: "projectFunded.supporter" as const,
+            params: { projectTitle: project.title },
             href: `/projects/${project.slug}`,
           })),
         ],
@@ -429,8 +438,12 @@ export async function submitMilestoneProof(
       contributors.map((c) => ({
         userId: c.userId,
         type: "PROOF_TO_VOTE" as const,
-        title: `Preuve à examiner — « ${milestone.project.title} »`,
-        body: `Étape ${milestone.order} : ${milestone.title}. Ton vote débloque (ou non) les fonds.`,
+        key: "proofToVote" as const,
+        params: {
+          projectTitle: milestone.project.title,
+          order: milestone.order,
+          milestoneTitle: milestone.title,
+        },
         href: `/projects/${milestone.project.slug}`,
       })),
       tx
@@ -628,10 +641,14 @@ async function approveProofTx(
     {
       userId: project.ownerId,
       type: "MILESTONE_RELEASED",
-      title: `Étape ${milestone.order} validée — ${formatMoney(release, project.currency)} débloqués`,
-      body: next
-        ? `La communauté a validé ta preuve pour « ${project.title} ». Prochaine étape : « ${next.title} ». Le virement part sur ton compte Stripe.`
-        : `« ${project.title} » est entièrement réalisé. Bravo ! Le virement final part sur ton compte Stripe.`,
+      key: next ? "milestoneReleased.next" : "milestoneReleased.final",
+      params: {
+        order: milestone.order,
+        amountMinor: release,
+        currency: project.currency,
+        projectTitle: project.title,
+        nextTitle: next?.title ?? null,
+      },
       href: `/projects/${project.slug}`,
     },
     tx
@@ -655,11 +672,7 @@ async function rejectProofTx(tx: Tx, proofId: string) {
   });
 
   if (milestone.rejectionCount >= MAX_PROOF_ATTEMPTS) {
-    await failProjectTx(
-      tx,
-      proof.milestone.projectId,
-      "Les preuves d'avancement ont été refusées par la communauté."
-    );
+    await failProjectTx(tx, proof.milestone.projectId, { key: "proofsRefused" });
   } else {
     await tx.milestone.update({
       where: { id: proof.milestoneId },
@@ -674,10 +687,13 @@ async function rejectProofTx(tx: Tx, proofId: string) {
       {
         userId: project.ownerId,
         type: "PROOF_REJECTED",
-        title: `Preuve refusée — « ${project.title} »`,
-        body: `Étape ${proof.milestone.order} : la communauté n'a pas validé. Il te reste ${
-          MAX_PROOF_ATTEMPTS - milestone.rejectionCount
-        } tentative — renforce ta preuve (photos, liens publics).`,
+        key: "proofRejected",
+        // `count` pilote le pluriel du gabarit (1 tentative / 2 tentatives).
+        params: {
+          projectTitle: project.title,
+          order: proof.milestone.order,
+          count: MAX_PROOF_ATTEMPTS - milestone.rejectionCount,
+        },
         href: `/projects/${project.slug}`,
       },
       tx
@@ -687,7 +703,17 @@ async function rejectProofTx(tx: Tx, proofId: string) {
 
 // ---------- Échec & remboursement ----------
 
-async function failProjectTx(tx: Tx, projectId: string, reason: string) {
+/**
+ * Motif d'échec en JEU FERMÉ (jamais de phrase libre) : la notification le
+ * traduit à la lecture ; la colonne `failureReason` garde le rendu français
+ * historique — elle est du contenu de page, pas un gabarit.
+ */
+type FailReason = { key: FailReasonKey; days?: number };
+const tNotifFr = makeT(NOTIF_FR, "fr");
+const failReasonFr = (reason: FailReason) =>
+  tNotifFr(`failReason.${reason.key}`, { days: reason.days ?? null });
+
+async function failProjectTx(tx: Tx, projectId: string, reason: FailReason) {
   const project = await tx.project.findUniqueOrThrow({
     where: { id: projectId },
     include: { contributions: { where: { refunded: false } } },
@@ -717,8 +743,8 @@ async function failProjectTx(tx: Tx, projectId: string, reason: string) {
       refundNotifications.push({
         userId: c.userId,
         type: "REFUND" as const,
-        title: `Remboursement de ${formatMoney(refund, project.currency)} — « ${project.title} »`,
-        body: "La campagne n'a pas abouti : ta part du séquestre restant repart vers ta carte (quelques jours selon ta banque), nette des frais de carte que la banque ne restitue pas — GeniGain n'en garde aucun.",
+        key: "refund.projectFailed" as const,
+        params: { amountMinor: refund, currency: project.currency, projectTitle: project.title },
         href: `/projects/${project.slug}`,
       });
     }
@@ -730,7 +756,7 @@ async function failProjectTx(tx: Tx, projectId: string, reason: string) {
 
   await tx.project.update({
     where: { id: project.id },
-    data: { status: "FAILED", failureReason: reason },
+    data: { status: "FAILED", failureReason: failReasonFr(reason) },
   });
   await tx.user.update({
     where: { id: project.ownerId },
@@ -749,8 +775,12 @@ async function failProjectTx(tx: Tx, projectId: string, reason: string) {
       {
         userId: project.ownerId,
         type: "PROJECT_FAILED" as const,
-        title: `« ${project.title} » n'a pas abouti`,
-        body: `${reason} L'échec n'est pas une sortie : des opportunités t'attendent sur le parcours rebond.`,
+        key: "projectFailed.owner" as const,
+        params: {
+          projectTitle: project.title,
+          reasonKey: reason.key,
+          days: reason.days ?? null,
+        },
         href: `/rebond?from=${project.slug}`,
       },
       ...refundNotifications,
@@ -759,7 +789,7 @@ async function failProjectTx(tx: Tx, projectId: string, reason: string) {
   );
 }
 
-export async function failProject(projectId: string, reason: string) {
+export async function failProject(projectId: string, reason: FailReason) {
   await prisma.$transaction(async (tx) => failProjectTx(tx, projectId, reason));
   const { executeDueRefunds } = await import("@/lib/payouts");
   await executeDueRefunds();
@@ -788,7 +818,7 @@ export async function cancelProjectByOwner(userId: string, projectId: string) {
   }
 
   await prisma.$transaction(async (tx) =>
-    failProjectTx(tx, projectId, "Projet arrêté par son porteur.")
+    failProjectTx(tx, projectId, { key: "stoppedByOwner" })
   );
   const { executeDueRefunds } = await import("@/lib/payouts");
   await executeDueRefunds();
@@ -806,7 +836,7 @@ export async function failExpiredProjects() {
   });
   for (const p of expired) {
     await prisma.$transaction(async (tx) =>
-      failProjectTx(tx, p.id, "Objectif non atteint avant la fin de la campagne.")
+      failProjectTx(tx, p.id, { key: "goalNotReached" })
     );
   }
   if (expired.length > 0) {
@@ -863,7 +893,7 @@ export async function failOverdueRealizations() {
         await failProjectTx(
           tx,
           p.id,
-          `Étapes non réalisées dans les ${REALIZATION_DAYS} jours suivant le financement.`
+          { key: "milestonesNotRealized", days: REALIZATION_DAYS }
         );
       }
       return releasedMilestone;

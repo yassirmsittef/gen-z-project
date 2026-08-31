@@ -236,8 +236,8 @@ export async function answerCall(userId: string, callId: string, projectId: stri
     recipients.map((recipientId) => ({
       userId: recipientId,
       type: "BOYCOTT_ANSWERED" as const,
-      title: `Un remplaçant pour ${call.target}`,
-      body: `« ${project.title} » se lance pour remplacer ${call.target}.`,
+      key: "boycottAnswered" as const,
+      params: { target: call.target, projectTitle: project.title },
       href: `/projects/${project.slug}`,
     }))
   );
@@ -360,8 +360,10 @@ export async function removeCall(
     await notify({
       userId: call.authorId,
       type: "BOYCOTT_REMOVED",
-      title: "Ton appel a été retiré",
-      body: `« ${call.target} » — ${options.reason?.trim() || "non conforme à la charte des appels"}.`,
+      key: "boycottRemoved",
+      // `reason: null` = le motif par défaut, TRADUIT à la lecture — le
+      // défaut ne se fige plus en français à l'écriture.
+      params: { target: call.target, reason: options.reason?.trim() || null },
       href: "/appels",
     });
   }
@@ -527,8 +529,9 @@ export async function postCallComment(userId: string, callId: string, body: stri
     await notify({
       userId: call.authorId,
       type: "CALL_COMMENT",
-      title: `${author?.name ?? "Un membre"} a répondu à ton appel sur ${call.target}`,
-      body: extraitDeReponse(body),
+      key: "callComment",
+      params: { actorName: author?.name ?? null, target: call.target },
+      excerpt: extraitDeReponse(body),
       href: `/appels/${call.slug}#discussion`,
       sourceId: comment.id,
     });
@@ -582,7 +585,9 @@ export async function deleteCallComment(userId: string, commentId: string, isAdm
   // perdu sans retour.
   await prisma.notification.updateMany({
     where: { type: "CALL_COMMENT", sourceId: commentId },
-    data: { body: "Cette réponse a été retirée." },
+    // L'extrait DISPARAÎT de la base ; le rendu affiche la pierre tombale
+    // (traduite) tant que la ligne existe.
+    data: { excerpt: null, retractedAt: new Date() },
   });
 
   // Le retrait clôt les signalements qui visaient cette réponse — même

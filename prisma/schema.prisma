@@ -589,7 +589,26 @@ model Notification {
   id        String           @id @default(cuid())
   userId    String
   type      NotificationType
-  title     String
+  /// Gabarit i18n (clé du catalogue notification-catalog.ts) : la ligne
+  /// stocke la MATIÈRE (clé + params bruts), jamais de texte rendu — le
+  /// rendu se fait à la LECTURE, dans la langue du lecteur. Le défaut ""
+  /// n'existe que pour la fenêtre de déploiement (anciennes lambdas) : le
+  /// rendu retombe alors sur le libellé du type, et la migration de
+  /// contraction purgera ces lignes.
+  key       String           @default("")
+  params    Json?
+  /// Extrait de contenu MEMBRE cité (légende, réponse, commentaire…) —
+  /// colonne dédiée et non champ de `params` : le retrait du contenu la
+  /// neutralise par updateMany (un Json ne se patche pas partiellement), et
+  /// l'exigence des tests est que le texte retiré disparaisse DE LA BASE.
+  excerpt   String?
+  /// Posé quand l'extrait a été neutralisé : le rendu affiche alors la
+  /// pierre tombale du type (« Ce témoignage a été retiré. »…).
+  retractedAt DateTime?
+  /// Fenêtre de déploiement uniquement (expand→contract) : les anciennes
+  /// lambdas écrivent encore ces deux colonnes, plus aucun code neuf ne les
+  /// lit. Supprimées par la migration de contraction.
+  title     String?
   body      String?
   /// Le contenu qui a DÉCLENCHÉ la notification (id de commentaire, de
   /// réponse…). Sert à retrouver la ligne quand ce contenu est retiré : le

@@ -75,8 +75,12 @@ export async function submitPartnershipAction(
   await notify({
     userId: project.ownerId,
     type: "PARTNERSHIP",
-    title: `Demande de partenariat de ${parsed.data.brandName}`,
-    body: `Pour « ${project.title} »${parsed.data.budget != null ? ` · ${parsed.data.budget} $ proposés` : ""}. Le copilote IA a préparé son analyse.`,
+    key: parsed.data.budget != null ? "partnership.requestBudget" : "partnership.request",
+    params: {
+      brandName: parsed.data.brandName,
+      projectTitle: project.title,
+      budgetUsd: parsed.data.budget ?? null,
+    },
     href: `/partenariats/${request.id}`,
   });
 

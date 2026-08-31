@@ -1,5 +1,6 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { prisma } from "../src/lib/prisma";
+import { renderNotification } from "../src/lib/notification-render";
 import { createCall } from "../src/lib/boycott";
 import {
   getVideo,
@@ -187,8 +188,13 @@ describe("retrait d'un témoignage", () => {
     const report = await prisma.report.findFirst({ where: { targetType: "CALL_VIDEO", targetId: id } });
     expect(report?.status).toBe("RESOLVED");
 
-    const notif = await prisma.notification.findFirst({ where: { type: "CALL_VIDEO", sourceId: id } });
-    expect(notif?.body).toBe("Ce témoignage a été retiré.");
+    const notif = await prisma.notification.findFirstOrThrow({
+      where: { type: "CALL_VIDEO", sourceId: id },
+    });
+    // L'extrait a DISPARU de la base ; le rendu affiche la pierre tombale.
+    expect(notif.excerpt).toBeNull();
+    expect(notif.retractedAt).not.toBeNull();
+    expect(renderNotification("fr", notif).body).toBe("Ce témoignage a été retiré.");
   });
 
   it("interdit à un passant de retirer le témoignage d'un autre", async () => {

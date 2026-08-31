@@ -1,5 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "../src/lib/prisma";
+import { renderNotification } from "../src/lib/notification-render";
 import { eraseAccount } from "../src/lib/account";
 import { createReport, handleReport } from "../src/lib/moderation";
 import { createResetToken, requestPasswordReset, resetPassword } from "../src/lib/password-reset";
@@ -189,11 +190,12 @@ describe("contribution (argent réel)", () => {
 
     await contribute(contrib.id, projet.id, 40);
 
-    const reçu = await prisma.notification.findFirst({
+    const reçu = await prisma.notification.findFirstOrThrow({
       where: { userId: contrib.id, type: "CONTRIBUTION_CONFIRMED" },
     });
-    expect(reçu?.title).toContain("est confirmée");
-    expect(reçu?.href).toBe(`/projects/${projet.slug}`);
+    // La base ne stocke plus de texte : on épingle le RENDU français.
+    expect(renderNotification("fr", reçu).title).toContain("est confirmée");
+    expect(reçu.href).toBe(`/projects/${projet.slug}`);
     expect(
       await prisma.notification.count({ where: { userId: porteur.id, type: "CONTRIBUTION" } })
     ).toBe(1);
@@ -227,8 +229,11 @@ describe("contribution (argent réel)", () => {
     const notif = await prisma.notification.findFirstOrThrow({
       where: { userId: porteur.id, type: "CONTRIBUTION" },
     });
-    expect(notif.title).toContain("Quelqu'un a soutenu");
-    expect(notif.title).not.toContain("Fixture");
+    expect(renderNotification("fr", notif).title).toContain("Quelqu'un a soutenu");
+    // Plus fort qu'avant : l'anonymat vaut AU STOCKAGE — le nom n'existe
+    // nulle part en base, pas seulement hors du rendu.
+    expect((notif.params as { actorName?: string | null })?.actorName ?? null).toBeNull();
+    expect(JSON.stringify(notif.params)).not.toContain("Fixture");
 
     // Le poids de vote et le gate restent intacts (anonymat d'affichage).
     const user = await prisma.user.findUniqueOrThrow({ where: { id: discret.id } });

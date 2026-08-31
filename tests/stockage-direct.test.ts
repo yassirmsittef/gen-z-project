@@ -1,6 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NotificationType } from "@prisma/client";
 import { prisma } from "../src/lib/prisma";
+import { renderNotification } from "../src/lib/notification-render";
 import { createCall, removeCall } from "../src/lib/boycott";
 import { eraseAccount } from "../src/lib/account";
 import {
@@ -311,7 +312,7 @@ describe("l'alerte aux admins", () => {
     await mkVideo(membre.id, call.id, { video: 2 * Mo });
     const alertes = await alertesDe(admin.id);
     expect(alertes).toHaveLength(1);
-    expect(alertes[0].title).toContain("80 %");
+    expect(renderNotification("fr", alertes[0]).title).toContain("80 %");
     expect(alertes[0].href).toBe("/admin?palier=alerte#stockage");
     expect(await alertesDe(membre.id)).toHaveLength(0);
 
@@ -340,7 +341,7 @@ describe("l'alerte aux admins", () => {
 
     const alertes = await alertesDe(admin.id);
     expect(alertes).toHaveLength(1);
-    expect(alertes[0].title).toContain("saturé");
+    expect(renderNotification("fr", alertes[0]).title).toContain("saturé");
   });
 
   it("ignore les préférences : couper ce type n'a aucun effet", async () => {
