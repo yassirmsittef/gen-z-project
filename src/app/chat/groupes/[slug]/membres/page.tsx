@@ -8,11 +8,15 @@ import { ReputationBadge } from "@/components/reputation-badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { getGroupBySlug, getGroupMembers } from "@/lib/chat-groups";
 import { formatDate } from "@/lib/format";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Membres du groupe",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("memberPages");
+  return {
+    title: t("meta.groupMembersTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function GroupMembersPage({
   params,
@@ -22,6 +26,8 @@ export default async function GroupMembersPage({
   const { slug } = await params;
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+  const t = await getT("memberPages");
+  const locale = await getRequestLocale();
 
   const group = await getGroupBySlug(slug, session.user.id);
   if (!group) notFound();
@@ -39,15 +45,15 @@ export default async function GroupMembersPage({
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
-          Retour au fil
+          {t("groupMembers.backToThread")}
         </Link>
         <h1 dir="auto" className="text-left text-4xl font-semibold tracking-tight">
           {group.name}
         </h1>
         <p className="data-label">
-          {members.length} membre{members.length > 1 ? "s" : ""}
+          {t("groupMembers.membersCount", { count: members.length })}
           {group.canModerate && bans.length > 0
-            ? ` · ${bans.length} exclu${bans.length > 1 ? "s" : ""}`
+            ? ` ${t("groupMembers.bansCount", { count: bans.length })}`
             : ""}
         </p>
       </div>
@@ -69,20 +75,20 @@ export default async function GroupMembersPage({
                       {isOwner && (
                         <span className="inline-flex items-center gap-1 rounded-full border border-secondary/30 bg-secondary/15 px-2 py-0.5 text-[11px] font-medium text-secondary">
                           <Crown className="h-3 w-3" aria-hidden />
-                          Animateur
+                          {t("groupMembers.owner")}
                         </span>
                       )}
                       {manager && !isOwner && (
                         <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
                           <ShieldCheck className="h-3 w-3" aria-hidden />
-                          Gérant·e
+                          {t("groupMembers.manager")}
                         </span>
                       )}
                     </p>
                     <div className="mt-0.5 flex items-center gap-2">
                       <ReputationBadge reputation={user.reputation} admin={user.role === "ADMIN"} showScore={false} />
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                        depuis le {formatDate(joinedAt)}
+                        {t("groupMembers.since", { date: formatDate(joinedAt, locale) })}
                       </span>
                     </div>
                   </div>
@@ -94,7 +100,7 @@ export default async function GroupMembersPage({
                   <MemberActions
                     slug={group.slug}
                     targetId={user.id}
-                    targetName={user.name ?? "ce membre"}
+                    targetName={user.name ?? t("groupMembers.thisMember")}
                     isManager={manager}
                     canManage={group.canManage}
                   />
@@ -108,12 +114,11 @@ export default async function GroupMembersPage({
           <section className="space-y-3">
             <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
               <UserMinus className="h-4 w-4 text-muted-foreground" aria-hidden />
-              Exclusions
+              {t("groupMembers.exclusions")}
             </h2>
             {bans.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-white/[0.12] p-6 text-center text-sm text-muted-foreground">
-                Personne n&apos;a été exclu de ce salon. Une exclusion retire la personne et lui
-                ferme la porte ; ses messages, eux, restent.
+                {t("groupMembers.noBans")}
               </p>
             ) : (
               <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl">
@@ -131,7 +136,7 @@ export default async function GroupMembersPage({
                       <div className="min-w-0">
                         <p className="truncate font-semibold">{user.name}</p>
                         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                          exclu le {formatDate(createdAt)}
+                          {t("groupMembers.bannedOn", { date: formatDate(createdAt, locale) })}
                         </p>
                       </div>
                     </div>

@@ -18,14 +18,19 @@ import { ThreadAutoScroll } from "@/components/thread-autoscroll";
 import { UserAvatar } from "@/components/user-avatar";
 import { getConversations } from "@/lib/chat";
 import { getGroupBySlug, getGroupThread, getMyGroups, markGroupRead } from "@/lib/chat-groups";
-import { CATEGORY_LABELS, roomTexts } from "@/lib/constants";
+import { roomTexts } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
+import { categoryLabel } from "@/lib/i18n/labels";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "Groupe",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("memberPages");
+  return {
+    title: t("meta.groupTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 /** Les cinq premiers visages du salon, puis le compte des autres. */
 function MemberStack({
@@ -63,6 +68,8 @@ export default async function GroupThreadPage({
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
+  const t = await getT("memberPages");
+  const locale = await getRequestLocale();
 
   const group = await getGroupBySlug(slug, userId);
   if (!group) notFound();
@@ -88,7 +95,7 @@ export default async function GroupThreadPage({
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
-          Tous les groupes
+          {t("groupThread.allGroups")}
         </Link>
         {/* dir="auto" ordonne correctement un nom arabe ; text-left le garde
             ancré à la mise en page (sinon il part à l'autre bout de l'écran,
@@ -98,9 +105,10 @@ export default async function GroupThreadPage({
           {group.name}
         </h1>
         <p className="data-label">
-          {group.official ? "Salon d'accueil · " : ""}
-          {CATEGORY_LABELS[group.category]} · {group.memberCount} membre
-          {group.memberCount > 1 ? "s" : ""}
+          {t(group.official ? "groupThread.metaOfficial" : "groupThread.meta", {
+            category: categoryLabel(locale, group.category),
+            members: t("groupThread.membersCount", { count: group.memberCount }),
+          })}
         </p>
       </div>
 
@@ -130,11 +138,11 @@ export default async function GroupThreadPage({
                   {group.purpose}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Animé par{" "}
+                  {t("groupThread.animatedBy")}{" "}
                   <Link href={`/u/${group.owner.id}`} className="hover:text-foreground">
                     {group.owner.name}
                   </Link>{" "}
-                  · ouvert le {formatDate(group.createdAt)}
+                  {t("groupThread.openedOn", { date: formatDate(group.createdAt, locale) })}
                 </p>
               </div>
             </div>
@@ -146,12 +154,15 @@ export default async function GroupThreadPage({
                 <Link
                   href={`/chat/groupes/${group.slug}/membres`}
                   className="flex -space-x-2 rounded-full transition-transform duration-200 hover:-translate-y-0.5"
-                  title={`Voir les ${group.memberCount} membres`}
+                  title={t("groupThread.seeMembers", { count: group.memberCount })}
                 >
                   <MemberStack group={group} />
                 </Link>
               ) : (
-                <div className="flex -space-x-2" aria-label={`${group.memberCount} membres`}>
+                <div
+                  className="flex -space-x-2"
+                  aria-label={t("groupThread.membersAria", { count: group.memberCount })}
+                >
                   <MemberStack group={group} />
                 </div>
               )}
@@ -179,7 +190,7 @@ export default async function GroupThreadPage({
                       className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.12] bg-card/60 px-3.5 py-1 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground"
                     >
                       <ChevronUp className="h-3.5 w-3.5" aria-hidden />
-                      Messages plus anciens
+                      {t("groupThread.olderMessages")}
                     </Link>
                   </p>
                 )}
@@ -240,7 +251,7 @@ export default async function GroupThreadPage({
                           </p>
                           <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                             <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                              {formatDate(message.createdAt)}
+                              {formatDate(message.createdAt, locale)}
                             </span>
                             <GroupMessageActions
                               messageId={message.id}
@@ -260,7 +271,7 @@ export default async function GroupThreadPage({
                       className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-sm font-medium text-primary transition-colors duration-200 hover:bg-primary/20"
                     >
                       <ChevronDown className="h-3.5 w-3.5" aria-hidden />
-                      Revenir aux derniers messages
+                      {t("groupThread.backToLatest")}
                     </Link>
                   </p>
                 )}
@@ -279,17 +290,16 @@ export default async function GroupThreadPage({
             <div className="flex flex-1 flex-col items-center justify-center gap-4 p-12 text-center">
               <Lock className="h-8 w-8 text-muted-foreground" aria-hidden />
               <div className="space-y-1">
-                <p className="font-semibold">Le fil est réservé aux membres</p>
+                <p className="font-semibold">{t("groupThread.membersOnly")}</p>
                 <p className="max-w-sm text-sm text-muted-foreground">
-                  Rejoins le groupe pour lire les échanges et écrire — tu peux en repartir quand
-                  tu veux.
+                  {t("groupThread.joinToRead")}
                 </p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <JoinGroupButton slug={group.slug} full={group.full} />
                 <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
                   <Users className="h-4 w-4" aria-hidden />
-                  {group.memberCount} membre{group.memberCount > 1 ? "s" : ""}
+                  {t("groupThread.membersCount", { count: group.memberCount })}
                 </span>
               </div>
               <ReportButton targetType="CHAT_GROUP" targetId={group.id} />

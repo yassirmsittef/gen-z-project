@@ -5,7 +5,7 @@ import { FileDown, Handshake, PenLine, ShieldAlert, Sparkles, Star, Swords } fro
 import { auth } from "@/auth";
 import { liveAnswer } from "@/lib/boycott";
 import { isLocale } from "@/lib/i18n/locales";
-import { getT } from "@/lib/i18n/server";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -32,21 +32,18 @@ import { convertMinor } from "@/lib/fx";
 import { formatDate, formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "Dashboard",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("memberPages");
+  return {
+    title: t("meta.dashboardTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
-/** Bandeaux de retour de l'onboarding Stripe Connect (?connect=done|refresh). */
-const CONNECT_BANNERS = {
-  done: {
-    tone: "text-success border-success/30 bg-success/10",
-    text: `Configuration transmise à Stripe — tes versements s'activent dès validation${stripeLive ? "." : " (souvent immédiat en mode test)."}`,
-  },
-  refresh: {
-    tone: "text-muted-foreground border-white/[0.12] bg-card/60",
-    text: "La session Stripe a expiré — relance la configuration des versements quand tu veux.",
-  },
+/** Teintes des bandeaux de retour de l'onboarding Stripe Connect (?connect=done|refresh). */
+const CONNECT_BANNER_TONES = {
+  done: "text-success border-success/30 bg-success/10",
+  refresh: "text-muted-foreground border-white/[0.12] bg-card/60",
 } as const;
 
 export default async function DashboardPage({
@@ -56,9 +53,19 @@ export default async function DashboardPage({
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+  const t = await getT("memberPages");
+  const locale = await getRequestLocale();
   const { connect } = await searchParams;
   const connectBanner =
-    connect === "done" || connect === "refresh" ? CONNECT_BANNERS[connect] : null;
+    connect === "done" || connect === "refresh"
+      ? {
+          tone: CONNECT_BANNER_TONES[connect],
+          text:
+            connect === "done"
+              ? t(stripeLive ? "dashboard.connectDoneLive" : "dashboard.connectDoneTest")
+              : t("dashboard.connectRefresh"),
+        }
+      : null;
 
   const [
     user,
@@ -180,20 +187,22 @@ export default async function DashboardPage({
         <div className="flex flex-wrap items-center gap-5">
           {/* La photo mène à la carte « Mon profil » plus bas : le premier
               réflexe pour changer sa photo est d'appuyer dessus. */}
-          <Link href="#profil" title="Modifier mon profil" className="rounded-full">
+          <Link href="#profil" title={t("dashboard.editProfile")} className="rounded-full">
             <ReputationRing reputation={user.reputation} admin={user.role === "ADMIN"}>
               <UserAvatar name={user.name} avatarUrl={user.avatarUrl} className="h-16 w-16 border-0 text-xl" />
             </ReputationRing>
           </Link>
           <div className="space-y-1.5">
-            <h1 className="text-4xl font-semibold tracking-tight">Salut {user.name}</h1>
-            <p className="data-label">QG personnel · systèmes opérationnels</p>
+            <h1 className="text-4xl font-semibold tracking-tight">
+              {t("dashboard.greeting", { name: user.name ?? "" })}
+            </h1>
+            <p className="data-label">{t("dashboard.tagline")}</p>
             <Link
               href="#profil"
               className="inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors duration-200 hover:text-primary/80"
             >
               <PenLine className="h-3.5 w-3.5" aria-hidden />
-              Modifier mon profil
+              {t("dashboard.editProfile")}
             </Link>
           </div>
           <ReputationBadge reputation={user.reputation} admin={user.role === "ADMIN"} className="ml-auto" />
@@ -208,11 +217,11 @@ export default async function DashboardPage({
               className={cn("h-5 w-5", openReports > 0 ? "text-destructive" : "text-primary")}
               aria-hidden
             />
-            <span className="text-sm font-medium">Cockpit admin</span>
+            <span className="text-sm font-medium">{t("dashboard.adminCockpit")}</span>
             <span className="ml-auto text-xs text-muted-foreground">
               {openReports > 0
-                ? `${openReports} signalement${openReports > 1 ? "s" : ""} à traiter`
-                : "rien à modérer"}
+                ? t("dashboard.reportsToHandle", { count: openReports })
+                : t("dashboard.nothingToModerate")}
             </span>
           </Link>
         )}
@@ -220,15 +229,12 @@ export default async function DashboardPage({
         {failedProjects.length > 0 && (
           <Alert>
             <Sparkles className="h-4 w-4" />
-            <AlertTitle>Un projet n&apos;a pas abouti — et maintenant ?</AlertTitle>
+            <AlertTitle>{t("dashboard.failedTitle")}</AlertTitle>
             <AlertDescription className="space-y-2">
-              <p>
-                L&apos;échec n&apos;est pas une sortie. Découvre d&apos;autres opportunités et
-                repars plus fort·e.
-              </p>
+              <p>{t("dashboard.failedBody")}</p>
               <Button size="sm" variant="outline" asChild>
                 <Link href={`/rebond?from=${failedProjects[0].slug}`}>
-                  Voir les opportunités →
+                  {t("dashboard.seeOpportunities")}
                 </Link>
               </Button>
             </AlertDescription>
@@ -242,33 +248,42 @@ export default async function DashboardPage({
               tint="violet"
               value={String(user.reputation)}
               percent={nextLevel ? nextLevel.progress : 1}
-              label="Réputation"
+              label={t("dashboard.statReputation")}
               sublabel={
                 nextLevel
-                  ? `${tLabels(nextLevel.nextLabelKey)} à ${nextLevel.target}`
-                  : "Niveau maximal atteint"
+                  ? t("dashboard.nextLevelAt", {
+                      label: tLabels(nextLevel.nextLabelKey),
+                      target: nextLevel.target,
+                    })
+                  : t("dashboard.maxLevel")
               }
             />
             <StatRing
-              value={formatMoneyRounded(user.contributedUsdCents, "usd")}
+              value={formatMoneyRounded(user.contributedUsdCents, "usd", locale)}
               percent={gateExempt ? 1 : Math.min(1, user.contributedUsdCents / GATE_USD_CENTS)}
-              label="Vers ton projet"
+              label={t("dashboard.statTowardProject")}
               sublabel={
                 gateExempt
-                  ? "Fondateur — tu postes sans le gate"
+                  ? t("dashboard.gateExempt")
                   : gateReached
-                    ? "Gate débloqué — tu peux poster"
-                    : `${formatMoney(GATE_USD_CENTS - user.contributedUsdCents, "usd")} avant de pouvoir poster`
+                    ? t("dashboard.gateReached")
+                    : t("dashboard.gateRemaining", {
+                        amount: formatMoney(
+                          GATE_USD_CENTS - user.contributedUsdCents,
+                          "usd",
+                          locale
+                        ),
+                      })
               }
             />
             <StatRing
               value={String(contributions.length)}
               percent={Math.min(1, contributions.length / 10)}
-              label="Soutiens"
+              label={t("dashboard.statSupports")}
               sublabel={
                 contributions.length >= 10
-                  ? "Pilier de la communauté"
-                  : `Objectif : 10 projets soutenus`
+                  ? t("dashboard.communityPillar")
+                  : t("dashboard.supportGoal")
               }
             />
           </div>
@@ -277,7 +292,9 @@ export default async function DashboardPage({
         {/* Trajectoire : l'activité récente en nœuds lumineux */}
         {trajectory.length > 0 && (
           <section data-reveal className="space-y-4">
-            <h2 className="text-2xl font-semibold tracking-tight">Ta trajectoire</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              {t("dashboard.trajectoryTitle")}
+            </h2>
             <div className="relative">
               <span
                 className="absolute left-0 right-0 top-[13px] h-px bg-gradient-to-r from-transparent via-primary/40 to-primary/10"
@@ -301,7 +318,7 @@ export default async function DashboardPage({
                         {event.reason}
                       </p>
                       <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                        {formatDate(event.createdAt)}
+                        {formatDate(event.createdAt, locale)}
                       </p>
                     </div>
                   </li>
@@ -314,31 +331,32 @@ export default async function DashboardPage({
         {pendingPartnerships > 0 && (
           <p className="rounded-2xl border border-secondary/40 bg-secondary/10 p-4 text-sm font-medium">
             <Handshake className="mr-2 inline h-4 w-4 text-secondary" aria-hidden />
-            {pendingPartnerships} demande{pendingPartnerships > 1 ? "s" : ""} de partenariat en
-            attente de ta réponse —{" "}
+            {t("dashboard.pendingPartnerships", { count: pendingPartnerships })}{" "}
             <Link href="/partenariats" className="font-semibold text-secondary hover:underline">
-              voir avec le copilote IA →
+              {t("dashboard.seeWithCopilot")}
             </Link>
           </p>
         )}
 
         <section className="space-y-4">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-2xl font-semibold tracking-tight">Mes projets</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">{t("dashboard.myProjects")}</h2>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="ghost" asChild>
                 <Link href="/partenariats">
-                  Partenariats{pendingPartnerships > 0 ? ` (${pendingPartnerships})` : ""}
+                  {pendingPartnerships > 0
+                    ? t("dashboard.partnershipsLinkCount", { count: pendingPartnerships })
+                    : t("dashboard.partnershipsLink")}
                 </Link>
               </Button>
               <Button size="sm" asChild>
-                <Link href="/projects/new">Lancer un projet</Link>
+                <Link href="/projects/new">{t("dashboard.launchProject")}</Link>
               </Button>
             </div>
           </div>
           {myProjects.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-white/[0.12] p-8 text-center text-sm text-muted-foreground">
-              Pas encore de projet. Contribue à un projet pour débloquer la création du tien.
+              {t("dashboard.noProjects")}
             </p>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -358,10 +376,10 @@ export default async function DashboardPage({
             <div className="flex items-center justify-between gap-2">
               <h2 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
                 <Swords className="h-6 w-6 text-secondary" aria-hidden />
-                Mes appels
+                {t("dashboard.myCalls")}
               </h2>
               <Button size="sm" variant="ghost" asChild>
-                <Link href="/appels/nouveau">Publier un appel</Link>
+                <Link href="/appels/nouveau">{t("dashboard.publishCall")}</Link>
               </Button>
             </div>
             <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-tr-sm">
@@ -373,17 +391,17 @@ export default async function DashboardPage({
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold">
-                        Remplacer {call.target}
+                        {t("dashboard.replaceTarget", { target: call.target })}
                       </span>
                       <span className="block text-xs text-muted-foreground">
-                        {call._count.supports} voix ·{" "}
+                        {t("dashboard.callVoices", { count: call._count.supports })} ·{" "}
                         {call._count.answers > 0
-                          ? `${call._count.answers} remplaçant${call._count.answers > 1 ? "s" : ""}`
-                          : "aucun remplaçant pour l'instant"}
+                          ? t("dashboard.callAnswerers", { count: call._count.answers })
+                          : t("dashboard.callNoAnswerers")}
                       </span>
                     </span>
                     <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                      {formatRelative(call.createdAt)}
+                      {formatRelative(call.createdAt, locale)}
                     </span>
                   </Link>
                 </li>
@@ -396,7 +414,7 @@ export default async function DashboardPage({
           <section className="space-y-4">
             <h2 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
               <Star className="h-6 w-6 text-secondary" aria-hidden />
-              Projets suivis
+              {t("dashboard.followedProjects")}
             </h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {followedProjects.map((follow) => (
@@ -409,12 +427,14 @@ export default async function DashboardPage({
         <section data-reveal className="grid gap-8 lg:grid-cols-2">
           {/* min-w-0 : sans lui, les lignes truncate imposent leur largeur à la colonne */}
           <div className="min-w-0 space-y-4">
-            <h2 className="text-2xl font-semibold tracking-tight">Mes contributions</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              {t("dashboard.myContributions")}
+            </h2>
             {contributions.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-white/[0.12] p-8 text-center text-sm text-muted-foreground">
-                Aucune contribution pour l&apos;instant.{" "}
+                {t("dashboard.noContributions")}{" "}
                 <Link href="/projects" className="font-medium text-primary hover:underline">
-                  Trouve un projet à soutenir →
+                  {t("dashboard.findProject")}
                 </Link>
               </p>
             ) : (
@@ -432,20 +452,24 @@ export default async function DashboardPage({
                             {contribution.project.title}
                           </Link>
                           <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                            {formatDate(contribution.createdAt)}
-                            {contribution.refunded && " · remboursée"}
+                            {formatDate(contribution.createdAt, locale)}
+                            {contribution.refunded && ` · ${t("dashboard.refunded")}`}
                           </p>
                         </div>
                         <span className="ml-auto shrink-0 text-right font-mono text-sm">
                           {converted != null ? (
                             <>
-                              {`≈ ${formatMoney(converted, displayCurrency)}`}
+                              {`≈ ${formatMoney(converted, displayCurrency, locale)}`}
                               <span className="block text-[10px] text-muted-foreground">
-                                {formatMoney(contribution.amount, contribution.project.currency)}
+                                {formatMoney(
+                                  contribution.amount,
+                                  contribution.project.currency,
+                                  locale
+                                )}
                               </span>
                             </>
                           ) : (
-                            formatMoney(contribution.amount, contribution.project.currency)
+                            formatMoney(contribution.amount, contribution.project.currency, locale)
                           )}
                         </span>
                       </div>
@@ -460,7 +484,7 @@ export default async function DashboardPage({
 
         <section id="profil" data-reveal className="grid scroll-mt-24 gap-8 lg:grid-cols-2">
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold tracking-tight">Mon profil</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">{t("dashboard.myProfile")}</h2>
             <Card>
               <CardContent className="space-y-6 pt-6">
                 <ProfileForm
@@ -478,7 +502,7 @@ export default async function DashboardPage({
             </Card>
           </div>
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold tracking-tight">Mes compétences</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">{t("dashboard.mySkills")}</h2>
             <Card>
               <CardContent className="pt-6">
                 <SkillsForm initialSkills={user.skills} />
@@ -486,7 +510,7 @@ export default async function DashboardPage({
             </Card>
           </div>
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold tracking-tight">Mes versements</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">{t("dashboard.myPayouts")}</h2>
             <Card>
               <CardContent className="pt-6">
                 <ConnectForm
@@ -498,20 +522,17 @@ export default async function DashboardPage({
             </Card>
           </div>
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold tracking-tight">Sécurité</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">{t("dashboard.security")}</h2>
             <Card>
               <CardContent className="space-y-6 pt-6">
                 <PasswordForm />
                 <div className="space-y-2">
-                  <h3 className="text-sm font-semibold">Mes données</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Tout ce que tu as confié à GeniGain (profil, projets, contributions, votes,
-                    messages envoyés…), en un fichier JSON — droit à la portabilité.
-                  </p>
+                  <h3 className="text-sm font-semibold">{t("dashboard.myData")}</h3>
+                  <p className="text-xs text-muted-foreground">{t("dashboard.myDataBody")}</p>
                   <Button variant="outline" size="sm" asChild>
                     <a href="/api/me/export" download>
                       <FileDown aria-hidden />
-                      Télécharger mes données
+                      {t("dashboard.downloadMyData")}
                     </a>
                   </Button>
                 </div>

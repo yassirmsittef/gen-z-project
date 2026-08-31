@@ -2,14 +2,18 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth, googleEnabled } from "@/auth";
-import { getRequestLocale } from "@/lib/i18n/server";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RegisterForm } from "@/components/auth-forms";
 
-export const metadata: Metadata = { title: "Inscription" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("authPages");
+  return { title: t("meta.registerTitle") };
+}
 
 export default async function RegisterPage() {
+  const t = await getT("authPages");
   const session = await auth();
   // Ne rediriger que si l'utilisateur du token existe toujours (un JWT peut
   // survivre à un utilisateur supprimé, ex. après un re-seed).
@@ -26,15 +30,15 @@ export default async function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-semibold tracking-tight">
-            Rejoins la communauté
+            {t("register.title")}
           </CardTitle>
           <CardDescription>
-            Contribue aux projets de ta génération par carte, dans leur devise — et lance le tien dès 20&nbsp;$ de contributions cumulées.{" "}
+            {t("register.description")}{" "}
             <Link
               href="/comment-ca-marche"
               className="font-medium text-primary underline-offset-4 hover:underline"
             >
-              Comment ça marche&nbsp;?
+              {t("register.howItWorks")}
             </Link>
           </CardDescription>
         </CardHeader>

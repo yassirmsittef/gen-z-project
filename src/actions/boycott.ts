@@ -174,7 +174,12 @@ export async function removeCallAction(formData: FormData): Promise<void> {
   if (!session?.user?.id) redirect("/login");
 
   const callId = String(formData.get("callId") ?? "");
-  const reason = String(formData.get("reason") ?? "");
+  // Le motif type de modération est écrit ICI, en français : la base garde le
+  // rendu que l'équipe relit, quelle que soit la langue du modérateur.
+  const reason =
+    formData.get("standardReason") === "1"
+      ? "Retiré par la modération après examen"
+      : String(formData.get("reason") ?? "");
 
   try {
     await removeCall(session.user.id, callId, {

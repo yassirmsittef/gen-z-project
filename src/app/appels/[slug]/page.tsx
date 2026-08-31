@@ -20,8 +20,9 @@ import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
 import { getCall, siblingCalls, targetWeight } from "@/lib/boycott";
 import { videoCountForCall } from "@/lib/call-videos";
-import { CATEGORY_LABELS } from "@/lib/constants";
 import { formatDate, formatRelative } from "@/lib/format";
+import { categoryLabel } from "@/lib/i18n/labels";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { isAdmin } from "@/lib/moderation";
 import { prisma } from "@/lib/prisma";
 
@@ -36,9 +37,10 @@ export async function generateMetadata({
     where: { slug: (await params).slug },
     select: { target: true, wanted: true, removedAt: true },
   });
-  if (!call || call.removedAt) return { title: "Appel" };
+  const t = await getT("callsPages");
+  if (!call || call.removedAt) return { title: t("meta.detailFallback") };
   return {
-    title: `Remplacer ${call.target}`,
+    title: t("meta.detailTitle", { target: call.target }),
     description: call.wanted.slice(0, 160),
   };
 }
@@ -47,6 +49,8 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const session = await auth();
   const userId = session?.user?.id;
+  const t = await getT("callsPages");
+  const locale = await getRequestLocale();
 
   const call = await getCall(slug, userId);
   if (!call) notFound();
@@ -57,14 +61,16 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
     return (
       <div className="container max-w-3xl py-16">
         <div className="glass rounded-2xl rounded-tr-sm p-8 text-center">
-          <h1 className="font-display text-2xl font-semibold">Cet appel a été retiré</h1>
+          <h1 className="font-display text-2xl font-semibold">{t("removed.title")}</h1>
           <p className="mt-2 text-muted-foreground">
             {call.removedById
-              ? `Retiré par la modération — ${call.removalReason ?? "non conforme à la charte des appels"}.`
-              : "Retiré par la personne qui l'avait publié."}
+              ? t("removed.byModeration", {
+                  reason: call.removalReason ?? t("removed.defaultReason"),
+                })
+              : t("removed.byAuthor")}
           </p>
           <Button asChild variant="outline" className="mt-6">
-            <Link href="/appels">Retour au fil</Link>
+            <Link href="/appels">{t("back.toFeed")}</Link>
           </Button>
         </div>
       </div>
@@ -101,23 +107,22 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
         className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
       >
         <ArrowLeft aria-hidden className="h-4 w-4" />
-        Retour au fil
+        {t("back.toFeed")}
       </Link>
 
       <article className="glass rounded-2xl rounded-tr-sm p-6 sm:p-8">
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{CATEGORY_LABELS[call.category]}</Badge>
+          <Badge variant="outline">{categoryLabel(locale, call.category)}</Badge>
           {call.answers.length > 0 ? (
             <Badge variant="success">
-              {call.answers.length} remplaçant{call.answers.length > 1 ? "s" : ""} déclaré
-              {call.answers.length > 1 ? "s" : ""}
+              {t("badge.answered", { count: call.answers.length })}
             </Badge>
           ) : (
-            <Badge variant="outline">Aucun remplaçant pour l&apos;instant</Badge>
+            <Badge variant="outline">{t("badge.none")}</Badge>
           )}
         </div>
 
-        <p className="data-label">Ne veut plus de</p>
+        <p className="data-label">{t("target.label")}</p>
         {/* Nom de marque : soustrait à la traduction automatique. */}
         <h1
           translate="no"
@@ -129,10 +134,12 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
             l'accumulation qui transforme un rejet isolé en signal. */}
         {weight.calls > 1 && (
           <p className="mt-2 text-sm text-muted-foreground">
-            <span className="font-semibold text-secondary">{weight.calls} appels</span> visent
-            cette marque, portés par{" "}
-            <span className="font-mono tabular-nums text-secondary">{weight.voices}</span> voix au
-            total.
+            <span className="font-semibold text-secondary">
+              {t("weight.calls", { count: weight.calls })}
+            </span>{" "}
+            {t("weight.aim")}{" "}
+            <span className="font-mono tabular-nums text-secondary">{weight.voices}</span>{" "}
+            {t("weight.total")}
           </p>
         )}
 
@@ -143,9 +150,9 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
           >
             <UserAvatar name={call.author.name} avatarUrl={call.author.avatarUrl} />
             <span>
-              <span className="font-semibold">{call.author.name ?? "Membre"}</span>
+              <span className="font-semibold">{call.author.name ?? t("author.fallback")}</span>
               <span className="block text-xs text-muted-foreground">
-                {formatDate(call.createdAt)}
+                {formatDate(call.createdAt, locale)}
               </span>
             </span>
           </Link>
@@ -160,21 +167,21 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
 
         <div className="mt-7 space-y-6">
           <section>
-            <h2 className="data-label mb-2">Le motif</h2>
+            <h2 className="data-label mb-2">{t("motive.title")}</h2>
             <p className="whitespace-pre-line leading-relaxed text-foreground/90">{call.reason}</p>
           </section>
 
           <section className="rounded-xl border border-secondary/20 bg-secondary/[0.06] p-5">
             <h2 className="data-label mb-2 flex items-center gap-1.5">
               <Target aria-hidden className="h-3 w-3" />
-              Ce qu&apos;il faudrait à la place
+              {t("wanted.title")}
             </h2>
             <p className="whitespace-pre-line leading-relaxed text-foreground/90">{call.wanted}</p>
           </section>
 
           {call.sources.length > 0 && (
             <section>
-              <h2 className="data-label mb-2">Sources avancées par l&apos;auteur</h2>
+              <h2 className="data-label mb-2">{t("sources.title")}</h2>
               <ul className="space-y-1.5">
                 {call.sources.map((source) => (
                   <li key={source}>
@@ -197,9 +204,7 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
         {/* Le cadre : qui parle, et qui ne parle pas. */}
         <footer className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.08] pt-5">
           <p className="max-w-md text-xs text-muted-foreground">
-            Appel publié par un membre. GeniGain héberge ce contenu, n&apos;en est pas
-            l&apos;auteur et ne l&apos;endosse pas. Une marque mise en cause peut demander un
-            retrait à{" "}
+            {t("frame.disclaimer")}{" "}
             <a href="mailto:bonjour@genigain.com" className="text-primary hover:underline">
               bonjour@genigain.com
             </a>
@@ -209,23 +214,27 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
             {/* Partager : c'est ce qui recrute un porteur. Avant le signalement,
                 parce que c'est l'action qu'on veut voir en premier. */}
             <ShareButton
-              title={`Remplacer ${call.target}`}
-              text={`${call._count.supports} ${call._count.supports > 1 ? "personnes veulent" : "personne veut"} remplacer ${call.target}. À la place : ${call.wanted}`}
+              title={t("share.title", { target: call.target })}
+              text={t("share.text", {
+                count: call._count.supports,
+                target: call.target,
+                wanted: call.wanted,
+              })}
             />
             {userId && !isAuthor && <ReportButton targetType="BOYCOTT_CALL" targetId={call.id} />}
             {(isAuthor || admin) && (
               <form action={removeCallAction}>
                 <input type="hidden" name="callId" value={call.id} />
+                {/* Un DRAPEAU, pas une phrase : le motif type est rendu en
+                    français par l'action (l'équipe modère en français), sinon
+                    la langue du modérateur se figerait dans la base et serait
+                    relue telle quelle par tout le monde. */}
                 {admin && !isAuthor && (
-                  <input
-                    type="hidden"
-                    name="reason"
-                    value="Retiré par la modération après examen"
-                  />
+                  <input type="hidden" name="standardReason" value="1" />
                 )}
                 <Button type="submit" variant="destructive" size="sm">
                   <Trash2 aria-hidden />
-                  {isAuthor ? "Retirer mon appel" : "Retirer (modération)"}
+                  {isAuthor ? t("actions.removeMine") : t("actions.removeModeration")}
                 </Button>
               </form>
             )}
@@ -235,12 +244,10 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
 
       <section className="mt-10">
         <h2 className="font-display text-2xl font-semibold tracking-tight">
-          {call.answers.length > 0 ? "Les remplaçants" : "Personne ne l'a encore remplacé"}
+          {call.answers.length > 0 ? t("replacements.title") : t("replacements.emptyTitle")}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          {call.answers.length > 0
-            ? "Ces projets se sont déclarés sur cet appel. Les financer, c'est faire exister l'alternative."
-            : "Cet appel attend son porteur. Les soutiens ci-dessus sont autant de premiers contributeurs."}
+          {call.answers.length > 0 ? t("replacements.body") : t("replacements.emptyBody")}
         </p>
 
         {call.answers.length > 0 && (
@@ -254,8 +261,8 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
                     <input type="hidden" name="projectId" value={answer.projectId} />
                     <Button type="submit" variant="ghost" size="sm">
                       {answer.project.ownerId === userId
-                        ? "Retirer ce projet de l'appel"
-                        : "Détacher ce projet (il squatte l'appel)"}
+                        ? t("replacements.withdrawMine")
+                        : t("replacements.detach")}
                     </Button>
                   </form>
                 )}
@@ -267,7 +274,7 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
 
       <section className="mt-10">
         <h2 className="font-display text-2xl font-semibold tracking-tight">
-          Les témoignages filmés
+          {t("videos.title")}
           {nbVideos > 0 && (
             <span className="ml-2 font-mono text-base font-normal text-muted-foreground">
               {nbVideos}
@@ -277,15 +284,14 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
         <p className="mt-1 text-sm text-muted-foreground">
           {nbVideos > 0 ? (
             <>
-              {nbVideos} témoignage{nbVideos > 1 ? "s" : ""} rattaché{nbVideos > 1 ? "s" : ""} à cet
-              appel —{" "}
+              {t("videos.attached", { count: nbVideos })}{" "}
               <Link href="/direct" className="text-secondary underline-offset-4 hover:underline">
-                les voir dans le direct
+                {t("videos.seeLive")}
               </Link>
               .
             </>
           ) : (
-            "Une caméra dit en trente secondes ce qu'un paragraphe met à prouver."
+            t("videos.emptyBody")
           )}
         </p>
         {userId ? (
@@ -295,26 +301,23 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
         ) : (
           <p className="mt-5 rounded-2xl border border-dashed border-white/[0.12] p-6 text-center text-sm text-muted-foreground">
             <Link href="/login" className="text-primary hover:underline">
-              Connecte-toi
+              {t("login.cta")}
             </Link>{" "}
-            pour filmer ton témoignage.
+            {t("videos.loginSuffix")}
           </p>
         )}
       </section>
 
       <section id="discussion" className="mt-10 scroll-mt-24">
         <h2 className="font-display text-2xl font-semibold tracking-tight">
-          La discussion
+          {t("discussion.title")}
           {call._count.comments > 0 && (
             <span className="ml-2 font-mono text-base font-normal text-muted-foreground">
               {call._count.comments}
             </span>
           )}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Corroborer, nuancer, contredire. L&apos;entreprise mise en cause peut répondre ici comme
-          n&apos;importe qui.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">{t("discussion.body")}</p>
 
         {call.comments.length > 0 && (
           <ul className="mt-5 space-y-3">
@@ -335,11 +338,11 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
                         className="h-8 w-8"
                       />
                       <span className="truncate text-sm font-semibold">
-                        {comment.user.name ?? "Membre"}
+                        {comment.user.name ?? t("author.fallback")}
                       </span>
                     </Link>
                     <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                      {formatRelative(comment.createdAt)}
+                      {formatRelative(comment.createdAt, locale)}
                     </span>
                     <span className="ml-auto flex shrink-0 items-center gap-1">
                       {userId && comment.userId !== userId && (
@@ -356,10 +359,10 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
                             type="submit"
                             variant="ghost"
                             size="icon"
-                            title="Retirer ce commentaire"
+                            title={t("discussion.removeComment")}
                           >
                             <Trash2 aria-hidden className="h-4 w-4" />
-                            <span className="sr-only">Retirer ce commentaire</span>
+                            <span className="sr-only">{t("discussion.removeComment")}</span>
                           </Button>
                         </form>
                       )}
@@ -376,8 +379,10 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
 
         {call._count.comments > call.comments.length && (
           <p className="mt-4 rounded-xl border border-dashed border-white/[0.12] p-3 text-center text-sm text-muted-foreground">
-            Les {call.comments.length} réponses les plus récentes sont affichées, sur{" "}
-            {call._count.comments}.
+            {t("discussion.shown", {
+              shown: call.comments.length,
+              total: call._count.comments,
+            })}
           </p>
         )}
 
@@ -387,9 +392,9 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
           ) : (
             <p className="rounded-2xl border border-dashed border-white/[0.12] p-6 text-center text-sm text-muted-foreground">
               <Link href="/login" className="text-primary hover:underline">
-                Connecte-toi
+                {t("login.cta")}
               </Link>{" "}
-              pour répondre à cet appel.
+              {t("discussion.loginSuffix")}
             </p>
           )}
         </div>
@@ -398,11 +403,9 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
       {siblings.length > 0 && (
         <section className="mt-10">
           <h2 className="font-display text-2xl font-semibold tracking-tight">
-            D&apos;autres appels visent {call.target}
+            {t("siblings.title", { target: call.target })}
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Publiés séparément, par d&apos;autres membres, pour d&apos;autres raisons.
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("siblings.body")}</p>
           <ul className="mt-5 space-y-3">
             {siblings.map((sibling) => (
               <li key={sibling.id}>
@@ -415,7 +418,7 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
                       {sibling._count.supports}
                     </span>
                     <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
-                      voix
+                      {t("siblings.voices")}
                     </span>
                   </span>
                   <span className="min-w-0 flex-1">
@@ -423,9 +426,11 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
                       {sibling.reason}
                     </span>
                     <span className="mt-1 block text-xs text-muted-foreground">
-                      par {sibling.author.name ?? "un membre"}
+                      {t("siblings.by", {
+                        name: sibling.author.name ?? t("siblings.anonymous"),
+                      })}
                       {sibling._count.answers > 0 &&
-                        ` · ${sibling._count.answers} remplaçant${sibling._count.answers > 1 ? "s" : ""}`}
+                        t("siblings.answers", { count: sibling._count.answers })}
                     </span>
                   </span>
                 </Link>

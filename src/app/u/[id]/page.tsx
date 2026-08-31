@@ -23,6 +23,7 @@ import { ReputationRing } from "@/components/reputation-ring";
 import { SkillTag } from "@/components/skill-tag";
 import { UserAvatar } from "@/components/user-avatar";
 import { formatDate } from "@/lib/format";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -32,16 +33,20 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<{ title: string; description?: string }> {
   const { id } = await params;
+  const t = await getT("memberPages");
   const user = await prisma.user.findUnique({
     where: { id },
     select: { name: true, city: true, bio: true },
   });
-  if (!user) return { title: "Profil introuvable" };
+  if (!user) return { title: t("meta.profileNotFound") };
+  const name = user.name ?? t("meta.profileFallback");
   return {
-    title: user.name ?? "Profil",
+    title: name,
     description:
       user.bio ??
-      `${user.name} sur GeniGain${user.city ? ` — ${user.city}` : ""} : réputation, projets et compétences.`,
+      (user.city
+        ? t("meta.profileDescriptionCity", { name, city: user.city })
+        : t("meta.profileDescription", { name })),
   };
 }
 
@@ -72,6 +77,8 @@ function linkMeta(url: string) {
 
 export default async function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const t = await getT("memberPages");
+  const locale = await getRequestLocale();
 
   const session = await auth();
   const user = await prisma.user.findUnique({
@@ -101,14 +108,14 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
               <Link
                 href={`/communaute?ville=${encodeURIComponent(user.city)}`}
                 className="inline-flex items-center gap-1 transition-colors duration-200 hover:text-primary"
-                title="Voir sur le globe Communauté"
+                title={t("profile.seeOnGlobe")}
               >
                 <MapPin className="h-3.5 w-3.5 text-primary/70" aria-hidden />
                 {user.city}
                 {user.country ? ` · ${user.country}` : ""}
               </Link>
             )}
-            <span>Membre depuis {formatDate(user.createdAt)}</span>
+            <span>{t("profile.memberSince", { date: formatDate(user.createdAt, locale) })}</span>
           </div>
           {user.bio && (
             <p className="max-w-xl text-sm leading-relaxed text-foreground/85">{user.bio}</p>
@@ -145,7 +152,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
             <Button variant="outline" size="sm" asChild>
               <Link href="/dashboard#profil">
                 <PenLine aria-hidden />
-                Modifier mon profil
+                {t("profile.editProfile")}
               </Link>
             </Button>
           </div>
@@ -155,14 +162,14 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
             <Button variant="outline" size="sm" asChild>
               <Link href={`/chat/${user.id}`}>
                 <MessagesSquare aria-hidden />
-                Envoyer un message
+                {t("profile.sendMessage")}
               </Link>
             </Button>
             <ReportButton
               targetType="USER"
               targetId={user.id}
               iconOnly
-              label="Signaler ce profil"
+              label={t("profile.reportProfile")}
               className="text-muted-foreground/70"
             />
           </div>
@@ -173,32 +180,36 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
         <Card>
           <CardContent className="pt-6 text-center">
             <p className="font-display text-3xl">{user.projects.length}</p>
-            <p className="text-sm text-muted-foreground">Projets lancés</p>
+            <p className="text-sm text-muted-foreground">{t("profile.projectsLaunched")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
             <p className="font-display text-3xl">{user._count.contributions}</p>
-            <p className="text-sm text-muted-foreground">Contributions</p>
+            <p className="text-sm text-muted-foreground">{t("profile.contributions")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="font-display text-3xl">{formatMoney(user.contributedUsdCents, "usd")}</p>
-            <p className="text-sm text-muted-foreground">Investis dans la communauté</p>
+            <p className="font-display text-3xl">
+              {formatMoney(user.contributedUsdCents, "usd", locale)}
+            </p>
+            <p className="text-sm text-muted-foreground">{t("profile.investedInCommunity")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
             <p className="font-display text-3xl">{user._count.votes}</p>
-            <p className="text-sm text-muted-foreground">Votes sur des preuves</p>
+            <p className="text-sm text-muted-foreground">{t("profile.votesOnProofs")}</p>
           </CardContent>
         </Card>
       </div>
 
       {user.projects.length > 0 && (
         <section className="space-y-4">
-          <h2 data-reveal className="text-2xl font-semibold tracking-tight">Ses projets</h2>
+          <h2 data-reveal className="text-2xl font-semibold tracking-tight">
+            {t("profile.theirProjects")}
+          </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {user.projects.map((project) => (
               <ProjectCard key={project.id} project={project} />
@@ -209,14 +220,16 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
 
       {user.reputationEvents.length > 0 && (
         <section data-reveal className="max-w-2xl space-y-4">
-          <h2 className="text-2xl font-semibold tracking-tight">Activité récente</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">{t("profile.recentActivity")}</h2>
           <Card>
             <CardContent className="divide-y pt-6">
               {user.reputationEvents.map((event) => (
                 <div key={event.id} className="flex items-center gap-3 py-3 text-sm">
                   <div className="min-w-0">
                     <p className="truncate">{event.reason}</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(event.createdAt)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(event.createdAt, locale)}
+                    </p>
                   </div>
                   <span
                     className={cn(
@@ -224,8 +237,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
                       event.delta >= 0 ? "text-success" : "text-destructive"
                     )}
                   >
-                    {event.delta >= 0 ? "+" : ""}
-                    {event.delta} rép.
+                    {t("profile.repPoints", {
+                      delta: `${event.delta >= 0 ? "+" : ""}${event.delta}`,
+                    })}
                   </span>
                 </div>
               ))}

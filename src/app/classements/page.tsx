@@ -6,22 +6,39 @@ import { Flame, Rocket, Swords, Trophy } from "lucide-react";
 import { mostTargetedBrands } from "@/lib/boycott";
 import { prisma } from "@/lib/prisma";
 import { UserAvatar } from "@/components/user-avatar";
-import { CATEGORY_LABELS } from "@/lib/constants";
 import { progressPercent } from "@/lib/format";
+import { categoryLabel } from "@/lib/i18n/labels";
+import type { Locale } from "@/lib/i18n/locales";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/t";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import type { Messages } from "@/messages";
 
-export const metadata: Metadata = { title: "Classements" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("communityPages");
+  return { title: t("meta.rankingsTitle") };
+}
 
 type RankedProject = Prisma.ProjectGetPayload<{
   include: typeof PROJECT_CARD_INCLUDE;
 }>;
 
-function RankedList({ projects, showPercent }: { projects: RankedProject[]; showPercent: boolean }) {
+function RankedList({
+  projects,
+  showPercent,
+  t,
+  locale,
+}: {
+  projects: RankedProject[];
+  showPercent: boolean;
+  t: Translator<Messages["communityPages"]>;
+  locale: Locale;
+}) {
   if (projects.length === 0) {
     return (
       <p className="rounded-2xl border border-dashed border-white/[0.12] p-8 text-center text-sm text-muted-foreground">
-        Rien à classer pour l&apos;instant.
+        {t("rankings.empty")}
       </p>
     );
   }
@@ -51,8 +68,8 @@ function RankedList({ projects, showPercent }: { projects: RankedProject[]; show
             <div className="min-w-0 flex-1">
               <p className="truncate font-semibold">{project.title}</p>
               <p className="mt-0.5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                {CATEGORY_LABELS[project.category]} · {project._count.contributions} soutien
-                {project._count.contributions > 1 ? "s" : ""}
+                {categoryLabel(locale, project.category)} ·{" "}
+                {t("count.supports", { count: project._count.contributions })}
               </p>
             </div>
             <div className="hidden items-center gap-2 sm:flex">
@@ -62,7 +79,9 @@ function RankedList({ projects, showPercent }: { projects: RankedProject[]; show
               </span>
             </div>
             <div className="shrink-0 text-right">
-              <p className="font-mono text-sm">{formatMoney(project.raised, project.currency)}</p>
+              <p className="font-mono text-sm">
+                {formatMoney(project.raised, project.currency, locale)}
+              </p>
               {showPercent && (
                 <p className="font-mono text-[10px] text-primary">
                   {progressPercent(project.raised, project.goal)}%
@@ -77,6 +96,8 @@ function RankedList({ projects, showPercent }: { projects: RankedProject[]; show
 }
 
 export default async function RankingsPage() {
+  const t = await getT("communityPages");
+  const locale = await getRequestLocale();
   const include = PROJECT_CARD_INCLUDE;
   const [active, completed, brands] = await Promise.all([
     prisma.project.findMany({
@@ -98,25 +119,25 @@ export default async function RankingsPage() {
     <div className="page-halo">
       <div className="container py-10">
         <div className="mb-10 space-y-2">
-          <h1 className="text-4xl font-semibold tracking-tight">Classements</h1>
-          <p className="data-label">Les projets qui font vibrer la communauté</p>
+          <h1 className="text-4xl font-semibold tracking-tight">{t("rankings.title")}</h1>
+          <p className="data-label">{t("rankings.subtitle")}</p>
         </div>
 
         <div className="grid items-start gap-10 lg:grid-cols-2">
           <section data-reveal className="min-w-0 space-y-4">
             <h2 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
               <Flame className="h-6 w-6 text-primary" aria-hidden />
-              En campagne
+              {t("rankings.active")}
             </h2>
-            <RankedList projects={active} showPercent />
+            <RankedList projects={active} showPercent t={t} locale={locale} />
           </section>
 
           <section data-reveal className="min-w-0 space-y-4">
             <h2 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
               <Trophy className="h-6 w-6 text-secondary" aria-hidden />
-              Financés &amp; réalisés
+              {t("rankings.funded")}
             </h2>
-            <RankedList projects={completed} showPercent={false} />
+            <RankedList projects={completed} showPercent={false} t={t} locale={locale} />
           </section>
         </div>
 
@@ -127,12 +148,9 @@ export default async function RankingsPage() {
             <div className="space-y-1">
               <h2 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
                 <Swords className="h-6 w-6 text-secondary" aria-hidden />
-                Les marques qu&apos;on veut remplacer
+                {t("brands.title")}
               </h2>
-              <p className="text-sm text-muted-foreground">
-                Le poids cumulé de tous les appels visant une même marque. Publiés par des
-                membres — GeniGain héberge ce fil et n&apos;en est pas l&apos;auteur.
-              </p>
+              <p className="text-sm text-muted-foreground">{t("brands.body")}</p>
             </div>
 
             <ol data-spotlight className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl">
@@ -155,28 +173,27 @@ export default async function RankingsPage() {
                         {brand.target}
                       </span>
                       <span className="block text-xs text-muted-foreground">
-                        {brand.calls} appel{brand.calls > 1 ? "s" : ""}
+                        {t("brands.calls", { count: brand.calls })}
                         {brand.answers > 0 ? (
                           <span className="text-success">
-                            {" "}
-                            · {brand.answers} remplaçant{brand.answers > 1 ? "s" : ""} en route
+                            {t("brands.answersOnTheWay", { count: brand.answers })}
                           </span>
                         ) : (
-                          " · personne ne s'y attaque encore"
+                          t("brands.nobodyYet")
                         )}
                       </span>
                     </span>
                     {brand.answers === 0 && (
                       <span className="hidden shrink-0 items-center gap-1.5 rounded-full border border-dashed border-secondary/30 px-3 py-1 text-xs font-semibold text-secondary sm:inline-flex">
                         <Rocket aria-hidden className="h-3 w-3" />
-                        À prendre
+                        {t("brands.upForGrabs")}
                       </span>
                     )}
                     <span className="shrink-0 text-right">
                       <span className="block font-mono text-lg font-semibold tabular-nums text-secondary">
                         {brand.voices}
                       </span>
-                      <span className="data-label">voix</span>
+                      <span className="data-label">{t("brands.voices")}</span>
                     </span>
                   </Link>
                 </li>

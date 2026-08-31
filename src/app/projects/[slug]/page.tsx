@@ -25,7 +25,8 @@ import { CategoryRoomCard } from "@/components/category-room-card";
 import { SkillTag } from "@/components/skill-tag";
 import { StatusBadge } from "@/components/status-badge";
 import { UserAvatar } from "@/components/user-avatar";
-import { CATEGORY_LABELS } from "@/lib/constants";
+import { categoryLabel } from "@/lib/i18n/labels";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { daysLeft, formatDate, progressPercent } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
 
@@ -40,7 +41,10 @@ export async function generateMetadata({
     where: { slug },
     select: { title: true, pitch: true },
   });
-  if (!project) return { title: "Projet introuvable" };
+  if (!project) {
+    const t = await getT("projectsPages");
+    return { title: t("meta.detailNotFound") };
+  }
   return {
     title: project.title,
     description: project.pitch,
@@ -50,6 +54,7 @@ export async function generateMetadata({
 
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const [locale, t] = [await getRequestLocale(), await getT("projectsPages")];
 
   // La grosse requête projet démarre tout de suite ; la session (JWT, immédiate)
   // débloque la requête « viewer » qui se chevauche alors avec elle (Promise.all)
@@ -133,21 +138,17 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     <div className="container py-10">
       {project.status === "FAILED" && (
         <Alert variant="destructive" className="mb-8">
-          <AlertTitle>Ce projet n&apos;a pas abouti</AlertTitle>
+          <AlertTitle>{t("detail.failedTitle")}</AlertTitle>
           <AlertDescription className="space-y-3">
             <p>
-              {project.failureReason} Les contributeurs ont été remboursés sur le séquestre
-              restant.
+              {project.failureReason} {t("detail.failedBody")}
             </p>
             {isOwner ? (
               <Button size="sm" asChild>
-                <Link href={`/rebond?from=${project.slug}`}>Rebondir maintenant →</Link>
+                <Link href={`/rebond?from=${project.slug}`}>{t("detail.failedRebound")}</Link>
               </Button>
             ) : (
-              <p className="text-sm">
-                L&apos;échec fait partie du jeu — le créateur est réorienté vers de nouvelles
-                opportunités.
-              </p>
+              <p className="text-sm">{t("detail.failedViewer")}</p>
             )}
           </AlertDescription>
         </Alert>
@@ -156,17 +157,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       {project.status === "COMPLETED" && (
         <Alert variant="success" className="mb-8">
           <PartyPopper className="h-4 w-4" />
-          <AlertTitle>Projet réalisé</AlertTitle>
-          <AlertDescription>
-            Toutes les étapes ont été validées par la communauté et les fonds intégralement
-            débloqués.
-          </AlertDescription>
+          <AlertTitle>{t("detail.completedTitle")}</AlertTitle>
+          <AlertDescription>{t("detail.completedBody")}</AlertDescription>
         </Alert>
       )}
 
       <div className="mb-8 space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{CATEGORY_LABELS[project.category]}</Badge>
+          <Badge variant="outline">{categoryLabel(locale, project.category)}</Badge>
           <StatusBadge status={project.status} />
         </div>
         <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">{project.title}</h1>
@@ -175,7 +173,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         {replaces.length > 0 && (
           <p className="flex flex-wrap items-center gap-2 text-sm">
             <Swords aria-hidden className="h-4 w-4 text-secondary" />
-            <span className="text-muted-foreground">Se lance pour remplacer</span>
+            <span className="text-muted-foreground">{t("detail.replaces")}</span>
             {replaces.map((call) => (
               <Link
                 key={call.slug}
@@ -205,10 +203,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               count={project._count.follows}
             />
           ) : !viewerId ? (
-            <Button variant="outline" size="sm" asChild title="Connecte-toi pour suivre ce projet">
+            <Button variant="outline" size="sm" asChild title={t("detail.followLoginTitle")}>
               <Link href="/login">
                 <Star aria-hidden />
-                Suivre
+                {t("detail.follow")}
                 <span className="font-mono text-xs opacity-75">{project._count.follows}</span>
               </Link>
             </Button>
@@ -216,7 +214,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             project._count.follows > 0 && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-secondary/30 bg-secondary/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.14em] text-secondary">
                 <Star className="h-3.5 w-3.5 fill-current" aria-hidden />
-                {project._count.follows} suivi{project._count.follows > 1 ? "s" : ""}
+                {t("detail.followerCount", { count: project._count.follows })}
               </span>
             )
           )}
@@ -224,7 +222,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             <Button variant="outline" size="sm" asChild>
               <Link href={`/chat/${project.owner.id}`}>
                 <MessagesSquare aria-hidden />
-                Contacter
+                {t("detail.contact")}
               </Link>
             </Button>
           )}
@@ -232,7 +230,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             <Button variant="outline" size="sm" asChild>
               <Link href={`/projects/${project.slug}/partenariat`}>
                 <Handshake aria-hidden />
-                Partenariat marque
+                {t("detail.brandPartnership")}
               </Link>
             </Button>
           )}
@@ -240,7 +238,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             <Button variant="outline" size="sm" asChild>
               <Link href={`/projects/${project.slug}/modifier`}>
                 <PenLine aria-hidden />
-                Modifier
+                {t("detail.edit")}
               </Link>
             </Button>
           )}
@@ -261,7 +259,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={project.coverUrl}
-            alt={`Visuel du projet ${project.title}`}
+            alt={t("detail.coverAlt", { title: project.title })}
             width={1680}
             height={720}
             className="aspect-[21/9] max-h-[380px] w-full object-cover"
@@ -272,13 +270,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-10">
           <section>
-            <h2 className="mb-4 text-2xl font-semibold tracking-tight">Le projet</h2>
+            <h2 className="mb-4 text-2xl font-semibold tracking-tight">{t("detail.aboutTitle")}</h2>
             <p className="whitespace-pre-line leading-relaxed text-foreground/90">
               {project.description}
             </p>
             {project.neededSkills.length > 0 && (
               <div className="mt-6 space-y-2">
-                <p className="data-label">Compétences recherchées</p>
+                <p className="data-label">{t("detail.skillsLabel")}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {project.neededSkills.map((skill) => (
                     <SkillTag key={skill} skill={skill} />
@@ -289,17 +287,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           </section>
 
           <section>
-            <h2 className="mb-1 text-2xl font-semibold tracking-tight">Étapes &amp; preuves d&apos;avancement</h2>
-            <p className="mb-6 text-sm text-muted-foreground">
-              Les fonds sont débloqués étape par étape : le créateur soumet une preuve, les
-              contributeurs votent.
-            </p>
+            <h2 className="mb-1 text-2xl font-semibold tracking-tight">
+              {t("detail.milestonesTitle")}
+            </h2>
+            <p className="mb-6 text-sm text-muted-foreground">{t("detail.milestonesHint")}</p>
             {project.status === "FUNDED" && project.realizationDeadline && (
               <p className="-mt-3 mb-6">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.14em] text-amber-300">
                   <Clock className="h-3.5 w-3.5" aria-hidden />
-                  à réaliser avant le {formatDate(project.realizationDeadline)} · J-
-                  {daysLeft(project.realizationDeadline)}
+                  {t("detail.realizeBefore", {
+                    date: formatDate(project.realizationDeadline, locale),
+                    days: daysLeft(project.realizationDeadline),
+                  })}
                 </span>
               </p>
             )}
@@ -315,7 +314,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           {/* Actus : le fil de nouvelles du porteur (contributeurs notifiés) */}
           <section id="actus" className="scroll-mt-24">
             <h2 className="mb-1 text-2xl font-semibold tracking-tight">
-              Actus du projet
+              {t("detail.updatesTitle")}
               {project.updates.length > 0 && (
                 <span className="ml-2 font-mono text-sm font-normal text-muted-foreground">
                   {project.updates.length}
@@ -323,7 +322,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               )}
             </h2>
             <p className="mb-6 text-sm text-muted-foreground">
-              Les nouvelles du terrain, racontées par {isOwner ? "toi" : project.owner.name}.
+              {isOwner
+                ? t("detail.updatesByYou")
+                : t("detail.updatesBy", { name: project.owner.name })}
             </p>
 
             {isOwner && (
@@ -337,7 +338,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             {project.updates.length === 0 ? (
               !isOwner && (
                 <p className="rounded-2xl border border-dashed border-white/[0.12] p-6 text-center text-sm text-muted-foreground">
-                  Pas encore d&apos;actu — elles apparaîtront ici au fil du projet.
+                  {t("detail.updatesEmpty")}
                 </p>
               )
             ) : (
@@ -352,18 +353,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                       <h3 className="font-display text-lg font-semibold">{update.title}</h3>
                       <span className="flex items-center gap-2">
                         <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                          {formatDate(update.createdAt)}
+                          {formatDate(update.createdAt, locale)}
                         </span>
                         {isOwner && (
                           <form action={deleteUpdateAction}>
                             <input type="hidden" name="updateId" value={update.id} />
                             <button
                               type="submit"
-                              title="Supprimer cette actu"
+                              title={t("detail.updateDelete")}
                               className="text-muted-foreground/60 transition-colors duration-200 hover:text-destructive"
                             >
                               <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                              <span className="sr-only">Supprimer cette actu</span>
+                              <span className="sr-only">{t("detail.updateDelete")}</span>
                             </button>
                           </form>
                         )}
@@ -381,16 +382,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           {/* Discussion : commentaires publics, modération légère par le porteur */}
           <section id="discussion" className="scroll-mt-24">
             <h2 className="mb-1 text-2xl font-semibold tracking-tight">
-              Discussion
+              {t("detail.commentsTitle")}
               {project.comments.length > 0 && (
                 <span className="ml-2 font-mono text-sm font-normal text-muted-foreground">
                   {project.comments.length}
                 </span>
               )}
             </h2>
-            <p className="mb-6 text-sm text-muted-foreground">
-              Questions, encouragements, coups de main — la communauté du projet.
-            </p>
+            <p className="mb-6 text-sm text-muted-foreground">{t("detail.commentsHint")}</p>
 
             {viewerId ? (
               <Card className="mb-6">
@@ -401,15 +400,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             ) : (
               <p className="mb-6 rounded-2xl border border-white/[0.08] bg-card/60 p-4 text-sm text-muted-foreground">
                 <Link href="/login" className="font-medium text-primary hover:underline">
-                  Connecte-toi
+                  {t("detail.commentsLogin")}
                 </Link>{" "}
-                pour participer à la discussion.
+                {t("detail.commentsLoginSuffix")}
               </p>
             )}
 
             {project.comments.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-white/[0.12] p-6 text-center text-sm text-muted-foreground">
-                Personne n&apos;a encore commenté — lance la discussion !
+                {t("detail.commentsEmpty")}
               </p>
             ) : (
               <ul className="space-y-4">
@@ -430,7 +429,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                           </Link>
                           <ReputationBadge reputation={comment.user.reputation} admin={comment.user.role === "ADMIN"} showScore={false} />
                           <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                            {formatDate(comment.createdAt)}
+                            {formatDate(comment.createdAt, locale)}
                           </span>
                           <span className="ml-auto flex items-center gap-1.5">
                             {viewerId && viewerId !== comment.userId && (
@@ -438,7 +437,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                                 targetType="COMMENT"
                                 targetId={comment.id}
                                 iconOnly
-                                label="Signaler ce commentaire"
+                                label={t("detail.commentReport")}
                                 className="h-6 w-6 text-muted-foreground/60 hover:text-destructive [&_svg]:size-3.5"
                               />
                             )}
@@ -447,11 +446,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                               <input type="hidden" name="commentId" value={comment.id} />
                               <button
                                 type="submit"
-                                title="Supprimer ce commentaire"
+                                title={t("detail.commentDelete")}
                                 className="text-muted-foreground/60 transition-colors duration-200 hover:text-destructive"
                               >
                                 <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                                <span className="sr-only">Supprimer ce commentaire</span>
+                                <span className="sr-only">{t("detail.commentDelete")}</span>
                               </button>
                             </form>
                           )}
@@ -474,10 +473,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             <CardContent className="space-y-4 pt-6">
               <div>
                 <p className="font-display text-4xl font-semibold">
-                  {formatMoney(project.raised, project.currency)}
+                  {formatMoney(project.raised, project.currency, locale)}
                   <span className="font-sans text-base font-normal text-muted-foreground">
                     {" "}
-                    sur {formatMoney(project.goal, project.currency)}
+                    {t("detail.ofGoal", {
+                      goal: formatMoney(project.goal, project.currency, locale),
+                    })}
                   </span>
                 </p>
               </div>
@@ -485,37 +486,42 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <Users className="h-4 w-4" />
-                  {contributorCount} contributeur{contributorCount > 1 ? "s" : ""}
+                  {t("detail.contributorCount", { count: contributorCount })}
                 </span>
                 {project.status === "ACTIVE" ? (
                   <span className="inline-flex items-center gap-1">
                     <Clock className="h-4 w-4" />
-                    {remaining} j restants
+                    {t("detail.daysLeft", { count: remaining })}
                   </span>
                 ) : (
-                  <span>Campagne terminée le {formatDate(project.deadline)}</span>
+                  <span>
+                    {t("detail.campaignEnded", { date: formatDate(project.deadline, locale) })}
+                  </span>
                 )}
               </div>
 
               {(project.status === "FUNDED" || project.status === "COMPLETED") && (
                 <p className="rounded-xl border border-white/[0.08] bg-muted/50 p-3 text-sm">
                   <LockOpen className="mr-1 inline h-4 w-4 text-success" aria-hidden />
-                  <span className="font-semibold">{formatMoney(project.released, project.currency)}</span>{" "}
-                  débloqués sur {formatMoney(project.raised, project.currency)} — le reste est sous séquestre
-                  jusqu&apos;à validation des étapes.
+                  <span className="font-semibold">
+                    {formatMoney(project.released, project.currency, locale)}
+                  </span>{" "}
+                  {t("detail.releasedNote", {
+                    raised: formatMoney(project.raised, project.currency, locale),
+                  })}
                 </p>
               )}
 
               {project.status === "ACTIVE" &&
                 (isOwner ? (
                   <p className="rounded-xl border border-white/[0.08] bg-muted/50 p-3 text-sm text-muted-foreground">
-                    C&apos;est ton projet — partage-le pour atteindre ton objectif.
+                    {t("detail.ownerShareHint")}
                   </p>
                 ) : viewerId ? (
                   <ContributeForm projectId={project.id} currency={project.currency} />
                 ) : (
                   <Button className="w-full" asChild>
-                    <Link href="/login">Connecte-toi pour contribuer</Link>
+                    <Link href="/login">{t("detail.loginToContribute")}</Link>
                   </Button>
                 ))}
             </CardContent>
@@ -545,7 +551,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Heart className="h-4 w-4 text-primary" aria-hidden />
-                  Contributeurs
+                  {t("detail.contributorsTitle")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -556,13 +562,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                       {contributor.name}
                     </Link>
                     <span className="ml-auto font-bold text-muted-foreground">
-                      {formatMoney(contributor.total, project.currency)}
+                      {formatMoney(contributor.total, project.currency, locale)}
                     </span>
                   </div>
                 ))}
                 {contributors.length > 8 && (
                   <p className="text-xs text-muted-foreground">
-                    + {contributors.length - 8} autres
+                    {t("detail.moreContributors", { count: contributors.length - 8 })}
                   </p>
                 )}
                 {anonymousTotal > 0 && (
@@ -571,10 +577,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                       <EyeOff className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
                     </span>
                     <span className="truncate font-bold text-muted-foreground">
-                      Contributions anonymes
+                      {t("detail.anonymous")}
                     </span>
                     <span className="ml-auto font-bold text-muted-foreground">
-                      {formatMoney(anonymousTotal, project.currency)}
+                      {formatMoney(anonymousTotal, project.currency, locale)}
                     </span>
                   </div>
                 )}

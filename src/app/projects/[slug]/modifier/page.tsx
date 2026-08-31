@@ -9,12 +9,16 @@ import { CancelProjectButton } from "@/components/cancel-project-button";
 import { EditProjectForm } from "@/components/edit-project-form";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { formatMoney } from "@/lib/money";
 
-export const metadata: Metadata = {
-  title: "Modifier le projet",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("projectsPages");
+  return {
+    title: t("meta.editTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function EditProjectPage({
   params,
@@ -24,6 +28,7 @@ export default async function EditProjectPage({
   const { slug } = await params;
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+  const [locale, t] = [await getRequestLocale(), await getT("projectsPages")];
 
   const project = await prisma.project.findUnique({
     where: { slug },
@@ -53,31 +58,35 @@ export default async function EditProjectPage({
         <Button variant="ghost" size="sm" asChild className="-ml-3 text-muted-foreground">
           <Link href={`/projects/${slug}`}>
             <ArrowLeft aria-hidden />
-            Retour au projet
+            {t("edit.back")}
           </Link>
         </Button>
         <h1 className="flex items-center gap-3 text-4xl font-semibold tracking-tight">
           <PenLine className="h-8 w-8 text-primary" aria-hidden />
-          Modifier le projet
+          {t("edit.title")}
         </h1>
-        <p className="font-medium text-muted-foreground">{project.title}</p>
+        <p className="font-medium text-muted-foreground" dir="auto">
+          {project.title}
+        </p>
       </div>
 
       {/* Cadre financier figé : c'est l'engagement sur lequel on contribue. */}
       <section className="glass rounded-2xl rounded-tr-sm p-5">
         <p className="data-label flex items-center gap-2">
           <Lock className="h-3.5 w-3.5" aria-hidden />
-          Cadre financier figé
+          {t("edit.frozenLabel")}
         </p>
         <p className="mt-2 text-sm text-foreground/90">
-          Objectif {formatMoney(project.goal, project.currency)} · fin de campagne le {formatDate(project.deadline)} ·{" "}
-          {project.milestones.length} étape{project.milestones.length > 1 ? "s" : ""} (
-          {project.milestones.map((m) => formatMoney(m.amount, project.currency)).join(" + ")})
+          {t("edit.frozenSummary", {
+            count: project.milestones.length,
+            goal: formatMoney(project.goal, project.currency, locale),
+            date: formatDate(project.deadline, locale),
+            amounts: project.milestones
+              .map((m) => formatMoney(m.amount, project.currency, locale))
+              .join(" + "),
+          })}
         </p>
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          Les contributions sont engagées sur ces règles : objectif, étapes et durée ne peuvent
-          plus changer.
-        </p>
+        <p className="mt-1.5 text-xs text-muted-foreground">{t("edit.frozenHint")}</p>
       </section>
 
       {editable ? (
@@ -96,51 +105,42 @@ export default async function EditProjectPage({
         </section>
       ) : (
         <section className="glass rounded-2xl p-6 text-sm text-muted-foreground">
-          La campagne est terminée : le contenu du projet est figé. Il reste consultable par la
-          communauté, avec ses preuves et son historique.
+          {t("edit.frozenClosed")}
         </section>
       )}
 
       <section className="space-y-2 rounded-2xl border border-destructive/25 bg-destructive/[0.05] p-5">
-        <p className="data-label text-destructive">Zone de retrait</p>
+        <p className="data-label text-destructive">{t("edit.dangerLabel")}</p>
         {deletable ? (
           <>
-            <p className="text-sm text-muted-foreground">
-              Personne n&apos;a encore contribué : tu peux retirer définitivement ce projet.
-              Étapes, commentaires et abonnés partiront avec lui — il n&apos;y a pas de retour en
-              arrière.
-            </p>
+            <p className="text-sm text-muted-foreground">{t("edit.deleteHint")}</p>
             <DeleteProjectButton projectId={project.id} />
           </>
         ) : cancellable ? (
           <>
             <p className="text-sm text-muted-foreground">
-              {project._count.contributions} membre
-              {project._count.contributions > 1 ? "s ont" : " a"} contribué. Tu ne peux plus le
-              retirer purement, mais tu peux l&apos;<strong>arrêter</strong> : il passera « non
-              abouti » et <strong>{formatMoney(refundRemaining, project.currency)}</strong> —
-              le séquestre restant — {refundRemaining > 0 ? "seront remboursés" : "seraient remboursés"}{" "}
-              aux contributeurs.
+              {t("edit.cancelMembers", { count: project._count.contributions })}{" "}
+              {t(refundRemaining > 0 ? "edit.cancelBodyRefund" : "edit.cancelBodyNoRefund", {
+                amount: formatMoney(refundRemaining, project.currency, locale),
+              })}
               {project.released > 0 && (
                 <>
                   {" "}
-                  Les {formatMoney(project.released, project.currency)} déjà débloqués par les
-                  votes ne sont pas concernés.
+                  {t("edit.cancelReleased", {
+                    released: formatMoney(project.released, project.currency, locale),
+                  })}
                 </>
               )}
             </p>
             <CancelProjectButton
               projectId={project.id}
               slug={slug}
-              refundLabel={formatMoney(refundRemaining, project.currency)}
+              refundLabel={formatMoney(refundRemaining, project.currency, locale)}
               contributorCount={distinctContributors}
             />
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Ce projet a terminé son cycle : il reste consultable par la communauté, avec son
-            historique.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("edit.closedHint")}</p>
         )}
       </section>
     </div>

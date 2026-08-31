@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { ProjectCategory } from "@prisma/client";
 import { Hash, MessagesSquare, Search, Users } from "lucide-react";
 import { auth } from "@/auth";
-import { getRequestLocale } from "@/lib/i18n/server";
+import { categoryDescription, categoryLabel } from "@/lib/i18n/labels";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { ChatSidebar } from "@/components/chat-sidebar";
 import { ChatStream } from "@/components/chat-stream";
 import { CreateGroupForm } from "@/components/create-group-form";
@@ -20,14 +21,16 @@ import {
   listGroups,
   missingLanguageRooms,
 } from "@/lib/chat-groups";
-import { CATEGORY_DESCRIPTIONS, CATEGORY_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { isAdmin } from "@/lib/moderation";
 
-export const metadata: Metadata = {
-  title: "Groupes",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("memberPages");
+  return {
+    title: t("meta.groupsTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function GroupsDirectoryPage({
   searchParams,
@@ -36,9 +39,11 @@ export default async function GroupsDirectoryPage({
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+  const t = await getT("memberPages");
+  const locale = await getRequestLocale();
 
   const params = await searchParams;
-  const category = Object.keys(CATEGORY_LABELS).includes(params.categorie ?? "")
+  const category = (Object.values(ProjectCategory) as string[]).includes(params.categorie ?? "")
     ? (params.categorie as ProjectCategory)
     : undefined;
   const query = (params.q ?? "").trim().slice(0, 60);
@@ -46,7 +51,7 @@ export default async function GroupsDirectoryPage({
   const [conversations, myGroups, groups, counts, admin] = await Promise.all([
     getConversations(session.user.id),
     getMyGroups(session.user.id),
-    listGroups({ category, query, userId: session.user.id, locale: await getRequestLocale() }),
+    listGroups({ category, query, userId: session.user.id, locale }),
     groupCountsByCategory(),
     isAdmin(session.user.id),
   ]);
@@ -67,8 +72,8 @@ export default async function GroupsDirectoryPage({
     <div className="container py-10">
       <ChatStream />
       <div className="mb-8 space-y-2">
-        <h1 className="text-4xl font-semibold tracking-tight">Groupes</h1>
-        <p className="data-label">Un salon par envie · rangés dans les catégories des projets</p>
+        <h1 className="text-4xl font-semibold tracking-tight">{t("groupsDir.title")}</h1>
+        <p className="data-label">{t("groupsDir.tagline")}</p>
       </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-[320px_1fr]">
@@ -86,38 +91,42 @@ export default async function GroupsDirectoryPage({
               type="search"
               name="q"
               defaultValue={query}
-              placeholder="Chercher un salon (nom, sujet…)"
-              aria-label="Chercher un salon"
+              placeholder={t("groupsDir.searchPlaceholder")}
+              aria-label={t("groupsDir.searchLabel")}
               maxLength={60}
               className="flex-1"
             />
-            <Button type="submit" size="icon" variant="outline" title="Chercher">
+            <Button type="submit" size="icon" variant="outline" title={t("groupsDir.search")}>
               <Search aria-hidden />
-              <span className="sr-only">Chercher</span>
+              <span className="sr-only">{t("groupsDir.search")}</span>
             </Button>
           </form>
 
           <div className="space-y-3">
             {/* La catégorie active passe en tête pour rester visible sans JS. */}
-            <ChipRail label="Catégories de groupes">
-              <FilterChip href={chipHref()} active={!category} label="Toutes catégories" />
+            <ChipRail label={t("groupsDir.categoriesLabel")}>
+              <FilterChip
+                href={chipHref()}
+                active={!category}
+                label={t("groupsDir.allCategories")}
+              />
               {[
-                ...(category ? [[category, CATEGORY_LABELS[category]] as const] : []),
-                ...Object.entries(CATEGORY_LABELS).filter(([value]) => value !== category),
-              ].map(([value, label]) => (
+                ...(category ? [category] : []),
+                ...Object.values(ProjectCategory).filter((value) => value !== category),
+              ].map((value) => (
                 <FilterChip
                   key={value}
                   href={chipHref(value)}
                   active={category === value}
-                  label={label}
-                  count={counts[value as ProjectCategory]}
+                  label={categoryLabel(locale, value)}
+                  count={counts[value]}
                 />
               ))}
             </ChipRail>
             {category && (
               <p className="max-w-2xl text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{CATEGORY_LABELS[category]}</span> —{" "}
-                {CATEGORY_DESCRIPTIONS[category]}
+                <span className="font-semibold text-foreground">{categoryLabel(locale, category)}</span> —{" "}
+                {categoryDescription(locale, category)}
               </p>
             )}
           </div>
@@ -136,15 +145,20 @@ export default async function GroupsDirectoryPage({
               />
               <p className="text-lg font-semibold">
                 {query
-                  ? `Aucun salon ne parle de « ${query} »${category ? ` en ${CATEGORY_LABELS[category]}` : ""}.`
+                  ? category
+                    ? t("groupsDir.noRoomForQueryInCategory", {
+                        query,
+                        category: categoryLabel(locale, category),
+                      })
+                    : t("groupsDir.noRoomForQuery", { query })
                   : category
-                    ? `Aucun groupe en ${CATEGORY_LABELS[category]} pour l'instant.`
-                    : "Aucun groupe pour l'instant."}
+                    ? t("groupsDir.noGroupInCategory", {
+                        category: categoryLabel(locale, category),
+                      })
+                    : t("groupsDir.noGroup")}
               </p>
               <p className="text-sm text-muted-foreground">
-                {query
-                  ? "Essaie un autre mot, ou ouvre le salon qui manque."
-                  : "Ouvre le premier — c'est souvent lui qui rassemble."}
+                {query ? t("groupsDir.tryAnotherWord") : t("groupsDir.openFirst")}
               </p>
             </div>
           ) : (
@@ -171,8 +185,10 @@ export default async function GroupsDirectoryPage({
                       </Link>
                       <p className="data-label">
                         {group.official
-                          ? `Salon d'accueil · ${CATEGORY_LABELS[group.category]}`
-                          : CATEGORY_LABELS[group.category]}
+                          ? t("groupsDir.officialRoomCategory", {
+                              category: categoryLabel(locale, group.category),
+                            })
+                          : categoryLabel(locale, group.category)}
                       </p>
                     </div>
                   </div>
@@ -190,13 +206,15 @@ export default async function GroupsDirectoryPage({
                       <MessagesSquare className="h-3 w-3" aria-hidden />
                       {group.messageCount}
                     </span>
-                    <span>{formatDate(group.lastAt)}</span>
+                    <span>{formatDate(group.lastAt, locale)}</span>
                   </p>
 
                   <div className="mt-auto pt-1">
                     {group.joined ? (
                       <Button asChild variant="outline" size="sm">
-                        <Link href={`/chat/groupes/${group.slug}`}>Ouvrir le fil</Link>
+                        <Link href={`/chat/groupes/${group.slug}`}>
+                          {t("groupsDir.openThread")}
+                        </Link>
                       </Button>
                     ) : (
                       <JoinGroupButton slug={group.slug} full={group.full} size="sm" />

@@ -9,16 +9,17 @@ import { DeepAnalysis } from "@/components/deep-analysis";
 import { PartnershipAnalysisPanel } from "@/components/partnership-analysis-panel";
 import { PartnershipResponseForm } from "@/components/partnership-response-form";
 import { aiEnabled, getOrCreateAnalysis } from "@/lib/partnership-ai";
-import {
-  PARTNERSHIP_COMPENSATION_LABELS,
-  PARTNERSHIP_STATUS_LABELS,
-} from "@/lib/constants";
 import { formatDate } from "@/lib/format";
+import { compensationLabel, partnershipStatusLabel } from "@/lib/i18n/labels";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Demande de partenariat",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("memberPages");
+  return {
+    title: t("meta.partnershipRequestTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 // L'analyse approfondie (action IA) peut prendre plusieurs dizaines de secondes.
 export const maxDuration = 60;
@@ -32,6 +33,8 @@ export default async function PartnershipDetailPage({
   const { id } = await params;
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+  const t = await getT("memberPages");
+  const locale = await getRequestLocale();
 
   const request = await prisma.partnershipRequest.findUnique({
     where: { id },
@@ -59,20 +62,20 @@ export default async function PartnershipDetailPage({
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Toutes les demandes
+            {t("partnershipDetail.allRequests")}
           </Link>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-4xl font-semibold tracking-tight">{request.brandName}</h1>
             <span className="rounded-full border border-white/[0.15] bg-card/60 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-              {PARTNERSHIP_STATUS_LABELS[request.status]}
+              {partnershipStatusLabel(locale, request.status)}
             </span>
           </div>
           <p className="data-label">
-            Pour «{" "}
+            {t("partnershipDetail.forQuoteOpen")}{" "}
             <Link href={`/projects/${request.project.slug}`} className="text-primary hover:underline">
               {request.project.title}
             </Link>{" "}
-            » · reçue le {formatDate(request.createdAt)}
+            {t("partnershipDetail.forQuoteClose", { date: formatDate(request.createdAt, locale) })}
           </p>
         </div>
 
@@ -95,25 +98,29 @@ export default async function PartnershipDetailPage({
                   <span className="truncate">{request.brandWebsite}</span>
                 </a>
               ) : (
-                <p className="text-muted-foreground/70">Aucun site web fourni</p>
+                <p className="text-muted-foreground/70">{t("partnershipDetail.noWebsite")}</p>
               )}
               <p>
-                <span className="data-label">Contact</span>
-                <span className="mt-1 block">{request.contactName || "Non précisé"}</span>
+                <span className="data-label">{t("partnershipDetail.contact")}</span>
+                <span className="mt-1 block">
+                  {request.contactName || t("partnershipDetail.notSpecified")}
+                </span>
               </p>
               <p>
-                <span className="data-label">Contrepartie</span>
+                <span className="data-label">{t("partnershipDetail.compensation")}</span>
                 <span className="mt-1 block">
-                  {PARTNERSHIP_COMPENSATION_LABELS[request.compensation]}
+                  {compensationLabel(locale, request.compensation)}
                   {request.budget != null && (
-                    <span className="ml-2 font-mono text-primary">{request.budget} $</span>
+                    <span className="ml-2 font-mono text-primary">
+                      {t("partnership.budgetUsd", { amount: request.budget })}
+                    </span>
                   )}
                 </span>
               </p>
             </div>
 
             <div>
-              <h2 className="data-label">Proposition</h2>
+              <h2 className="data-label">{t("partnershipDetail.proposal")}</h2>
               <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
                 {request.message}
               </p>
@@ -121,7 +128,7 @@ export default async function PartnershipDetailPage({
 
             {request.deliverables && (
               <div>
-                <h2 className="data-label">Ce que la marque attend</h2>
+                <h2 className="data-label">{t("partnershipDetail.deliverables")}</h2>
                 <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
                   {request.deliverables}
                 </p>
@@ -141,7 +148,9 @@ export default async function PartnershipDetailPage({
         {/* Réponse */}
         {request.status === "PENDING" ? (
           <section className="space-y-4">
-            <h2 className="text-2xl font-semibold tracking-tight">Répondre à la marque</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              {t("partnershipDetail.replyToBrand")}
+            </h2>
             <Card>
               <CardContent className="pt-6">
                 <PartnershipResponseForm
@@ -154,8 +163,14 @@ export default async function PartnershipDetailPage({
         ) : (
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold tracking-tight">
-              Ta réponse ({PARTNERSHIP_STATUS_LABELS[request.status].toLowerCase()}
-              {request.respondedAt ? ` le ${formatDate(request.respondedAt)}` : ""})
+              {request.respondedAt
+                ? t("partnershipDetail.yourReplyDated", {
+                    status: partnershipStatusLabel(locale, request.status).toLowerCase(),
+                    date: formatDate(request.respondedAt, locale),
+                  })
+                : t("partnershipDetail.yourReply", {
+                    status: partnershipStatusLabel(locale, request.status).toLowerCase(),
+                  })}
             </h2>
             <Card>
               <CardContent className="pt-6">

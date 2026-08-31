@@ -19,14 +19,19 @@ import { liveAnswer } from "@/lib/boycott";
 import { storageStatus } from "@/lib/call-videos";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/moderation";
-import { STATUS_LABELS, VIDEO_STORAGE_WARN_RATIO } from "@/lib/constants";
+import { VIDEO_STORAGE_WARN_RATIO } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
+import { statusLabel } from "@/lib/i18n/labels";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { formatMoney, formatMoneyRounded } from "@/lib/money";
 
-export const metadata: Metadata = {
-  title: "Cockpit",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("adminPages");
+  return {
+    title: t("meta.cockpitTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 /**
  * Cockpit admin : les chiffres de la plateforme d'un coup d'œil — collecte,
@@ -50,6 +55,9 @@ export default async function AdminCockpitPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   if (!(await isAdmin(session.user.id))) redirect("/");
+
+  const locale = await getRequestLocale();
+  const t = await getT("adminPages");
 
   const since7 = new Date(Date.now() - 7 * 86_400_000);
   const since30 = new Date(Date.now() - (DAYS - 1) * 86_400_000);
@@ -162,15 +170,17 @@ export default async function AdminCockpitPage() {
           <div>
             <p className="data-label flex items-center gap-2">
               <ShieldAlert className="h-3.5 w-3.5 text-primary" aria-hidden />
-              Zone admin
+              {t("cockpit.zone")}
             </p>
-            <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">Cockpit</h1>
+            <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">
+              {t("cockpit.title")}
+            </h1>
           </div>
           <Link
             href="/admin/signalements"
             className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors duration-200 hover:border-white/20 hover:text-foreground"
           >
-            File de modération
+            {t("cockpit.moderationQueue")}
             <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         </header>
@@ -179,17 +189,20 @@ export default async function AdminCockpitPage() {
         <section className="glass rounded-2xl rounded-tr-sm p-5">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <p className="text-xs text-muted-foreground">
-              Collecte par jour — {DAYS} derniers jours, équivalent $US
+              {t("chart.caption", { days: DAYS })}
             </p>
             <p className="font-display text-lg font-semibold">
-              {formatMoneyRounded(recentUsd, "usd")}
+              {formatMoneyRounded(recentUsd, "usd", locale)}
             </p>
           </div>
           <svg
             viewBox={`0 0 ${W} ${H}`}
             className="h-16 w-full"
             role="img"
-            aria-label={`Collecte des ${DAYS} derniers jours : ${formatMoney(recentUsd, "usd")} au total.`}
+            aria-label={t("chart.ariaLabel", {
+              days: DAYS,
+              total: formatMoney(recentUsd, "usd", locale),
+            })}
           >
             <defs>
               <linearGradient id="admin-aurora" x1="0" y1="0" x2="1" y2="0">
@@ -235,30 +248,37 @@ export default async function AdminCockpitPage() {
                 height={H}
                 fill="transparent"
               >
-                <title>{`${formatDate(new Date(b.date))} — ${formatMoney(b.usdCents, "usd")}`}</title>
+                <title>
+                  {t("chart.dayTooltip", {
+                    date: formatDate(new Date(b.date), locale),
+                    amount: formatMoney(b.usdCents, "usd", locale),
+                  })}
+                </title>
               </rect>
             ))}
           </svg>
         </section>
 
-        <section aria-label="Chiffres de la plateforme" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Tile Icon={Users} label="Membres" value={String(totalUsers)}>
-            {newUsers7 > 0 ? `+${newUsers7} sur 7 jours` : "aucune inscription sur 7 jours"}
+        <section aria-label={t("tiles.ariaLabel")} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Tile Icon={Users} label={t("tiles.members")} value={String(totalUsers)}>
+            {newUsers7 > 0 ? t("tiles.membersNew", { count: newUsers7 }) : t("tiles.membersNone")}
           </Tile>
 
           <Tile
             Icon={HeartHandshake}
-            label="Contributions"
+            label={t("tiles.contributions")}
             value={String(contribAgg._count)}
           >
-            ≈ {formatMoneyRounded(contribAgg._sum.usdCents ?? 0, "usd")} depuis le lancement
+            {t("tiles.contributionsTotal", {
+              amount: formatMoneyRounded(contribAgg._sum.usdCents ?? 0, "usd", locale),
+            })}
           </Tile>
 
-          <Tile Icon={FolderKanban} label="Projets" value={String(projectCount)}>
+          <Tile Icon={FolderKanban} label={t("tiles.projects")} value={String(projectCount)}>
             {statusOrder
               .map((status) => {
                 const count = projectsByStatus.find((g) => g.status === status)?._count ?? 0;
-                return `${STATUS_LABELS[status]} ${count}`;
+                return `${statusLabel(locale, status)} ${count}`;
               })
               .join(" · ")}
           </Tile>
@@ -266,69 +286,72 @@ export default async function AdminCockpitPage() {
           {/* Le taux de transformation du fil : un appel sans remplaçant est
               une demande qui attend, pas un échec — mais si le ratio reste à
               zéro, le fil ne sert qu'à râler. */}
-          <Tile Icon={Swords} label="Appels au remplacement" value={String(openCalls)}>
+          <Tile Icon={Swords} label={t("tiles.calls")} value={String(openCalls)}>
             {openCalls === 0
-              ? "aucun appel publié"
-              : `${answeredCalls} avec un remplaçant · ${openCalls - answeredCalls} sans`}
+              ? t("tiles.callsNone")
+              : t("tiles.callsSplit", {
+                  answered: answeredCalls,
+                  unanswered: openCalls - answeredCalls,
+                })}
           </Tile>
 
-          <Tile Icon={Banknote} label="Collecté par devise" value={collectedByCurrency.length === 0 ? "—" : formatMoney(collectedByCurrency[0][1], collectedByCurrency[0][0])}>
+          <Tile Icon={Banknote} label={t("tiles.collected")} value={collectedByCurrency.length === 0 ? "—" : formatMoney(collectedByCurrency[0][1], collectedByCurrency[0][0], locale)}>
             {collectedByCurrency.length > 1
               ? collectedByCurrency
                   .slice(1)
-                  .map(([currency, amount]) => formatMoney(amount, currency))
+                  .map(([currency, amount]) => formatMoney(amount, currency, locale))
                   .join(" · ")
-              : "une seule devise en jeu"}
+              : t("tiles.collectedSingle")}
           </Tile>
 
           <Tile
             Icon={Banknote}
-            label="Versements aux porteurs"
+            label={t("tiles.payouts")}
             value={
               duePayoutsByCurrency.length === 0
-                ? "à jour"
+                ? t("tiles.payoutsUpToDate")
                 : duePayoutsByCurrency
-                    .map(([currency, amount]) => formatMoney(amount, currency))
+                    .map(([currency, amount]) => formatMoney(amount, currency, locale))
                     .join(" · ")
             }
             tone={duePayouts.length > 0 ? "amber" : undefined}
           >
             {duePayouts.length > 0
-              ? `${duePayouts.length} part${duePayouts.length > 1 ? "s" : ""} en attente · ${paidPayouts} versée${paidPayouts > 1 ? "s" : ""}`
-              : `${paidPayouts} part${paidPayouts > 1 ? "s" : ""} versée${paidPayouts > 1 ? "s" : ""}`}
+              ? `${t("tiles.payoutsPending", { count: duePayouts.length })} · ${t("tiles.payoutsPaidShort", { count: paidPayouts })}`
+              : t("tiles.payoutsPaid", { count: paidPayouts })}
           </Tile>
 
           <Tile
             Icon={Undo2}
-            label="Remboursements à rejouer"
+            label={t("tiles.refunds")}
             value={
               refundsByCurrency.length === 0
-                ? "aucun"
+                ? t("tiles.refundsNone")
                 : refundsByCurrency
-                    .map(([currency, amount]) => formatMoney(amount, currency))
+                    .map(([currency, amount]) => formatMoney(amount, currency, locale))
                     .join(" · ")
             }
             tone={pendingRefunds.length > 0 ? "amber" : undefined}
           >
             {pendingRefunds.length > 0
-              ? `${pendingRefunds.length} contribution${pendingRefunds.length > 1 ? "s" : ""} — le cron réessaie chaque jour`
-              : "rien en file — le cron n'a rien à faire"}
+              ? t("tiles.refundsPending", { count: pendingRefunds.length })
+              : t("tiles.refundsIdle")}
           </Tile>
 
           <Link href="/admin/signalements" className="group block">
             <Tile
               Icon={ShieldAlert}
-              label="Signalements ouverts"
+              label={t("tiles.reports")}
               value={String(openReports)}
               tone={openReports > 0 ? "red" : undefined}
               interactive
             >
-              {openReports > 0 ? "à traiter dans la file de modération" : "rien à modérer"}
+              {openReports > 0 ? t("tiles.reportsOpen") : t("tiles.reportsNone")}
             </Tile>
           </Link>
 
-          <Tile Icon={Handshake} label="Partenariats en attente" value={String(pendingPartnerships)}>
-            demandes de marques sans réponse des porteurs
+          <Tile Icon={Handshake} label={t("tiles.partnerships")} value={String(pendingPartnerships)}>
+            {t("tiles.partnershipsBody")}
           </Tile>
 
           {/* La jauge que Vercel Hobby n'offre pas : le plan coupe à 1 Go de
@@ -337,15 +360,17 @@ export default async function AdminCockpitPage() {
           <Tile
             id="stockage"
             Icon={Clapperboard}
-            label="Stockage hébergé"
+            label={t("tiles.storage")}
             value={
               storage.full
-                ? "saturé"
+                ? t("tiles.storageFull")
                 : // Arrondi vers le BAS : arrondir au plus proche afficherait
                   // « 80 % » en teinte neutre juste avant le seuil d'alerte,
                   // puis « 80 % » en ambre juste après — deux fois le même
                   // chiffre pour deux états différents.
-                  `${Math.floor((storage.usedBytes / storage.capBytes) * 100)} %`
+                  t("tiles.storagePercent", {
+                    percent: Math.floor((storage.usedBytes / storage.capBytes) * 100),
+                  })
             }
             tone={
               storage.full
@@ -356,8 +381,13 @@ export default async function AdminCockpitPage() {
             }
           >
             {storage.usedBytes === 0
-              ? `aucun fichier hébergé · plafond ${Math.round(storage.capBytes / (1024 * 1024))} Mo`
-              : `${Math.round(storage.usedBytes / (1024 * 1024))} Mo sur ${Math.round(storage.capBytes / (1024 * 1024))} Mo · ${Math.round(storage.videoBytes / (1024 * 1024))} de vidéo, ${Math.round(storage.avatarBytes / (1024 * 1024))} de photos${storage.full ? " — dépôts refusés" : ""}`}
+              ? t("tiles.storageEmpty", { cap: Math.round(storage.capBytes / (1024 * 1024)) })
+              : `${t("tiles.storageUsed", {
+                  used: Math.round(storage.usedBytes / (1024 * 1024)),
+                  cap: Math.round(storage.capBytes / (1024 * 1024)),
+                  video: Math.round(storage.videoBytes / (1024 * 1024)),
+                  photos: Math.round(storage.avatarBytes / (1024 * 1024)),
+                })}${storage.full ? t("tiles.storageRefusedSuffix") : ""}`}
           </Tile>
         </section>
       </div>

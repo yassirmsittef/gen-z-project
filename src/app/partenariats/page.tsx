@@ -4,17 +4,18 @@ import { redirect } from "next/navigation";
 import { Handshake } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import {
-  PARTNERSHIP_COMPENSATION_LABELS,
-  PARTNERSHIP_STATUS_LABELS,
-} from "@/lib/constants";
 import { formatDate } from "@/lib/format";
+import { compensationLabel, partnershipStatusLabel } from "@/lib/i18n/labels";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "Partenariats",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("memberPages");
+  return {
+    title: t("meta.partnershipsTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 const STATUS_TONES = {
   PENDING: "border-primary/40 bg-primary/10 text-primary",
@@ -26,6 +27,8 @@ const STATUS_TONES = {
 export default async function PartnershipsInboxPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+  const t = await getT("memberPages");
+  const locale = await getRequestLocale();
 
   const requests = await prisma.partnershipRequest.findMany({
     where: { project: { ownerId: session.user.id } },
@@ -41,25 +44,17 @@ export default async function PartnershipsInboxPage() {
         <div className="space-y-2">
           <h1 className="flex items-center gap-3 text-4xl font-semibold tracking-tight">
             <Handshake className="h-8 w-8 text-primary" aria-hidden />
-            Partenariats
+            {t("partnershipsInbox.title")}
           </h1>
           <p className="data-label">
-            {requests.length} demande{requests.length > 1 ? "s" : ""} reçue
-            {requests.length > 1 ? "s" : ""} · {pendingCount} en attente · copilote IA avant
-            chaque réponse
+            {t("partnershipsInbox.meta", { count: requests.length, pending: pendingCount })}
           </p>
         </div>
 
         {requests.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-white/[0.12] p-10 text-center text-sm text-muted-foreground">
-            <p>
-              Aucune demande pour l&apos;instant. Les marques peuvent te proposer un partenariat
-              depuis la page de chacun de tes projets (« Partenariat marque »).
-            </p>
-            <p className="mt-2">
-              Quand une demande arrive, le copilote IA t&apos;aide à vérifier qu&apos;elle est
-              fiable et équitable avant de répondre.
-            </p>
+            <p>{t("partnershipsInbox.emptyBody")}</p>
+            <p className="mt-2">{t("partnershipsInbox.emptyHint")}</p>
           </div>
         ) : (
           <ul data-spotlight className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-tr-sm">
@@ -74,13 +69,13 @@ export default async function PartnershipsInboxPage() {
                       {request.brandName}
                       {request.budget != null && (
                         <span className="ml-2 font-mono text-sm text-primary">
-                          {request.budget} $
+                          {t("partnership.budgetUsd", { amount: request.budget })}
                         </span>
                       )}
                     </p>
                     <p className="mt-0.5 truncate font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                      {request.project.title} · {PARTNERSHIP_COMPENSATION_LABELS[request.compensation]}{" "}
-                      · {formatDate(request.createdAt)}
+                      {request.project.title} · {compensationLabel(locale, request.compensation)}{" "}
+                      · {formatDate(request.createdAt, locale)}
                     </p>
                   </div>
                   <span
@@ -89,7 +84,7 @@ export default async function PartnershipsInboxPage() {
                       STATUS_TONES[request.status]
                     )}
                   >
-                    {PARTNERSHIP_STATUS_LABELS[request.status]}
+                    {partnershipStatusLabel(locale, request.status)}
                   </span>
                 </Link>
               </li>

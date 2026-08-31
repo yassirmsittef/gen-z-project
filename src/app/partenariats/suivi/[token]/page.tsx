@@ -4,14 +4,18 @@ import { notFound } from "next/navigation";
 import { CheckCircle2, Clock, Handshake, XCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
-import { PARTNERSHIP_COMPENSATION_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
+import { compensationLabel } from "@/lib/i18n/labels";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 
 // Lien privé à token : jamais indexé.
-export const metadata: Metadata = {
-  title: "Suivi de votre demande",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("memberPages");
+  return {
+    title: t("meta.trackingTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 /**
  * Page PUBLIQUE de suivi pour la marque (lien privé à token, sans compte).
@@ -26,6 +30,8 @@ export default async function PartnershipTrackingPage({
 }) {
   const { token } = await params;
   const { nouveau } = await searchParams;
+  const t = await getT("memberPages");
+  const locale = await getRequestLocale();
 
   const request = await prisma.partnershipRequest.findUnique({
     where: { trackToken: token },
@@ -41,22 +47,21 @@ export default async function PartnershipTrackingPage({
             role="status"
             className="rounded-2xl border border-success/30 bg-success/10 p-4 text-sm font-medium text-success"
           >
-            Demande envoyée ! Conservez précieusement le lien de cette page : c&apos;est ici que
-            la réponse s&apos;affichera.
+            {t("tracking.sentBanner")}
           </p>
         )}
 
         <div className="space-y-2">
           <h1 className="flex items-center gap-3 text-3xl font-semibold tracking-tight">
             <Handshake className="h-7 w-7 text-primary" aria-hidden />
-            Votre demande de partenariat
+            {t("tracking.title")}
           </h1>
           <p className="data-label">
-            {request.brandName} × «{" "}
+            {request.brandName} {t("tracking.pairing")}{" "}
             <Link href={`/projects/${request.project.slug}`} className="text-primary hover:underline">
               {request.project.title}
             </Link>{" "}
-            » · envoyée le {formatDate(request.createdAt)}
+            {t("tracking.sentOn", { date: formatDate(request.createdAt, locale) })}
           </p>
         </div>
 
@@ -64,9 +69,13 @@ export default async function PartnershipTrackingPage({
           <CardContent className="space-y-5 pt-6">
             <div className="text-sm text-muted-foreground">
               <p>
-                Contrepartie proposée : {PARTNERSHIP_COMPENSATION_LABELS[request.compensation]}
+                {t("tracking.compensationProposed", {
+                  compensation: compensationLabel(locale, request.compensation),
+                })}
                 {request.budget != null && (
-                  <span className="ml-1.5 font-mono text-primary">{request.budget} $</span>
+                  <span className="ml-1.5 font-mono text-primary">
+                    {t("partnership.budgetUsd", { amount: request.budget })}
+                  </span>
                 )}
               </p>
             </div>
@@ -75,10 +84,9 @@ export default async function PartnershipTrackingPage({
               <div className="flex items-start gap-3 rounded-2xl border border-primary/25 bg-primary/[0.07] p-4">
                 <Clock className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
                 <div className="text-sm">
-                  <p className="font-semibold">En cours d&apos;examen</p>
+                  <p className="font-semibold">{t("tracking.pendingTitle")}</p>
                   <p className="mt-1 text-muted-foreground">
-                    {request.project.owner.name} étudie votre proposition. La réponse
-                    s&apos;affichera sur cette page — pensez à la mettre dans vos favoris.
+                    {t("tracking.pendingBody", { name: request.project.owner.name ?? "" })}
                   </p>
                 </div>
               </div>
@@ -98,11 +106,11 @@ export default async function PartnershipTrackingPage({
                 <div className="min-w-0 text-sm">
                   <p className="font-semibold">
                     {request.status === "ACCEPTED"
-                      ? "Partenariat accepté"
-                      : "Proposition déclinée"}
+                      ? t("tracking.accepted")
+                      : t("tracking.declined")}
                     {request.respondedAt && (
                       <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                        {formatDate(request.respondedAt)}
+                        {formatDate(request.respondedAt, locale)}
                       </span>
                     )}
                   </p>
@@ -117,10 +125,7 @@ export default async function PartnershipTrackingPage({
           </CardContent>
         </Card>
 
-        <p className="text-xs text-muted-foreground">
-          Vous représentez une autre marque ou souhaitez compléter votre demande ? Déposez une
-          nouvelle proposition depuis la page du projet.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("tracking.footerNote")}</p>
       </div>
     </div>
   );

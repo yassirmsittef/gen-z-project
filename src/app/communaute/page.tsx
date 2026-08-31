@@ -13,15 +13,21 @@ import { ReputationBadge } from "@/components/reputation-badge";
 import { SkillTag } from "@/components/skill-tag";
 import { UserAvatar } from "@/components/user-avatar";
 import { CITIES } from "@/lib/cities";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { formatMoney } from "@/lib/money";
 
-export const metadata: Metadata = { title: "Communauté" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("communityPages");
+  return { title: t("meta.communityTitle") };
+}
 
 export default async function CommunityPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; ville?: string }>;
 }) {
+  const t = await getT("communityPages");
+  const locale = await getRequestLocale();
   const params = await searchParams;
   const query = (params.q ?? "").trim();
   const cityParam = (params.ville ?? "").trim();
@@ -105,10 +111,10 @@ export default async function CommunityPage({
     <div className="page-halo">
       <div className="container space-y-8 py-10">
         <div className="space-y-2">
-          <h1 className="text-4xl font-semibold tracking-tight">Communauté</h1>
+          <h1 className="text-4xl font-semibold tracking-tight">{t("community.title")}</h1>
           <p className="data-label">
-            {totalMembers} membre{totalMembers > 1 ? "s" : ""} · {markers.length} ville
-            {markers.length > 1 ? "s" : ""} sur le globe · le réseau en orbite
+            {t("count.members", { count: totalMembers })} ·{" "}
+            {t("stats.cities", { count: markers.length })} · {t("stats.network")}
           </p>
         </div>
 
@@ -122,13 +128,12 @@ export default async function CommunityPage({
           {selectedMarker && (
             <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-primary/40 bg-card/80 py-1 pl-4 pr-1 backdrop-blur-md">
               <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-primary">
-                {selectedMarker.city} · {selectedMarker.count} membre
-                {selectedMarker.count > 1 ? "s" : ""}
+                {selectedMarker.city} · {t("count.members", { count: selectedMarker.count })}
               </span>
               <Button variant="ghost" size="icon" asChild className="h-7 w-7 rounded-full">
-                <Link href={clearCityHref} scroll={false} title="Retirer le filtre ville">
+                <Link href={clearCityHref} scroll={false} title={t("globe.clearCity")}>
                   <X className="h-3.5 w-3.5" aria-hidden />
-                  <span className="sr-only">Retirer le filtre ville</span>
+                  <span className="sr-only">{t("globe.clearCity")}</span>
                 </Link>
               </Button>
             </div>
@@ -136,17 +141,15 @@ export default async function CommunityPage({
 
           {markers.length === 0 ? (
             <div className="pointer-events-none absolute inset-x-0 bottom-6 text-center">
-              <p className="data-label">
-                Le globe attend ses premiers signaux — ajoute ta ville depuis ton dashboard
-              </p>
+              <p className="data-label">{t("globe.empty")}</p>
             </div>
           ) : (
             <>
               <p className="pointer-events-none absolute bottom-4 left-4 hidden font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:block">
-                Glisse pour explorer · clique un point
+                {t("globe.hintDesktop")}
               </p>
               <p className="pointer-events-none absolute bottom-4 left-4 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:hidden">
-                Un doigt : tourner · deux doigts : incliner
+                {t("globe.hintMobile")}
               </p>
             </>
           )}
@@ -154,9 +157,9 @@ export default async function CommunityPage({
 
         {session?.user?.id && me && !me.city && (
           <p className="rounded-2xl border border-primary/25 bg-primary/[0.07] p-4 text-sm">
-            Tu n&apos;apparais pas encore sur le globe.{" "}
+            {t("locate.notYet")}{" "}
             <Link href="/dashboard" className="font-medium text-primary hover:underline">
-              Ajoute ta ville depuis ton dashboard →
+              {t("locate.cta")}
             </Link>
           </p>
         )}
@@ -177,9 +180,9 @@ export default async function CommunityPage({
                 type="search"
                 name="q"
                 defaultValue={query}
-                placeholder="Un nom, une compétence (montage, couture...)"
+                placeholder={t("search.placeholder")}
                 className="pl-9"
-                aria-label="Rechercher un membre"
+                aria-label={t("search.memberLabel")}
               />
             </div>
             <div className="relative sm:w-64">
@@ -191,10 +194,10 @@ export default async function CommunityPage({
                 name="ville"
                 list="cities-filter"
                 defaultValue={selectedCity ?? ""}
-                placeholder="Toutes les villes"
+                placeholder={t("search.cityPlaceholder")}
                 autoComplete="off"
                 className="pl-9"
-                aria-label="Filtrer par ville"
+                aria-label={t("search.cityLabel")}
               />
               <datalist id="cities-filter">
                 {CITIES.map((city) => (
@@ -206,11 +209,11 @@ export default async function CommunityPage({
             </div>
             <div className="flex items-center gap-2">
               <Button type="submit" variant="outline" size="default">
-                Rechercher
+                {t("search.submit")}
               </Button>
               {hasFilters && (
                 <Button variant="ghost" size="default" asChild>
-                  <Link href="/communaute">Réinitialiser</Link>
+                  <Link href="/communaute">{t("search.reset")}</Link>
                 </Button>
               )}
             </div>
@@ -218,16 +221,16 @@ export default async function CommunityPage({
 
           <div className="space-y-4">
             <p className="data-label">
-              {members.length} membre{members.length > 1 ? "s" : ""}
-              {selectedCity ? ` à ${selectedCity}` : ""}
-              {query ? ` pour « ${query} »` : ""}
+              {t("count.members", { count: members.length })}
+              {selectedCity ? t("results.inCity", { city: selectedCity }) : ""}
+              {query ? t("results.forQuery", { query }) : ""}
             </p>
 
             {members.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-white/[0.12] p-10 text-center text-sm text-muted-foreground">
-                Personne ne correspond à cette recherche.{" "}
+                {t("results.empty")}{" "}
                 <Link href="/communaute" className="font-medium text-primary hover:underline">
-                  Réinitialiser les filtres →
+                  {t("results.resetCta")}
                 </Link>
               </p>
             ) : (
@@ -257,7 +260,7 @@ export default async function CommunityPage({
                               </p>
                             ) : (
                               <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/60">
-                                Hors radar
+                                {t("member.offRadar")}
                               </p>
                             )}
                           </div>
@@ -267,11 +270,13 @@ export default async function CommunityPage({
                               size="icon"
                               asChild
                               className="h-8 w-8 shrink-0"
-                              title={`Contacter ${member.name}`}
+                              title={t("member.contact", { name: member.name })}
                             >
                               <Link href={`/chat/${member.id}`}>
                                 <MessagesSquare className="h-4 w-4" aria-hidden />
-                                <span className="sr-only">Contacter {member.name}</span>
+                                <span className="sr-only">
+                                  {t("member.contact", { name: member.name })}
+                                </span>
                               </Link>
                             </Button>
                           )}
@@ -289,12 +294,11 @@ export default async function CommunityPage({
                           <ReputationBadge reputation={member.reputation} admin={member.role === "ADMIN"} showScore={false} />
                           <p
                             className="min-w-0 truncate font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground"
-                            title={`${member._count.projects} projets · ${member._count.contributions} soutiens · ${formatMoney(member.contributedUsdCents, "usd")} investis`}
+                            title={`${t("count.projects", { count: member._count.projects })} · ${t("count.supports", { count: member._count.contributions })} · ${t("member.invested", { amount: formatMoney(member.contributedUsdCents, "usd", locale) })}`}
                           >
-                            {member._count.projects} projet{member._count.projects > 1 ? "s" : ""} ·{" "}
-                            {member._count.contributions} soutien
-                            {member._count.contributions > 1 ? "s" : ""} ·{" "}
-                            {formatMoney(member.contributedUsdCents, "usd")}
+                            {t("count.projects", { count: member._count.projects })} ·{" "}
+                            {t("count.supports", { count: member._count.contributions })} ·{" "}
+                            {formatMoney(member.contributedUsdCents, "usd", locale)}
                           </p>
                         </div>
                       </CardContent>

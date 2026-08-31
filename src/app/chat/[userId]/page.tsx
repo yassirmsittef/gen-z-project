@@ -14,12 +14,16 @@ import { UserAvatar } from "@/components/user-avatar";
 import { getConversations, getThread } from "@/lib/chat";
 import { getMyGroups } from "@/lib/chat-groups";
 import { formatDate } from "@/lib/format";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "Chat",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("memberPages");
+  return {
+    title: t("meta.chatTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function ChatThreadPage({
   params,
@@ -32,6 +36,8 @@ export default async function ChatThreadPage({
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   if (partnerId === session.user.id) redirect("/chat");
+  const t = await getT("memberPages");
+  const locale = await getRequestLocale();
 
   const partner = await prisma.user.findUnique({
     where: { id: partnerId },
@@ -57,10 +63,10 @@ export default async function ChatThreadPage({
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground lg:hidden"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
-          Toutes mes conversations
+          {t("chatThread.allConversations")}
         </Link>
-        <h1 className="text-4xl font-semibold tracking-tight">Chat</h1>
-        <p className="data-label">Entraide entre porteurs · collabs · coups de main</p>
+        <h1 className="text-4xl font-semibold tracking-tight">{t("chatHeader.title")}</h1>
+        <p className="data-label">{t("chatHeader.tagline")}</p>
       </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-[320px_1fr]">
@@ -96,14 +102,13 @@ export default async function ChatThreadPage({
                   className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.12] bg-card/60 px-3.5 py-1 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground"
                 >
                   <ChevronUp className="h-3.5 w-3.5" aria-hidden />
-                  Messages plus anciens
+                  {t("chatThread.olderMessages")}
                 </Link>
               </p>
             )}
             {thread.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">
-                Démarre la conversation — propose un coup de main, une collab, un échange de
-                compétences.
+                {t("chatThread.startConversation")}
               </p>
             ) : (
               thread.map((message) => {
@@ -120,7 +125,7 @@ export default async function ChatThreadPage({
                     >
                       <p className="whitespace-pre-line break-words">{message.body}</p>
                       <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                        {formatDate(message.createdAt)}
+                        {formatDate(message.createdAt, locale)}
                       </p>
                     </div>
                   </div>
@@ -134,7 +139,7 @@ export default async function ChatThreadPage({
                   className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-sm font-medium text-primary transition-colors duration-200 hover:bg-primary/20"
                 >
                   <ChevronDown className="h-3.5 w-3.5" aria-hidden />
-                  Revenir aux derniers messages
+                  {t("chatThread.backToLatest")}
                 </Link>
               </p>
             )}

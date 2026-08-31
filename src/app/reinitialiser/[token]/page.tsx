@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
+import { getT } from "@/lib/i18n/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResetPasswordForm } from "@/components/password-reset-forms";
 
-export const metadata: Metadata = {
-  title: "Nouveau mot de passe",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("authPages");
+  return {
+    title: t("meta.resetTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 /** Le token n'est validé qu'à la SOUMISSION (jamais au rendu : un simple
  * crawl du lien ne doit rien consommer ni révéler). */
@@ -14,6 +18,7 @@ export default async function ResetPasswordPage({
 }: {
   params: Promise<{ token: string }>;
 }) {
+  const t = await getT("authPages");
   const { token } = await params;
 
   return (
@@ -21,11 +26,9 @@ export default async function ResetPasswordPage({
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-semibold tracking-tight">
-            Choisis ton nouveau mot de passe
+            {t("reset.title")}
           </CardTitle>
-          <CardDescription>
-            Le lien ne sert qu&apos;une fois — dès que c&apos;est enregistré, il est mort.
-          </CardDescription>
+          <CardDescription>{t("reset.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <ResetPasswordForm token={token} />

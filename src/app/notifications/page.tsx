@@ -26,14 +26,17 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NotificationPrefs } from "@/components/notification-prefs";
 import { formatRelative } from "@/lib/format";
-import { getRequestLocale } from "@/lib/i18n/server";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { renderNotification } from "@/lib/notification-render";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "Notifications",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("memberPages");
+  return {
+    title: t("meta.notificationsTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 /** Icône + teinte par type — la couleur n'est jamais seule porteuse (icône dédiée). */
 const TYPE_STYLES: Record<NotificationType, { Icon: LucideIcon; tone: string }> = {
@@ -60,6 +63,7 @@ const TYPE_STYLES: Record<NotificationType, { Icon: LucideIcon; tone: string }> 
 export default async function NotificationsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+  const t = await getT("memberPages");
   const locale = await getRequestLocale();
 
   const [notifications, viewer] = await Promise.all([
@@ -89,12 +93,12 @@ export default async function NotificationsPage() {
         <div className="space-y-2">
           <h1 className="flex items-center gap-3 text-4xl font-semibold tracking-tight">
             <Bell className="h-8 w-8 text-primary" aria-hidden />
-            Notifications
+            {t("notifications.title")}
           </h1>
           <p className="data-label">
             {unreadIds.length > 0
-              ? `${unreadIds.length} nouvelle${unreadIds.length > 1 ? "s" : ""} depuis ton dernier passage`
-              : "Tout est à jour"}
+              ? t("notifications.newSince", { count: unreadIds.length })
+              : t("notifications.allCaughtUp")}
           </p>
         </div>
 
@@ -102,8 +106,7 @@ export default async function NotificationsPage() {
 
         {notifications.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-white/[0.12] p-10 text-center text-sm text-muted-foreground">
-            Rien pour l&apos;instant. Contributions reçues, preuves à voter, étapes débloquées,
-            messages, commentaires, actus et demandes de partenariat arriveront ici.
+            {t("notifications.empty")}
           </p>
         ) : (
           <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-tr-sm">

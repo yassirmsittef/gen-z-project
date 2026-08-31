@@ -4,13 +4,16 @@ import { auth } from "@/auth";
 import { VideoFeed, type VideoDuFilRendu } from "@/components/video-feed";
 import { Button } from "@/components/ui/button";
 import { getVideo, listVideos, peutRetirerVideo } from "@/lib/call-videos";
+import { getT } from "@/lib/i18n/server";
 import { isAdmin } from "@/lib/moderation";
 
-export const metadata: Metadata = {
-  title: "Le direct",
-  description:
-    "Les témoignages filmés de la communauté : pourquoi on ne veut plus de ces marques, et ce qu'on voudrait à la place.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("callsPages");
+  return {
+    title: t("meta.directTitle"),
+    description: t("meta.directDescription"),
+  };
+}
 
 /** Le fil se lit toujours frais : on ne sert pas un cache de la veille. */
 export const dynamic = "force-dynamic";
@@ -23,6 +26,7 @@ export default async function DirectPage({
   const { v } = await searchParams;
   const session = await auth();
   const userId = session?.user?.id;
+  const t = await getT("callsPages");
 
   const [{ videos, cursor }, admin, épinglée] = await Promise.all([
     listVideos({}),
@@ -60,13 +64,13 @@ export default async function DirectPage({
     <div className="relative">
       <header className="pointer-events-none absolute left-0 right-0 top-0 z-20 flex items-start justify-between gap-3 p-4 sm:p-5">
         <div className="rounded-2xl bg-background/40 px-3 py-2 backdrop-blur-md">
-          <p className="data-label">Le direct</p>
+          <p className="data-label">{t("direct.label")}</p>
           <h1 className="font-display text-lg font-semibold tracking-tight sm:text-xl">
-            Ce qu&apos;on ne veut plus, filmé
+            {t("direct.title")}
           </h1>
         </div>
         <Button asChild variant="outline" size="sm" className="pointer-events-auto mr-14 shrink-0">
-          <Link href="/appels">Publier</Link>
+          <Link href="/appels">{t("direct.publish")}</Link>
         </Button>
       </header>
 

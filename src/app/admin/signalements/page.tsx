@@ -13,25 +13,24 @@ import { deleteCommentAction } from "@/actions/project-feed";
 import { isAdmin } from "@/lib/moderation";
 import { Button } from "@/components/ui/button";
 import { formatRelative } from "@/lib/format";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/t";
+import type { Messages } from "@/messages";
 
-export const metadata: Metadata = {
-  title: "Modération",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("adminPages");
+  return {
+    title: t("meta.moderationTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
-const TARGET_LABELS = {
-  PROJECT: "Projet",
-  COMMENT: "Commentaire",
-  USER: "Membre",
-  CHAT_GROUP: "Groupe",
-  GROUP_MESSAGE: "Message de groupe",
-  BOYCOTT_CALL: "Appel au remplacement",
-  CALL_COMMENT: "Réponse sous un appel",
-  CALL_VIDEO: "Témoignage vidéo",
-} as const;
+/** Tronque un contenu utilisateur pour l'aperçu de la file. */
+const excerpt = (text: string, max: number) =>
+  `${text.slice(0, max)}${text.length > max ? "…" : ""}`;
 
 /** Résout la cible de chaque signalement (lien + aperçu) en requêtes groupées. */
-async function resolveTargets(reports: Report[]) {
+async function resolveTargets(reports: Report[], t: Translator<Messages["adminPages"]>) {
   const ids = (type: Report["targetType"]) =>
     reports.filter((r) => r.targetType === type).map((r) => r.targetId);
 
@@ -99,58 +98,74 @@ async function resolveTargets(reports: Report[]) {
     if (report.targetType === "PROJECT") {
       const p = projects.find((x) => x.id === report.targetId);
       return p
-        ? { label: `« ${p.title} »`, href: `/projects/${p.slug}` }
-        : { label: "Projet supprimé", href: null };
+        ? { label: t("resolve.projectQuoted", { title: p.title }), href: `/projects/${p.slug}` }
+        : { label: t("resolve.projectDeleted"), href: null };
     }
     if (report.targetType === "COMMENT") {
       const c = comments.find((x) => x.id === report.targetId);
       return c
         ? {
-            label: `« ${c.body.slice(0, 80)}${c.body.length > 80 ? "…" : ""} » — sur ${c.project.title}`,
+            label: t("resolve.commentOn", {
+              excerpt: excerpt(c.body, 80),
+              project: c.project.title,
+            }),
             href: `/projects/${c.project.slug}#discussion`,
             commentId: c.id,
           }
-        : { label: "Commentaire déjà supprimé", href: null };
+        : { label: t("resolve.commentDeleted"), href: null };
     }
     if (report.targetType === "GROUP_MESSAGE") {
       const m = groupMessages.find((x) => x.id === report.targetId);
       return m
         ? {
-            label: `« ${m.body.slice(0, 80)}${m.body.length > 80 ? "…" : ""} » — dans ${m.group.name}`,
+            label: t("resolve.messageIn", {
+              excerpt: excerpt(m.body, 80),
+              group: m.group.name,
+            }),
             href: `/chat/groupes/${m.group.slug}`,
             groupMessageId: m.id,
           }
-        : { label: "Message déjà retiré", href: null };
+        : { label: t("resolve.messageDeleted"), href: null };
     }
     if (report.targetType === "BOYCOTT_CALL") {
       const c = calls.find((x) => x.id === report.targetId);
-      if (!c) return { label: "Appel introuvable", href: null };
+      if (!c) return { label: t("resolve.callMissing"), href: null };
       return {
-        label: `${c.removedAt ? "[retiré] " : ""}« ${c.target} » — ${c.reason.slice(0, 70)}${c.reason.length > 70 ? "…" : ""}`,
+        label: `${c.removedAt ? t("resolve.removedPrefix") : ""}${t("resolve.callLabel", {
+          target: c.target,
+          excerpt: excerpt(c.reason, 70),
+        })}`,
         href: `/appels/${c.slug}`,
       };
     }
     if (report.targetType === "CALL_COMMENT") {
       const c = callComments.find((x) => x.id === report.targetId);
-      if (!c) return { label: "Réponse introuvable", href: null };
+      if (!c) return { label: t("resolve.replyMissing"), href: null };
       // Le retrait est LOGIQUE : la ligne survit. Sans marqueur, la file
       // présentait une réponse déjà retirée exactement comme une réponse en
       // ligne, et offrait un bouton « Retirer » devenu sans effet — un
       // modérateur ne pouvait pas distinguer « déjà traité » de « à traiter ».
       return {
-        label: `${c.removedAt ? "[retiré] " : ""}« ${c.body.slice(0, 80)}${c.body.length > 80 ? "…" : ""} » — sous l'appel sur ${c.call.target}`,
+        label: `${c.removedAt ? t("resolve.removedPrefix") : ""}${t("resolve.replyUnder", {
+          excerpt: excerpt(c.body, 80),
+          target: c.call.target,
+        })}`,
         href: `/appels/${c.call.slug}#discussion`,
         callCommentId: c.removedAt ? undefined : c.id,
       };
     }
     if (report.targetType === "CALL_VIDEO") {
       const v = callVideos.find((x) => x.id === report.targetId);
-      if (!v) return { label: "Témoignage introuvable", href: null };
+      if (!v) return { label: t("resolve.videoMissing"), href: null };
       // Une vidéo ne se modère pas en lisant une ligne : le lecteur est posé
       // DANS la file, sinon trancher demande d'ouvrir un autre onglet — et
       // c'est ce qui fait qu'on tranche sans regarder.
       return {
-        label: `${v.removedAt ? "[retiré] " : ""}« ${v.caption.slice(0, 70)}${v.caption.length > 70 ? "…" : ""} » — ${Math.round(v.durationMs / 1000)} s, sous l'appel sur ${v.call.target}`,
+        label: `${v.removedAt ? t("resolve.removedPrefix") : ""}${t("resolve.videoUnder", {
+          excerpt: excerpt(v.caption, 70),
+          seconds: Math.round(v.durationMs / 1000),
+          target: v.call.target,
+        })}`,
         href: `/direct?v=${v.id}`,
         callVideoId: v.removedAt ? undefined : v.id,
         videoUrl: v.url,
@@ -160,13 +175,16 @@ async function resolveTargets(reports: Report[]) {
     if (report.targetType === "CHAT_GROUP") {
       const g = groups.find((x) => x.id === report.targetId);
       return g
-        ? { label: `« ${g.name} » — ${g.purpose}`, href: `/chat/groupes/${g.slug}` }
-        : { label: "Groupe dissous", href: null };
+        ? {
+            label: t("resolve.groupLabel", { name: g.name, purpose: g.purpose }),
+            href: `/chat/groupes/${g.slug}`,
+          }
+        : { label: t("resolve.groupDissolved"), href: null };
     }
     const u = users.find((x) => x.id === report.targetId);
     return u
-      ? { label: u.name ?? "Membre", href: `/u/${u.id}` }
-      : { label: "Membre introuvable", href: null };
+      ? { label: u.name ?? t("resolve.memberFallback"), href: `/u/${u.id}` }
+      : { label: t("resolve.memberMissing"), href: null };
   };
 }
 
@@ -174,6 +192,9 @@ export default async function ModerationPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   if (!(await isAdmin(session.user.id))) redirect("/");
+
+  const locale = await getRequestLocale();
+  const t = await getT("adminPages");
 
   const [open, handled] = await Promise.all([
     prisma.report.findMany({
@@ -188,7 +209,7 @@ export default async function ModerationPage() {
       include: { reporter: { select: { id: true, name: true } } },
     }),
   ]);
-  const target = await resolveTargets([...open, ...handled]);
+  const target = await resolveTargets([...open, ...handled], t);
 
   return (
     <div className="page-halo">
@@ -196,40 +217,40 @@ export default async function ModerationPage() {
         <div className="space-y-2">
           <h1 className="flex items-center gap-3 text-4xl font-semibold tracking-tight">
             <ShieldAlert className="h-8 w-8 text-destructive" aria-hidden />
-            Modération
+            {t("moderation.title")}
           </h1>
           <p className="data-label">
             {open.length > 0
-              ? `${open.length} signalement${open.length > 1 ? "s" : ""} à traiter`
-              : "File vide — la communauté se tient bien"}
+              ? t("moderation.openCount", { count: open.length })
+              : t("moderation.empty")}
           </p>
         </div>
 
         {open.length > 0 && (
           <ul className="space-y-4">
             {open.map((report) => {
-              const t = target(report);
+              const tgt = target(report);
               return (
                 <li key={report.id} className="glass space-y-3 rounded-2xl rounded-tr-sm p-5">
                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                    <span className="data-label">{TARGET_LABELS[report.targetType]}</span>
+                    <span className="data-label">{t(`target.${report.targetType}`)}</span>
                     <span className="text-sm font-semibold">{report.reason}</span>
                     <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                      {formatRelative(report.createdAt)}
+                      {formatRelative(report.createdAt, locale)}
                     </span>
                   </div>
 
                   <p className="text-sm text-foreground/90">
-                    {t.href ? (
+                    {tgt.href ? (
                       <Link
-                        href={t.href}
+                        href={tgt.href}
                         className="inline-flex items-center gap-1.5 text-primary hover:underline"
                       >
-                        {t.label}
+                        {tgt.label}
                         <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                       </Link>
                     ) : (
-                      <span className="text-muted-foreground">{t.label}</span>
+                      <span className="text-muted-foreground">{tgt.label}</span>
                     )}
                   </p>
 
@@ -240,16 +261,16 @@ export default async function ModerationPage() {
                   )}
 
                   <p className="text-xs text-muted-foreground">
-                    Signalé par{" "}
+                    {t("moderation.reportedBy")}{" "}
                     <Link href={`/u/${report.reporter.id}`} className="text-primary hover:underline">
                       {report.reporter.name}
                     </Link>
                   </p>
 
-                  {t.videoUrl && (
+                  {tgt.videoUrl && (
                     <video
-                      src={t.videoUrl}
-                      poster={t.videoPoster ?? undefined}
+                      src={tgt.videoUrl}
+                      poster={tgt.videoPoster ?? undefined}
                       controls
                       preload="metadata"
                       playsInline
@@ -263,7 +284,7 @@ export default async function ModerationPage() {
                       <input type="hidden" name="decision" value="RESOLVED" />
                       <Button type="submit" variant="outline" size="sm">
                         <Check aria-hidden />
-                        Traité
+                        {t("moderation.resolve")}
                       </Button>
                     </form>
                     <form action={handleReportAction}>
@@ -271,42 +292,42 @@ export default async function ModerationPage() {
                       <input type="hidden" name="decision" value="DISMISSED" />
                       <Button type="submit" variant="ghost" size="sm">
                         <X aria-hidden />
-                        Rejeter
+                        {t("moderation.dismiss")}
                       </Button>
                     </form>
-                    {t.commentId && (
+                    {tgt.commentId && (
                       <form action={deleteCommentAction} className="ml-auto">
-                        <input type="hidden" name="commentId" value={t.commentId} />
+                        <input type="hidden" name="commentId" value={tgt.commentId} />
                         <Button type="submit" variant="destructive" size="sm">
                           <Trash2 aria-hidden />
-                          Supprimer le commentaire
+                          {t("moderation.deleteComment")}
                         </Button>
                       </form>
                     )}
-                    {t.callVideoId && (
+                    {tgt.callVideoId && (
                       <form action={removeVideoAction} className="ml-auto">
-                        <input type="hidden" name="videoId" value={t.callVideoId} />
+                        <input type="hidden" name="videoId" value={tgt.callVideoId} />
                         <Button type="submit" variant="destructive" size="sm">
                           <Trash2 aria-hidden />
-                          Retirer le témoignage
+                          {t("moderation.removeVideo")}
                         </Button>
                       </form>
                     )}
-                    {t.callCommentId && (
+                    {tgt.callCommentId && (
                       <form action={deleteCallCommentAction} className="ml-auto">
-                        <input type="hidden" name="commentId" value={t.callCommentId} />
+                        <input type="hidden" name="commentId" value={tgt.callCommentId} />
                         <Button type="submit" variant="destructive" size="sm">
                           <Trash2 aria-hidden />
-                          Retirer la réponse
+                          {t("moderation.removeReply")}
                         </Button>
                       </form>
                     )}
-                    {t.groupMessageId && (
+                    {tgt.groupMessageId && (
                       <form action={deleteGroupMessageFormAction} className="ml-auto">
-                        <input type="hidden" name="messageId" value={t.groupMessageId} />
+                        <input type="hidden" name="messageId" value={tgt.groupMessageId} />
                         <Button type="submit" variant="destructive" size="sm">
                           <Trash2 aria-hidden />
-                          Retirer le message
+                          {t("moderation.removeMessage")}
                         </Button>
                       </form>
                     )}
@@ -319,10 +340,10 @@ export default async function ModerationPage() {
 
         {handled.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold tracking-tight">Derniers traités</h2>
+            <h2 className="text-xl font-semibold tracking-tight">{t("moderation.handledTitle")}</h2>
             <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl">
               {handled.map((report) => {
-                const t = target(report);
+                const tgt = target(report);
                 return (
                   <li key={report.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-1 p-3.5 text-sm">
                     <span
@@ -332,12 +353,14 @@ export default async function ModerationPage() {
                           : "font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground"
                       }
                     >
-                      {report.status === "RESOLVED" ? "traité" : "rejeté"}
+                      {report.status === "RESOLVED"
+                        ? t("moderation.statusResolved")
+                        : t("moderation.statusDismissed")}
                     </span>
                     <span className="text-muted-foreground">
-                      {TARGET_LABELS[report.targetType]} · {report.reason}
+                      {t(`target.${report.targetType}`)} · {report.reason}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-muted-foreground/70">{t.label}</span>
+                    <span className="min-w-0 flex-1 truncate text-muted-foreground/70">{tgt.label}</span>
                   </li>
                 );
               })}

@@ -7,14 +7,19 @@ import { skillMatchScore } from "@/lib/project-service";
 import { Button } from "@/components/ui/button";
 import { ProjectCard, type ProjectCardData } from "@/components/project-card";
 import { PROJECT_CARD_INCLUDE } from "@/lib/project-card-data";
+import { getT } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Rebondir" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("rebound");
+  return { title: t("meta.title") };
+}
 
 export default async function ReboundPage({
   searchParams,
 }: {
   searchParams: Promise<{ from?: string }>;
 }) {
+  const t = await getT("rebound");
   const { from } = await searchParams;
   const session = await auth();
 
@@ -56,28 +61,27 @@ export default async function ReboundPage({
         </span>
         <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
           {failedProject
-            ? `« ${failedProject.title} » n'a pas abouti. Et alors ?`
-            : "Un projet raté n'est pas une fin."}
+            ? t("hero.failedTitle", { title: failedProject.title })
+            : t("hero.title")}
         </h1>
         <p className="max-w-2xl font-medium text-muted-foreground">
-          Ici, l&apos;échec n&apos;est pas une sortie — c&apos;est un passage. Les contributeurs
-          ont été remboursés, ta réputation encaisse le coup mais se reconstruit à chaque
-          contribution, chaque vote, chaque étape validée. Le meilleur moyen de rebondir :
-          replonger dans la communauté.
+          {t("hero.body")}
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Button asChild>
-            <Link href="/projects">Soutenir un projet</Link>
+            <Link href="/projects">{t("hero.support")}</Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/projects/new">Relancer un projet</Link>
+            <Link href="/projects/new">{t("hero.relaunch")}</Link>
           </Button>
         </div>
       </div>
 
       {suggestions.length > 0 && (
         <>
-          <h2 data-reveal className="mb-6 text-2xl font-semibold tracking-tight">Des opportunités qui t&apos;attendent</h2>
+          <h2 data-reveal className="mb-6 text-2xl font-semibold tracking-tight">
+            {t("suggestions.heading")}
+          </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {suggestions.map((project) => (
               <ProjectCard key={project.id} project={project} />

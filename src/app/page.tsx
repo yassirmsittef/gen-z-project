@@ -24,33 +24,8 @@ import { prisma } from "@/lib/prisma";
 import { stripeLive } from "@/lib/stripe-mode";
 import { formatRelative } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
-
-const STEPS = [
-  {
-    icon: HandCoins,
-    chip: "border-primary/30 bg-primary/15 text-primary",
-    title: "1. Contribue",
-    text: "Soutiens les projets qui te parlent, par carte, dans leur devise — 20 $ de contributions cumulées débloquent la création du tien.",
-  },
-  {
-    icon: Rocket,
-    chip: "border-primary/30 bg-primary/15 text-primary",
-    title: "2. Lance ton projet",
-    text: "Poster est réservé à ceux qui ont déjà contribué. Fixe ton objectif, découpe ton plan en étapes claires.",
-  },
-  {
-    icon: ShieldCheck,
-    chip: "border-secondary/30 bg-secondary/15 text-secondary",
-    title: "3. Débloque par étapes",
-    text: "Les fonds restent sous séquestre. À chaque étape, tu montres une preuve d'avancement et tes contributeurs votent.",
-  },
-  {
-    icon: Sparkles,
-    chip: "border-success/30 bg-success/15 text-success",
-    title: "4. Rate ? Rebondis",
-    text: "Un échec n'est pas une sortie : les contributeurs sont remboursés et on te réoriente vers de nouvelles opportunités.",
-  },
-];
+import { localeTag } from "@/lib/i18n/locales";
+import { getRequestLocale, getT } from "@/lib/i18n/server";
 
 type PulseItem = {
   at: Date;
@@ -61,6 +36,36 @@ type PulseItem = {
 };
 
 export default async function HomePage() {
+  const t = await getT("home");
+  const locale = await getRequestLocale();
+
+  const steps = [
+    {
+      icon: HandCoins,
+      chip: "border-primary/30 bg-primary/15 text-primary",
+      title: t("steps.contributeTitle"),
+      text: t("steps.contributeText"),
+    },
+    {
+      icon: Rocket,
+      chip: "border-primary/30 bg-primary/15 text-primary",
+      title: t("steps.launchTitle"),
+      text: t("steps.launchText"),
+    },
+    {
+      icon: ShieldCheck,
+      chip: "border-secondary/30 bg-secondary/15 text-secondary",
+      title: t("steps.unlockTitle"),
+      text: t("steps.unlockText"),
+    },
+    {
+      icon: Sparkles,
+      chip: "border-success/30 bg-success/15 text-success",
+      title: t("steps.reboundTitle"),
+      text: t("steps.reboundText"),
+    },
+  ];
+
   const [
     calls,
     vivier,
@@ -139,9 +144,11 @@ export default async function HomePage() {
       href: `/projects/${c.project.slug}`,
       text: (
         <>
-          <span className="font-semibold">{c.anonymous ? "Quelqu'un" : c.user.name}</span> a soutenu «{" "}
-          {c.project.title} »{" "}
-          <span className="font-mono text-primary">{formatMoney(c.amount, c.project.currency)}</span>
+          <span className="font-semibold">{c.anonymous ? t("pulse.anonymous") : c.user.name}</span>{" "}
+          {t("pulse.supported", { title: c.project.title })}{" "}
+          <span className="font-mono text-primary">
+            {formatMoney(c.amount, c.project.currency, locale)}
+          </span>
         </>
       ),
     })),
@@ -152,7 +159,8 @@ export default async function HomePage() {
       href: `/projects/${p.slug}`,
       text: (
         <>
-          <span className="font-semibold">{p.owner.name}</span> a lancé « {p.title} »
+          <span className="font-semibold">{p.owner.name}</span>{" "}
+          {t("pulse.launched", { title: p.title })}
         </>
       ),
     })),
@@ -163,7 +171,8 @@ export default async function HomePage() {
       href: `/projects/${u.project.slug}#actus`,
       text: (
         <>
-          Actu de « {u.project.title} » : <span className="font-semibold">{u.title}</span>
+          {t("pulse.update", { title: u.project.title })}{" "}
+          <span className="font-semibold">{u.title}</span>
         </>
       ),
     })),
@@ -174,7 +183,7 @@ export default async function HomePage() {
       href: `/u/${m.id}`,
       text: (
         <>
-          <span className="font-semibold">{m.name}</span> a rejoint GeniGain
+          <span className="font-semibold">{m.name}</span> {t("pulse.joined")}
         </>
       ),
     })),
@@ -183,10 +192,10 @@ export default async function HomePage() {
     .slice(0, 10);
 
   const counters = [
-    { label: "Projets", value: projectCount.toLocaleString("fr-FR") },
-    { label: "Membres", value: userCount.toLocaleString("fr-FR") },
+    { label: t("hero.projects"), value: projectCount.toLocaleString(localeTag(locale)) },
+    { label: t("hero.members"), value: userCount.toLocaleString(localeTag(locale)) },
   ];
-  const invested = formatMoney(contributed._sum.usdCents ?? 0, "usd");
+  const invested = formatMoney(contributed._sum.usdCents ?? 0, "usd", locale);
 
   return (
     <div>
@@ -203,25 +212,22 @@ export default async function HomePage() {
             className="hero-reveal data-label rounded-full border border-white/[0.12] bg-card/60 px-4 py-1.5 backdrop-blur-md"
             style={{ animationDelay: "1.7s" }}
           >
-            {stripeLive
-              ? "0 % de commission · paiements sécurisés par Stripe"
-              : "Bêta · 0 % de commission · paiements Stripe en mode test"}
+            {stripeLive ? t("hero.badgeLive") : t("hero.badgeTest")}
           </span>
           <h1
             className="hero-reveal max-w-4xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl"
             style={{ animationDelay: "2.0s" }}
           >
-            La communauté qui finance{" "}
+            {t("hero.titleLead")}{" "}
             <span className="bg-accent-gradient bg-clip-text text-transparent">
-              ta génération
+              {t("hero.titleAccent")}
             </span>
           </h1>
           <p
             className="hero-reveal max-w-2xl text-lg text-muted-foreground"
             style={{ animationDelay: "2.35s" }}
           >
-            Contribue avant de poster. Débloque tes fonds avec des preuves. Construis ta
-            réputation. Et si ça rate — rebondis.
+            {t("hero.subtitle")}
           </p>
           <div
             className="hero-reveal flex flex-wrap justify-center gap-4"
@@ -229,12 +235,12 @@ export default async function HomePage() {
           >
             <span data-magnetic className="inline-flex">
               <LaunchLink href="/projects" variant="default">
-                Découvrir les projets
+                {t("hero.discover")}
               </LaunchLink>
             </span>
             <span data-magnetic className="inline-flex">
               <LaunchLink href="/projects/new" variant="outline">
-                Lancer le mien
+                {t("hero.launchMine")}
               </LaunchLink>
             </span>
           </div>
@@ -254,7 +260,7 @@ export default async function HomePage() {
               <dd className="font-display bg-accent-gradient bg-clip-text text-3xl font-semibold text-transparent [overflow-wrap:anywhere]">
                 {invested}
               </dd>
-              <dt className="data-label mt-1">Investis (équiv.)</dt>
+              <dt className="data-label mt-1">{t("hero.invested")}</dt>
             </div>
           </dl>
         </div>
@@ -270,16 +276,16 @@ export default async function HomePage() {
               <div>
                 <h2 className="flex items-center gap-3 text-3xl font-semibold tracking-tight sm:text-4xl">
                   <Swords className="h-8 w-8 text-secondary" aria-hidden />
-                  À remplacer
+                  {t("calls.heading")}
                 </h2>
                 <p className="mt-2 max-w-2xl text-muted-foreground">
-                  Des marques dont des membres ne veulent plus, et pour lesquelles{" "}
-                  <span className="text-foreground">personne n&apos;a encore lancé</span> de
-                  remplaçant. Chaque appel est une commande qui attend son porteur.
+                  {t("calls.introBefore")}{" "}
+                  <span className="text-foreground">{t("calls.introHighlight")}</span>{" "}
+                  {t("calls.introAfter")}
                 </p>
               </div>
               <Button variant="outline" size="sm" asChild>
-                <Link href="/appels">Voir tous les appels →</Link>
+                <Link href="/appels">{t("calls.seeAll")}</Link>
               </Button>
             </div>
 
@@ -290,7 +296,7 @@ export default async function HomePage() {
                     href={`/appels/${call.slug}`}
                     className="glass flex h-full flex-col rounded-2xl rounded-tr-sm p-5 transition-all duration-200 ease-out hover:-translate-y-1 hover:border-secondary/25 hover:shadow-glow-violet"
                   >
-                    <p className="data-label">Ne veut plus de</p>
+                    <p className="data-label">{t("calls.noLongerWants")}</p>
                     <p
                       translate="no"
                       className="mt-1 font-display text-2xl font-semibold leading-tight"
@@ -306,8 +312,7 @@ export default async function HomePage() {
                         {call._count.supports}
                       </span>
                       <span className="text-muted-foreground">
-                        {call._count.supports > 1 ? "personnes veulent" : "personne veut"} ça
-                        remplacé
+                        {t("calls.wantReplaced", { count: call._count.supports })}
                       </span>
                     </p>
                   </Link>
@@ -319,13 +324,13 @@ export default async function HomePage() {
               <Button asChild>
                 <Link href="/projects/new">
                   <Rocket aria-hidden />
-                  Lancer un remplaçant
+                  {t("calls.launchReplacement")}
                 </Link>
               </Button>
               <Button variant="outline" asChild>
                 <Link href="/appels/nouveau">
                   <Megaphone aria-hidden />
-                  Publier mon appel
+                  {t("calls.publishCall")}
                 </Link>
               </Button>
             </div>
@@ -338,10 +343,10 @@ export default async function HomePage() {
           data-reveal
           className="mb-10 text-center text-3xl font-semibold tracking-tight sm:text-4xl"
         >
-          Comment ça marche
+          {t("steps.heading")}
         </h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((step, i) => (
+          {steps.map((step, i) => (
             <Card key={step.title} data-reveal style={{ transitionDelay: `${i * 0.08}s` }}>
               <CardContent className="space-y-3 pt-6">
                 <span
@@ -360,7 +365,7 @@ export default async function HomePage() {
             href="/comment-ca-marche"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
           >
-            Le fonctionnement en détail — séquestre, votes, remboursements
+            {t("steps.detailsLink")}
             <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </p>
@@ -371,10 +376,10 @@ export default async function HomePage() {
           <div data-reveal className="mb-8 flex items-center justify-between">
             <h2 className="flex items-center gap-3 text-3xl font-semibold tracking-tight sm:text-4xl">
               <Flame className="h-8 w-8 text-primary" aria-hidden />
-              En campagne
+              {t("featured.heading")}
             </h2>
             <Button variant="outline" size="sm" asChild>
-              <Link href="/projects">Tout voir →</Link>
+              <Link href="/projects">{t("featured.seeAll")}</Link>
             </Button>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -397,10 +402,10 @@ export default async function HomePage() {
               className="mb-2 flex items-center justify-center gap-3 text-3xl font-semibold tracking-tight sm:text-4xl"
             >
               <Activity className="h-8 w-8 text-primary" aria-hidden />
-              Le pouls de GeniGain
+              {t("pulse.heading")}
             </h2>
             <p data-reveal className="data-label mb-8 text-center">
-              Ce qui vient de se passer sur la plateforme
+              {t("pulse.subheading")}
             </p>
             <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-tr-sm">
               {pulse.map((item, index) => (
@@ -416,7 +421,7 @@ export default async function HomePage() {
                     </span>
                     <span className="min-w-0 flex-1 truncate text-sm">{item.text}</span>
                     <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                      {formatRelative(item.at)}
+                      {formatRelative(item.at, locale)}
                     </span>
                   </Link>
                 </li>
