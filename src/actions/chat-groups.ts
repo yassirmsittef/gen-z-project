@@ -1,4 +1,5 @@
 "use server";
+import { domainErrorMessage, tErr } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -40,7 +41,7 @@ export async function createGroupAction(
   try {
     slug = await createGroup(session.user.id, parsed.data);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -62,7 +63,7 @@ export async function openLanguageRoomsAction(
   try {
     opened = await openLanguageRooms(session.user.id);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -83,7 +84,7 @@ export async function joinGroupAction(
   try {
     await joinGroup(session.user.id, slug);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -101,7 +102,7 @@ export async function leaveGroupAction(
   try {
     await leaveGroup(session.user.id, String(formData.get("slug") ?? ""));
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -119,7 +120,7 @@ export async function dissolveGroupAction(
   try {
     await dissolveGroup(session.user.id, String(formData.get("slug") ?? ""));
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -144,7 +145,7 @@ export async function toggleGroupMuteAction(
       formData.get("muted") === "true"
     );
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -175,9 +176,9 @@ export async function groupModerationAction(
     else if (geste === "demettre") await setGroupManager(session.user.id, slug, targetId, false);
     else if (geste === "exclure") await excludeFromGroup(session.user.id, slug, targetId);
     else if (geste === "readmettre") await readmitToGroup(session.user.id, slug, targetId);
-    else return { error: "Geste inconnu." };
+    else return { error: await tErr("unknownGesture") };
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -198,7 +199,7 @@ export async function deleteGroupMessageAction(
   try {
     await deleteGroupMessage(session.user.id, String(formData.get("messageId") ?? ""));
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -246,7 +247,7 @@ export async function sendGroupMessageAction(
   try {
     await postGroupMessage(session.user.id, parsed.data);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 

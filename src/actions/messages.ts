@@ -1,4 +1,5 @@
 "use server";
+import { tErr } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -24,13 +25,13 @@ export async function sendMessageAction(
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
   if (parsed.data.recipientId === session.user.id) {
-    return { error: "Tu ne peux pas t'écrire à toi-même." };
+    return { error: await tErr("selfMessage") };
   }
   const recipient = await prisma.user.findUnique({
     where: { id: parsed.data.recipientId },
     select: { id: true },
   });
-  if (!recipient) return { error: "Destinataire introuvable." };
+  if (!recipient) return { error: await tErr("recipientNotFound") };
 
   await prisma.message.create({
     data: {

@@ -1,4 +1,5 @@
 "use server";
+import { domainErrorMessage } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -30,7 +31,7 @@ export async function submitProofAction(
   try {
     await submitMilestoneProof(session.user.id, parsed.data);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 

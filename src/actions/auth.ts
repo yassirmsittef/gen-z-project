@@ -1,4 +1,5 @@
 "use server";
+import { tErr } from "@/lib/action-errors";
 
 import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
@@ -26,7 +27,7 @@ export async function registerAction(
   // Consentement CGU + confidentialité : la case est `required` côté client,
   // mais un POST forgé sans elle ne doit pas créer de compte.
   if (formData.get("cgu") !== "on") {
-    return { error: "Tu dois accepter les conditions d'utilisation pour créer un compte." };
+    return { error: await tErr("mustAcceptTerms") };
   }
 
   const { name, email, password } = parsed.data;
@@ -36,7 +37,7 @@ export async function registerAction(
   const cityRaw = String(formData.get("city") ?? "").trim();
   const city = cityRaw ? findCity(cityRaw) : undefined;
   if (cityRaw && !city) {
-    return { error: "Ville non reconnue — choisis-en une dans la liste, ou laisse vide." };
+    return { error: await tErr("cityUnknownOrEmpty") };
   }
 
   // Devise d'AFFICHAGE (modifiable au profil). Le droit de poster reste
@@ -46,7 +47,7 @@ export async function registerAction(
   const preferredCurrency = CURRENCY_CODES.includes(currencyRaw) ? currencyRaw : "eur";
 
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) return { error: "Un compte existe déjà avec cet email." };
+  if (existing) return { error: await tErr("emailTaken") };
 
   const user = await prisma.user.create({
     data: {
@@ -88,10 +89,10 @@ export async function loginAction(
         ((error.cause as { err?: { code?: string } } | undefined)?.err?.code);
       if (code === "rate-limited") {
         return {
-          error: "Trop de tentatives pour ce compte — attends quelques minutes avant de réessayer.",
+          error: await tErr("tooManyAttempts"),
         };
       }
-      return { error: "Email ou mot de passe incorrect." };
+      return { error: await tErr("badCredentials") };
     }
     throw error; // NEXT_REDIRECT inclus
   }

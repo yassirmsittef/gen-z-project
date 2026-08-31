@@ -1,4 +1,5 @@
 "use server";
+import { domainErrorMessage, tErr } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
 import { reportStorageAfterUpload, storageStatus } from "@/lib/call-videos";
@@ -29,7 +30,7 @@ export async function deleteAccountAction(
   if (!session?.user?.id) redirect("/login");
 
   const password = String(formData.get("password") ?? "");
-  if (!password) return { error: "Mot de passe requis pour confirmer." };
+  if (!password) return { error: await tErr("passwordToConfirm") };
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -42,13 +43,13 @@ export async function deleteAccountAction(
     };
   }
   if (!(await bcrypt.compare(password, user.passwordHash))) {
-    return { error: "Mot de passe incorrect." };
+    return { error: await tErr("passwordIncorrect") };
   }
 
   try {
     await eraseAccount(session.user.id);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -81,14 +82,14 @@ export async function changePasswordAction(
     select: { passwordHash: true },
   });
   if (!user?.passwordHash) {
-    return { error: "Ce compte n'a pas de mot de passe à changer." };
+    return { error: await tErr("noPasswordToChange") };
   }
 
   const valid = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
-  if (!valid) return { error: "Mot de passe actuel incorrect." };
+  if (!valid) return { error: await tErr("currentPasswordIncorrect") };
 
   if (parsed.data.newPassword === parsed.data.currentPassword) {
-    return { error: "Le nouveau mot de passe doit être différent de l'actuel." };
+    return { error: await tErr("newPasswordSame") };
   }
 
   await prisma.user.update({
@@ -146,13 +147,13 @@ export async function updateProfileAction(
 
   if (file instanceof File && file.size > 0) {
     if (!file.type.startsWith("image/")) {
-      return { error: "La photo doit être une image." };
+      return { error: await tErr("photoMustBeImage") };
     }
     if (file.size > 1_500_000) {
-      return { error: "Photo trop lourde — réessaie avec une image plus petite." };
+      return { error: await tErr("photoTooHeavy") };
     }
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      return { error: "Le stockage des photos n'est pas configuré sur cet environnement." };
+      return { error: await tErr("photoStorageNotConfigured") };
     }
     const blob = await put(`avatars/${session.user.id}.webp`, file, {
       access: "public",
@@ -244,7 +245,7 @@ export async function updateLocationAction(
 
   const city = findCity(raw);
   if (!city) {
-    return { error: "Ville non reconnue — choisis une ville proposée par la liste." };
+    return { error: await tErr("cityUnknownPick") };
   }
 
   await updateUserLocation(session.user.id, city);

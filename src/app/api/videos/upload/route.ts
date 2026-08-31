@@ -1,3 +1,4 @@
+import { tErr } from "@/lib/action-errors";
 import { NextResponse } from "next/server";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { auth } from "@/auth";
@@ -77,7 +78,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json(json);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Envoi impossible." },
+      { error: error instanceof Error ? error.message : await tErr("uploadImpossible") },
       { status: 400 }
     );
   }

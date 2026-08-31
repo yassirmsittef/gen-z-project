@@ -1,10 +1,12 @@
 import type { Messages } from "../types";
+import { err } from "./err";
 import { labels } from "./labels";
 import { meta } from "./meta";
 import { nav } from "./nav";
 import { v } from "./v";
 
 export const es = {
+  err,
   common: {
     someone: "Alguien",
     justNow: "ahora mismo",

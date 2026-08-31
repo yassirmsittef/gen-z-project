@@ -1,4 +1,5 @@
 "use server";
+import { domainErrorMessage, tErr } from "@/lib/action-errors";
 
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -31,14 +32,14 @@ export async function contributeAction(
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
   if (!stripeEnabled) {
-    return { error: "Les paiements ne sont pas configurés sur cet environnement." };
+    return { error: await tErr("paymentsNotConfigured") };
   }
 
   let project;
   try {
     project = await assertCanContribute(session.user.id, parsed.data.projectId);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -75,6 +76,6 @@ export async function contributeAction(
     cancel_url: `${appUrl()}/projects/${project.slug}?contribution=annulee`,
   });
 
-  if (!checkout.url) return { error: "Stripe n'a pas fourni de page de paiement — réessaie." };
+  if (!checkout.url) return { error: await tErr("stripeNoCheckout") };
   return { checkoutUrl: checkout.url };
 }

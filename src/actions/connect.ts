@@ -1,4 +1,5 @@
 "use server";
+import { tErr } from "@/lib/action-errors";
 
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -20,7 +21,7 @@ export async function connectOnboardingAction(
   if (!session?.user?.id) redirect("/login");
 
   if (!stripeEnabled) {
-    return { error: "Stripe n'est pas configuré sur cet environnement." };
+    return { error: await tErr("stripeNotConfigured") };
   }
 
   const user = await prisma.user.findUnique({
@@ -66,6 +67,6 @@ export async function connectOnboardingAction(
           "Les versements ne sont pas encore ouverts — la plateforme finalise son intégration Stripe. Reviens bientôt !",
       };
     }
-    return { error: "Stripe n'a pas pu démarrer la configuration — réessaie dans un instant." };
+    return { error: await tErr("stripeConnectFailed") };
   }
 }

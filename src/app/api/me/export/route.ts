@@ -1,3 +1,4 @@
+import { tErr } from "@/lib/action-errors";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -12,7 +13,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non connecté" }, { status: 401 });
+    return NextResponse.json({ error: await tErr("notLoggedIn") }, { status: 401 });
   }
   const userId = session.user.id;
 

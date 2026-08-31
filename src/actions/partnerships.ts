@@ -1,4 +1,5 @@
 "use server";
+import { tErr } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -21,7 +22,7 @@ export async function submitPartnershipAction(
 ): Promise<PartnershipFormState> {
   // Pot-de-miel : les humains ne voient pas ce champ, les bots le remplissent.
   if (String(formData.get("companySize") ?? "").length > 0) {
-    return { error: "Envoi bloqué." };
+    return { error: await tErr("sendBlocked") };
   }
 
   const { partnershipRequestSchema } = await requestSchemas();
@@ -42,7 +43,7 @@ export async function submitPartnershipAction(
     where: { id: parsed.data.projectId },
     select: { id: true, slug: true, title: true, ownerId: true },
   });
-  if (!project) return { error: "Projet introuvable." };
+  if (!project) return { error: await tErr("projectNotFound") };
 
   // Garde-fou anti-spam : 5 demandes en attente max par email et par projet.
   const pendingFromSender = await prisma.partnershipRequest.count({
@@ -53,7 +54,7 @@ export async function submitPartnershipAction(
     },
   });
   if (pendingFromSender >= 5) {
-    return { error: "Vous avez déjà plusieurs demandes en attente pour ce projet." };
+    return { error: await tErr("pendingRequestsAlready") };
   }
 
   const request = await prisma.partnershipRequest.create({
@@ -116,9 +117,9 @@ export async function respondPartnershipAction(
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
   const request = await requireOwnedRequest(parsed.data.requestId);
-  if (!request) return { error: "Demande introuvable." };
+  if (!request) return { error: await tErr("requestNotFound") };
   if (request.status !== "PENDING") {
-    return { error: "Cette demande a déjà reçu une réponse." };
+    return { error: await tErr("alreadyAnswered") };
   }
 
   await prisma.partnershipRequest.update({
@@ -147,7 +148,7 @@ export async function deepAnalyzeAction(
 ): Promise<DeepAnalysisState> {
   const requestId = String(formData.get("requestId") ?? "");
   const request = await requireOwnedRequest(requestId);
-  if (!request) return { error: "Demande introuvable." };
+  if (!request) return { error: await tErr("requestNotFound") };
 
   const analysis = await deepAnalyze(request, {
     projectTitle: request.project.title,
@@ -155,7 +156,7 @@ export async function deepAnalyzeAction(
     ownerName: request.project.owner.name ?? "Le porteur du projet",
   });
   if (!analysis) {
-    return { error: "L'analyse approfondie n'a pas abouti — l'analyse rapide reste affichée." };
+    return { error: await tErr("deepAnalysisFailed") };
   }
 
   revalidatePath(`/partenariats/${request.id}`);

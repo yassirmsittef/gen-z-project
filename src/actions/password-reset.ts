@@ -1,4 +1,5 @@
 "use server";
+import { domainErrorMessage } from "@/lib/action-errors";
 
 import { emailEnabled } from "@/lib/email";
 import { requestPasswordReset, resetPassword } from "@/lib/password-reset";
@@ -52,7 +53,7 @@ export async function resetPasswordAction(
   try {
     await resetPassword(parsed.data.token, parsed.data.newPassword);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 

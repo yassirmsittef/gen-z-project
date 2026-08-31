@@ -7,9 +7,33 @@ import { notify, notifyMany } from "@/lib/notifications";
 import { splitMilestonePayout } from "@/lib/payout-split";
 import { slugify } from "@/lib/utils";
 import type { CreateProjectInput, UpdateProjectInput } from "@/lib/validation";
+import { makeT, type Vars } from "@/lib/i18n/t";
+import { err as ERR_FR } from "@/messages/fr/err";
 
-/** Erreur métier : son message est affichable tel quel à l'utilisateur. */
-export class DomainError extends Error {}
+/**
+ * Erreur métier : son message est affichable tel quel à l'utilisateur.
+ *
+ * BI-MODE i18n : construite avec une chaîne (sites historiques, message fr),
+ * ou avec `{ key, params }` du namespace `err` — `message` reste alors le
+ * rendu FRANÇAIS (logs, `.toThrow(…)` des tests), et le bord traduit via
+ * `domainErrorMessage` (src/lib/action-errors.ts) dans la langue du
+ * requérant. La migration des sites se fait par lots, sans rupture.
+ */
+export type DomainErrKey = keyof typeof ERR_FR & string;
+const tErrFr = makeT(ERR_FR, "fr");
+
+export class DomainError extends Error {
+  readonly key?: DomainErrKey;
+  readonly params?: Vars;
+
+  constructor(arg: string | { key: DomainErrKey; params?: Vars }) {
+    super(typeof arg === "string" ? arg : tErrFr(arg.key, arg.params));
+    if (typeof arg !== "string") {
+      this.key = arg.key;
+      this.params = arg.params;
+    }
+  }
+}
 
 type Tx = Prisma.TransactionClient;
 

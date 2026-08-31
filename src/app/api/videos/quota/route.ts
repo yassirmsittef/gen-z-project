@@ -1,3 +1,4 @@
+import { domainErrorMessage } from "@/lib/action-errors";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -75,7 +76,7 @@ export async function GET(): Promise<NextResponse> {
   try {
     await assertVideoStorageAvailable();
   } catch (error) {
-    if (error instanceof DomainError) return NextResponse.json({ ok: false, raison: error.message });
+    if (error instanceof DomainError) return NextResponse.json({ ok: false, raison: await domainErrorMessage(error) });
     throw error;
   }
 

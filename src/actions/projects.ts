@@ -1,4 +1,5 @@
 "use server";
+import { domainErrorMessage, tErr } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -28,7 +29,7 @@ export async function createProjectAction(
   try {
     milestones = JSON.parse(String(formData.get("milestones") ?? "[]"));
   } catch {
-    return { error: "Étapes invalides." };
+    return { error: await tErr("invalidMilestones") };
   }
 
   const { createProjectSchema } = await requestSchemas();
@@ -39,7 +40,7 @@ export async function createProjectAction(
   try {
     slug = await createProject(session.user.id, parsed.data);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -73,7 +74,7 @@ export async function updateProjectAction(
   try {
     slug = await updateProject(session.user.id, String(formData.get("projectId")), parsed.data);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -92,7 +93,7 @@ export async function deleteProjectAction(
   try {
     await deleteProject(session.user.id, String(formData.get("projectId")));
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -116,7 +117,7 @@ export async function cancelProjectAction(
   try {
     await cancelProjectByOwner(session.user.id, String(formData.get("projectId")));
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 

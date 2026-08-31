@@ -1,4 +1,5 @@
 "use server";
+import { domainErrorMessage, tErr } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -40,7 +41,7 @@ export async function createCallAction(
   try {
     slug = await createCall(session.user.id, parsed.data);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -63,7 +64,7 @@ export async function toggleSupportAction(
   try {
     supporting = await toggleSupport(session.user.id, callId);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -91,7 +92,7 @@ export async function postCallCommentAction(
   try {
     await postCallComment(session.user.id, parsed.data.callId, parsed.data.body);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 
@@ -129,12 +130,12 @@ export async function answerCallAction(
 
   const callId = String(formData.get("callId") ?? "");
   const projectId = String(formData.get("projectId") ?? "");
-  if (!projectId) return { error: "Choisis lequel de tes projets répond à cet appel." };
+  if (!projectId) return { error: await tErr("pickYourProject") };
 
   try {
     await answerCall(session.user.id, callId, projectId);
   } catch (error) {
-    if (error instanceof DomainError) return { error: error.message };
+    if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
 

@@ -1,4 +1,5 @@
 "use server";
+import { tErr } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -29,7 +30,7 @@ export async function addCommentAction(
     where: { id: parsed.data.projectId },
     select: { id: true, slug: true, title: true, ownerId: true },
   });
-  if (!project) return { error: "Projet introuvable." };
+  if (!project) return { error: await tErr("projectNotFound") };
 
   await prisma.comment.create({
     data: {
@@ -124,9 +125,9 @@ export async function postUpdateAction(
     where: { id: parsed.data.projectId },
     select: { id: true, slug: true, title: true, ownerId: true },
   });
-  if (!project) return { error: "Projet introuvable." };
+  if (!project) return { error: await tErr("projectNotFound") };
   if (project.ownerId !== session.user.id) {
-    return { error: "Seul·e le·la porteur·se du projet peut poster une actu." };
+    return { error: await tErr("ownerOnlyUpdate") };
   }
 
   await prisma.projectUpdate.create({
