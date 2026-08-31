@@ -1,5 +1,7 @@
 "use server";
+import { cookies } from "next/headers";
 import { tErr } from "@/lib/action-errors";
+import { LANG_COOKIE } from "@/lib/i18n/server";
 
 import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
@@ -21,6 +23,7 @@ export async function registerAction(
     email: formData.get("email"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
+    preferredLanguage: formData.get("preferredLanguage"),
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -30,7 +33,7 @@ export async function registerAction(
     return { error: await tErr("mustAcceptTerms") };
   }
 
-  const { name, email, password } = parsed.data;
+  const { name, email, password, preferredLanguage } = parsed.data;
 
   // Ville optionnelle : si renseignée, elle doit venir de la liste officielle
   // (position de la VILLE sur le globe Communauté — modifiable au dashboard).
@@ -55,11 +58,17 @@ export async function registerAction(
       email,
       passwordHash: await bcrypt.hash(password, 10),
       preferredCurrency,
+      preferredLanguage,
       ...(city
         ? { city: city.name, country: city.country, latitude: city.lat, longitude: city.lng }
         : {}),
     },
   });
+
+  // La langue choisie vaut aussi pour le visiteur redevenu anonyme : le
+  // cookie suit la préférence du compte (déconnexion comprise).
+  const jar = await cookies();
+  jar.set(LANG_COOKIE, preferredLanguage, { path: "/", maxAge: 60 * 60 * 24 * 365 });
 
   // Lance la session puis redirige (signIn lève un NEXT_REDIRECT).
   await signIn("credentials", { email, password, redirectTo: "/" });

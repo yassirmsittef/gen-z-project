@@ -2,6 +2,7 @@ import { z } from "zod";
 import { isVideoBlob } from "@/lib/blob";
 import { PartnershipCompensation, ProjectCategory } from "@prisma/client";
 import { CURRENCY_CODES } from "@/lib/money";
+import { LOCALE_CODES } from "@/lib/i18n/locales";
 import { makeT, type Translator } from "@/lib/i18n/t";
 import { v as V_FR } from "@/messages/fr/v";
 import type { Messages } from "@/messages/types";
@@ -51,6 +52,9 @@ export function makeSchemas(tv: TV) {
       email: z.string().email(tv("emailInvalid")),
       password: z.string().min(8, tv("passwordMin")),
       confirmPassword: z.string(),
+      // DANS le schéma (contrairement à preferredCurrency, lu à la main) :
+      // le garde-fou contrat-formulaires exige ainsi la clé dans l'action.
+      preferredLanguage: z.enum(LOCALE_CODES),
     })
     .refine((data) => data.password === data.confirmPassword, {
       message: tv("confirmMismatch"),
@@ -105,6 +109,9 @@ export function makeSchemas(tv: TV) {
       .min(2, tv("nameMin"))
       .max(50, tv("maxChars", { n: 50 })),
     bio: z.string().trim().max(280, tv("bioMax")).optional(),
+    // Langue de l'interface — même famille que la devise : une préférence
+    // de lecture, relue en base à chaque requête.
+    preferredLanguage: z.enum(LOCALE_CODES),
     // Devise d'affichage du dashboard — préférence de lecture, pas de compte.
     preferredCurrency: z
       .string()

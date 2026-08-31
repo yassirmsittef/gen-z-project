@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth, googleEnabled } from "@/auth";
+import { getRequestLocale } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RegisterForm } from "@/components/auth-forms";
@@ -38,7 +39,7 @@ export default async function RegisterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <RegisterForm googleEnabled={googleEnabled} />
+          <RegisterForm googleEnabled={googleEnabled} defaultLocale={await getRequestLocale()} />
         </CardContent>
       </Card>
     </div>

@@ -1,5 +1,7 @@
 "use server";
+import { cookies } from "next/headers";
 import { domainErrorMessage, tErr } from "@/lib/action-errors";
+import { LANG_COOKIE } from "@/lib/i18n/server";
 
 import { revalidatePath } from "next/cache";
 import { reportStorageAfterUpload, storageStatus } from "@/lib/call-videos";
@@ -122,6 +124,7 @@ export async function updateProfileAction(
   const parsed = updateProfileSchema.safeParse({
     name: formData.get("name"),
     bio: formData.get("bio"),
+    preferredLanguage: formData.get("preferredLanguage"),
     preferredCurrency: formData.get("preferredCurrency"),
     links: formData
       .getAll("links")
@@ -177,10 +180,17 @@ export async function updateProfileAction(
       avatarUrl,
       avatarBytes,
       bio: parsed.data.bio || null,
+      preferredLanguage: parsed.data.preferredLanguage,
       preferredCurrency: parsed.data.preferredCurrency,
       links: parsed.data.links,
     },
   });
+
+  // Le cookie suit la préférence du compte : sans lui, la déconnexion
+  // ramènerait le visiteur à la langue négociée — et un sélecteur qui
+  // paraît revenir en arrière est un sélecteur cassé.
+  const jar = await cookies();
+  jar.set(LANG_COOKIE, parsed.data.preferredLanguage, { path: "/", maxAge: 60 * 60 * 24 * 365 });
 
   // Si cette photo a fait franchir un palier de stockage, l'équipe l'apprend
   // maintenant — sans ça, seule la publication d'un témoignage pouvait le

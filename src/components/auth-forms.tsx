@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { CITIES } from "@/lib/cities";
+import { LOCALES, type Locale } from "@/lib/i18n/locales";
 import { CURRENCIES } from "@/lib/money";
 
 function GoogleButton() {
@@ -72,7 +73,13 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
   );
 }
 
-export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
+export function RegisterForm({
+  googleEnabled,
+  defaultLocale,
+}: {
+  googleEnabled: boolean;
+  defaultLocale: Locale;
+}) {
   const [state, formAction, pending] = useActionState(registerAction, undefined);
 
   return (
@@ -116,6 +123,26 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
           <p className="text-xs text-muted-foreground">
             Position de la ville sur le globe Communauté, jamais ta position exacte. Modifiable
             à tout moment.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="preferredLanguage">Ta langue</Label>
+          {/* Les noms de langue s'affichent CHACUN DANS SA LANGUE : un menu
+              de langues doit se lire même quand l'interface parle une autre. */}
+          <select
+            id="preferredLanguage"
+            name="preferredLanguage"
+            defaultValue={defaultLocale}
+            className="flex h-11 w-full rounded-xl border border-input bg-background/60 px-3.5 py-2 text-sm transition-colors duration-200 hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            {LOCALES.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            L&apos;interface, les notifications et les emails te parleront dans cette langue.
           </p>
         </div>
         <div className="space-y-1.5">

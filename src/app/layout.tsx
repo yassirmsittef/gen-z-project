@@ -6,6 +6,7 @@ import { Navbar } from "@/components/navbar";
 import { stripeLive } from "@/lib/stripe-mode";
 import { Atmosphere } from "@/components/atmosphere";
 import { I18nProvider } from "@/components/i18n-provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { PointerFx } from "@/components/pointer-fx";
 import { PageTransition } from "@/components/page-transition";
@@ -109,6 +110,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </Link>
               </nav>
               <p>{stripeLive ? t("footerLive") : t("footerTest")}</p>
+              <LanguageSwitcher current={locale} />
             </div>
           </footer>
           <ScrollReveal />

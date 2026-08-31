@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { FileDown, Handshake, PenLine, ShieldAlert, Sparkles, Star, Swords } from "lucide-react";
 import { auth } from "@/auth";
 import { liveAnswer } from "@/lib/boycott";
+import { isLocale } from "@/lib/i18n/locales";
 import { prisma } from "@/lib/prisma";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -464,6 +465,7 @@ export default async function DashboardPage({
                   initialName={user.name}
                   initialAvatarUrl={user.avatarUrl}
                   initialBio={user.bio}
+                  initialLanguage={isLocale(user.preferredLanguage) ? user.preferredLanguage : "fr"}
                   initialCurrency={user.preferredCurrency}
                   initialLinks={user.links}
                 />

@@ -20,6 +20,7 @@ const valide = {
   name: "Yassir",
   email: "fondateur@exemple.fr",
   password: "correct-horse-8",
+  preferredLanguage: "fr",
 };
 
 describe("registerSchema — confirmation du mot de passe", () => {
