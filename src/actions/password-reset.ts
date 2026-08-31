@@ -3,7 +3,7 @@
 import { emailEnabled } from "@/lib/email";
 import { requestPasswordReset, resetPassword } from "@/lib/password-reset";
 import { DomainError } from "@/lib/project-service";
-import { requestResetSchema, resetPasswordSchema } from "@/lib/validation";
+import { requestSchemas } from "@/lib/validation-locale";
 
 export type RequestResetState = { error?: string; success?: boolean } | undefined;
 
@@ -11,6 +11,7 @@ export async function requestResetAction(
   _prev: RequestResetState,
   formData: FormData
 ): Promise<RequestResetState> {
+  const { requestResetSchema } = await requestSchemas();
   const parsed = requestResetSchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -40,6 +41,7 @@ export async function resetPasswordAction(
   _prev: ResetPasswordState,
   formData: FormData
 ): Promise<ResetPasswordState> {
+  const { resetPasswordSchema } = await requestSchemas();
   const parsed = resetPasswordSchema.safeParse({
     token: formData.get("token"),
     newPassword: formData.get("newPassword"),

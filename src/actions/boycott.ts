@@ -14,7 +14,8 @@ import {
 } from "@/lib/boycott";
 import { isAdmin } from "@/lib/moderation";
 import { DomainError } from "@/lib/project-service";
-import { boycottCallSchema, callCommentSchema, parseLines } from "@/lib/validation";
+import { parseLines } from "@/lib/validation";
+import { requestSchemas } from "@/lib/validation-locale";
 
 export type CallFormState = { error?: string } | undefined;
 
@@ -25,6 +26,7 @@ export async function createCallAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { boycottCallSchema } = await requestSchemas();
   const parsed = boycottCallSchema.safeParse({
     target: formData.get("target"),
     category: formData.get("category"),
@@ -79,6 +81,7 @@ export async function postCallCommentAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { callCommentSchema } = await requestSchemas();
   const parsed = callCommentSchema.safeParse({
     callId: formData.get("callId"),
     body: formData.get("body"),

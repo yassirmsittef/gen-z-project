@@ -12,12 +12,8 @@ import bcrypt from "bcryptjs";
 import { signOut } from "@/auth";
 import { eraseAccount } from "@/lib/account";
 import { DomainError } from "@/lib/project-service";
-import {
-  changePasswordSchema,
-  parseList,
-  updateProfileSchema,
-  userSkillsSchema,
-} from "@/lib/validation";
+import { parseList } from "@/lib/validation";
+import { requestSchemas } from "@/lib/validation-locale";
 
 export type DeleteAccountState = { error?: string } | undefined;
 
@@ -72,6 +68,7 @@ export async function changePasswordAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { changePasswordSchema } = await requestSchemas();
   const parsed = changePasswordSchema.safeParse({
     currentPassword: formData.get("currentPassword"),
     newPassword: formData.get("newPassword"),
@@ -120,6 +117,7 @@ export async function updateProfileAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { updateProfileSchema } = await requestSchemas();
   const parsed = updateProfileSchema.safeParse({
     name: formData.get("name"),
     bio: formData.get("bio"),
@@ -211,6 +209,7 @@ export async function updateSkillsAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { userSkillsSchema } = await requestSchemas();
   const parsed = userSkillsSchema.safeParse(parseList(formData.get("skills")));
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 

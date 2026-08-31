@@ -6,7 +6,7 @@ import { auth } from "@/auth";
 import { postVideo, removeVideo } from "@/lib/call-videos";
 import { isAdmin } from "@/lib/moderation";
 import { DomainError } from "@/lib/project-service";
-import { callVideoSchema } from "@/lib/validation";
+import { requestSchemas } from "@/lib/validation-locale";
 
 export type VideoFormState = { error?: string; success?: boolean } | undefined;
 
@@ -22,6 +22,7 @@ export async function postVideoAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { callVideoSchema } = await requestSchemas();
   const parsed = callVideoSchema.safeParse({
     callId: formData.get("callId"),
     url: formData.get("url"),

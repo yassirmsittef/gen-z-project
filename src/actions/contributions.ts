@@ -6,7 +6,7 @@ import { usdCentsFromMinor } from "@/lib/fx";
 import { formatMoney, toMinor } from "@/lib/money";
 import { assertCanContribute, DomainError } from "@/lib/project-service";
 import { appUrl, getStripe, stripeEnabled } from "@/lib/stripe";
-import { contributeSchema } from "@/lib/validation";
+import { requestSchemas } from "@/lib/validation-locale";
 
 export type ContributeState = { error?: string; checkoutUrl?: string } | undefined;
 
@@ -23,6 +23,7 @@ export async function contributeAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { contributeSchema } = await requestSchemas();
   const parsed = contributeSchema.safeParse({
     projectId: formData.get("projectId"),
     amount: formData.get("amount"),

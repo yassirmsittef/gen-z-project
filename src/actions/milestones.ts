@@ -6,7 +6,8 @@ import type { VoteDecision } from "@prisma/client";
 import { auth } from "@/auth";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { castVote, DomainError, submitMilestoneProof } from "@/lib/project-service";
-import { parseList, submitProofSchema } from "@/lib/validation";
+import { parseList } from "@/lib/validation";
+import { requestSchemas } from "@/lib/validation-locale";
 
 export type ProofFormState = { error?: string; success?: boolean } | undefined;
 
@@ -17,6 +18,7 @@ export async function submitProofAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { submitProofSchema } = await requestSchemas();
   const parsed = submitProofSchema.safeParse({
     milestoneId: formData.get("milestoneId"),
     content: formData.get("content"),

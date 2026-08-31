@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { notifyOnceUnread } from "@/lib/notifications";
-import { messageSchema } from "@/lib/validation";
+import { requestSchemas } from "@/lib/validation-locale";
 
 export type MessageFormState = { error?: string; sentAt?: number } | undefined;
 
@@ -16,6 +16,7 @@ export async function sendMessageAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { messageSchema } = await requestSchemas();
   const parsed = messageSchema.safeParse({
     recipientId: formData.get("recipientId"),
     body: formData.get("body"),

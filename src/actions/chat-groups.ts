@@ -17,7 +17,7 @@ import {
   setGroupMuted,
 } from "@/lib/chat-groups";
 import { DomainError } from "@/lib/project-service";
-import { createGroupSchema, groupMessageSchema } from "@/lib/validation";
+import { requestSchemas } from "@/lib/validation-locale";
 
 export type CreateGroupState = { error?: string } | undefined;
 
@@ -28,6 +28,7 @@ export async function createGroupAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { createGroupSchema } = await requestSchemas();
   const parsed = createGroupSchema.safeParse({
     name: formData.get("name"),
     purpose: formData.get("purpose"),
@@ -235,6 +236,7 @@ export async function sendGroupMessageAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { groupMessageSchema } = await requestSchemas();
   const parsed = groupMessageSchema.safeParse({
     groupId: formData.get("groupId"),
     body: formData.get("body"),

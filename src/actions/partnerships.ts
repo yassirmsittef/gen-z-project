@@ -6,7 +6,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import { deepAnalyze } from "@/lib/partnership-ai";
-import { partnershipRequestSchema, partnershipResponseSchema } from "@/lib/validation";
+import { requestSchemas } from "@/lib/validation-locale";
 
 export type PartnershipFormState = { error?: string } | undefined;
 
@@ -24,6 +24,7 @@ export async function submitPartnershipAction(
     return { error: "Envoi bloqué." };
   }
 
+  const { partnershipRequestSchema } = await requestSchemas();
   const parsed = partnershipRequestSchema.safeParse({
     projectId: formData.get("projectId"),
     brandName: formData.get("brandName"),
@@ -106,6 +107,7 @@ export async function respondPartnershipAction(
   _prev: PartnershipResponseState,
   formData: FormData
 ): Promise<PartnershipResponseState> {
+  const { partnershipResponseSchema } = await requestSchemas();
   const parsed = partnershipResponseSchema.safeParse({
     requestId: formData.get("requestId"),
     decision: formData.get("decision"),

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { notify, notifyMany } from "@/lib/notifications";
-import { commentSchema, projectUpdateSchema } from "@/lib/validation";
+import { requestSchemas } from "@/lib/validation-locale";
 
 /** Vie du projet : actus du porteur + discussion publique. */
 
@@ -18,6 +18,7 @@ export async function addCommentAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { commentSchema } = await requestSchemas();
   const parsed = commentSchema.safeParse({
     projectId: formData.get("projectId"),
     body: formData.get("body"),
@@ -111,6 +112,7 @@ export async function postUpdateAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { projectUpdateSchema } = await requestSchemas();
   const parsed = projectUpdateSchema.safeParse({
     projectId: formData.get("projectId"),
     title: formData.get("title"),

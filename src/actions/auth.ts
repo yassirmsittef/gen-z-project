@@ -6,7 +6,7 @@ import { signIn, signOut } from "@/auth";
 import { findCity } from "@/lib/cities";
 import { CURRENCY_CODES } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
-import { loginSchema, registerSchema } from "@/lib/validation";
+import { requestSchemas } from "@/lib/validation-locale";
 
 export type AuthFormState = { error?: string } | undefined;
 
@@ -14,6 +14,7 @@ export async function registerAction(
   _prev: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
+  const { registerSchema } = await requestSchemas();
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -68,6 +69,7 @@ export async function loginAction(
   _prev: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
+  const { loginSchema } = await requestSchemas();
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),

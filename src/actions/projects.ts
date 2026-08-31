@@ -12,12 +12,8 @@ import {
   DomainError,
   updateProject,
 } from "@/lib/project-service";
-import {
-  createProjectSchema,
-  projectEditFormToInput,
-  projectFormToInput,
-  updateProjectSchema,
-} from "@/lib/validation";
+import { projectEditFormToInput, projectFormToInput } from "@/lib/validation";
+import { requestSchemas } from "@/lib/validation-locale";
 
 export type CreateProjectState = { error?: string } | undefined;
 
@@ -35,6 +31,7 @@ export async function createProjectAction(
     return { error: "Étapes invalides." };
   }
 
+  const { createProjectSchema } = await requestSchemas();
   const parsed = createProjectSchema.safeParse(projectFormToInput(formData, milestones));
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -68,6 +65,7 @@ export async function updateProjectAction(
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const { updateProjectSchema } = await requestSchemas();
   const parsed = updateProjectSchema.safeParse(projectEditFormToInput(formData));
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
