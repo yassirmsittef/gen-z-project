@@ -36,7 +36,7 @@ export function useLocale(): Locale {
   return useI18n().locale;
 }
 
-export function useT<N extends ClientNamespace>(ns: N): Translator<Messages[N]> {
+export function useT<N extends ClientNamespace>(ns: N): Translator<ClientMessages[N]> {
   const { locale, messages } = useI18n();
   return useMemo(() => makeT(messages[ns], locale), [messages, ns, locale]);
 }
