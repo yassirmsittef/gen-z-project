@@ -553,6 +553,12 @@ model GroupMessage {
   // que par une personne : rendue en filet centré, jamais en bulle, et
   // ignorée des aperçus, des compteurs et des non-lus.
   system    Boolean  @default(false)
+  /// Gabarit i18n d'une ligne d'événement : la ligne stocke la MATIÈRE et se
+  /// rend dans la langue du LECTEUR — un mot d'accueil gravé à l'écriture
+  /// resterait figé dans la langue du salon, illisible pour qui passe.
+  /// `body` garde le rendu d'origine en secours (lignes d'avant la refonte).
+  systemKey    String?
+  systemParams Json?
   createdAt DateTime @default(now())
 
   group  ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)

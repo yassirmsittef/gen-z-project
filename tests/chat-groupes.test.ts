@@ -1,5 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "../src/lib/prisma";
+import { makeT } from "../src/lib/i18n/t";
+import { MESSAGES } from "../src/messages";
 import { eraseAccount } from "../src/lib/account";
 import { createReport } from "../src/lib/moderation";
 import {
@@ -198,7 +200,7 @@ describe("rejoindre, écrire, quitter", () => {
     ).toBe(0);
   });
 
-  it("accueille l'arrivant dans la langue du salon, sans réveiller le fil", async () => {
+  it("accueille l'arrivant dans la langue DU LECTEUR, sans réveiller le fil", async () => {
     const admin = await mkUser();
     await prisma.user.update({ where: { id: admin.id }, data: { role: "ADMIN" } });
     await openLanguageRooms(admin.id);
@@ -215,6 +217,20 @@ describe("rejoindre, écrire, quitter", () => {
 
     const accueil = fil.messages.at(-1)!;
     expect(accueil.system).toBe(true);
+    // La ligne stocke la MATIÈRE, pas une phrase : c'est ce qui permet de la
+    // rendre dans la langue de qui la lit, et non dans celle du salon.
+    expect(accueil.systemKey).toBe("joined");
+    expect(accueil.systemParams).toEqual({ name: arrivant.name });
+    // Deux lecteurs, deux langues, la même ligne.
+    const rendu = (locale: "fr" | "en" | "ar") =>
+      makeT(MESSAGES[locale].memberPages, locale)("groupThread.systemJoined", {
+        name: (accueil.systemParams as { name: string }).name,
+      });
+    expect(rendu("fr")).toBe(`${arrivant.name} a rejoint le salon. Bienvenue !`);
+    expect(rendu("en")).toBe(`${arrivant.name} joined the room. Welcome!`);
+    expect(rendu("ar")).toContain(arrivant.name);
+    expect(rendu("ar")).not.toBe(rendu("fr"));
+    // `body` garde le rendu d'origine : filet des lignes d'avant la refonte.
     expect(accueil.body).toBe(`${arrivant.name} joined the room. Welcome!`);
     // Ligne d'événement : ni notification pour les membres, ni compteur.
     expect(
@@ -232,11 +248,13 @@ describe("rejoindre, écrire, quitter", () => {
     await joinGroup(arrivant.id, "salon-english");
     expect(await prisma.groupMessage.count({ where: { groupId: anglais!.id } })).toBe(2);
 
-    // Un groupe ordinaire accueille en français, la langue de la plateforme.
+    // Un groupe ordinaire porte la même clé : le salon ne décide plus de la
+    // langue du mot d'accueil, le lecteur si.
     const ordinaire = await group(admin.id, "Groupe ordinaire");
     await joinGroup(arrivant.id, ordinaire);
     const fose = await getGroupBySlug(ordinaire, arrivant.id);
     const filOrdinaire = await getGroupThread(fose!.id);
+    expect(filOrdinaire.messages.at(-1)?.systemKey).toBe("joined");
     expect(filOrdinaire.messages.at(-1)?.body).toBe(
       `${arrivant.name} a rejoint le groupe. Bienvenue !`
     );

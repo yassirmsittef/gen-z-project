@@ -479,6 +479,11 @@ export async function joinGroup(userId: string, slug: string): Promise<string> {
       groupId: group.id,
       senderId: userId,
       system: true,
+      // La MATIÈRE, pas la phrase : le mot d'accueil se rend dans la langue
+      // de qui le lit. `body` garde le rendu dans la langue du salon — filet
+      // pour les lignes écrites avant cette refonte.
+      systemKey: "joined",
+      systemParams: { name: arrivant?.name ?? null },
       body: roomTexts(group.slug).welcome.replace("{nom}", arrivant?.name ?? "Un membre"),
     },
   });

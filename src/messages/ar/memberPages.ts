@@ -149,6 +149,10 @@ export const memberPages = {
   "groupsDir.openThread": "افتح المحادثة",
 
   // chat/groupes/[slug]/page.tsx
+  // Rendus dans la langue du LECTEUR (et non du salon) : un mot
+  // d'accueil figé dans une langue qu'on ne lit pas n'accueille personne.
+  "groupThread.systemJoined": "مرحبًا بـ {name} في الغرفة!",
+  "groupThread.emptyThread": "لا شيء هنا بعد. ابدأ الحديث: عرّف بنفسك وقل عمّا تبحث.",
   "groupThread.allGroups": "كل المجموعات",
   "groupThread.membersCount": {
     zero: "لا أعضاء",

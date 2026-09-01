@@ -18,7 +18,6 @@ import { ThreadAutoScroll } from "@/components/thread-autoscroll";
 import { UserAvatar } from "@/components/user-avatar";
 import { getConversations } from "@/lib/chat";
 import { getGroupBySlug, getGroupThread, getMyGroups, markGroupRead } from "@/lib/chat-groups";
-import { roomTexts } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { categoryLabel } from "@/lib/i18n/labels";
 import { getRequestLocale, getT } from "@/lib/i18n/server";
@@ -69,6 +68,7 @@ export default async function GroupThreadPage({
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
   const t = await getT("memberPages");
+  const tCommon = await getT("common");
   const locale = await getRequestLocale();
 
   const group = await getGroupBySlug(slug, userId);
@@ -201,20 +201,27 @@ export default async function GroupThreadPage({
                 )}
                 {thread.length === 0 ? (
                   <p dir="auto" className="py-12 text-center text-sm text-muted-foreground">
-                    {roomTexts(group.slug).empty}
+                    {t("groupThread.emptyThread")}
                   </p>
                 ) : (
                   thread.map((message) => {
-                    // Arrivée d'un membre : filet centré dans la langue du
-                    // salon, jamais une bulle — ce n'est pas quelqu'un qui parle.
+                    // Arrivée d'un membre : filet centré, jamais une bulle —
+                    // ce n'est pas quelqu'un qui parle. Rendu dans la langue
+                    // DU LECTEUR : `body` (langue du salon) ne sert plus que
+                    // de secours aux lignes d'avant la refonte.
                     if (message.system) {
+                      const params = (message.systemParams ?? {}) as { name?: string | null };
                       return (
                         <p
                           key={message.id}
                           dir="auto"
                           className="py-1 text-center text-xs text-muted-foreground"
                         >
-                          {message.body}
+                          {message.systemKey === "joined"
+                            ? t("groupThread.systemJoined", {
+                                name: params.name ?? tCommon("someone"),
+                              })
+                            : message.body}
                         </p>
                       );
                     }

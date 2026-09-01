@@ -131,6 +131,10 @@ export const memberPages = {
   "groupsDir.openThread": "Apri la conversazione",
 
   // chat/groupes/[slug]/page.tsx
+  // Rendus dans la langue du LECTEUR (et non du salon) : un mot
+  // d'accueil figé dans une langue qu'on ne lit pas n'accueille personne.
+  "groupThread.systemJoined": "{name} entra nella stanza. Diamo il benvenuto!",
+  "groupThread.emptyThread": "Ancora niente. Apri la conversazione: presentati e di' cosa cerchi.",
   "groupThread.allGroups": "Tutti i gruppi",
   "groupThread.membersCount": {
     one: "{count} membro",
