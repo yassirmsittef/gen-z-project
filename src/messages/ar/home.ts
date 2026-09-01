@@ -1,3 +1,54 @@
 import type { Messages } from "../types";
 
-export const home = {} satisfies Messages["home"];
+export const home = {
+  "hero.badgeLive": "عمولة 0٪ · مدفوعات مؤمَّنة عبر Stripe",
+  "hero.badgeTest": "نسخة تجريبية · عمولة 0٪ · مدفوعات Stripe في وضع الاختبار",
+  "hero.titleLead": "المجتمع الذي يموّل",
+  "hero.titleAccent": "جيلك",
+  "hero.subtitle":
+    "ساهم قبل أن تنشر. افتح أموالك بالإثباتات. ابنِ سمعتك. وإن فشلت — انهض من جديد.",
+  "hero.discover": "اكتشف المشاريع",
+  "hero.launchMine": "أطلق مشروعي",
+  "hero.projects": "مشاريع",
+  "hero.members": "أعضاء",
+  "hero.invested": "مستثمَر (تقريبًا)",
+  "calls.heading": "للاستبدال",
+  "calls.introBefore": "علامات لم يعد بعض الأعضاء يريدونها، بينما",
+  "calls.introHighlight": "لم يطلق أحد بعد",
+  "calls.introAfter": "بديلًا لها. كل نداء طلبية تنتظر من يأخذها.",
+  "calls.seeAll": "عرض كل النداءات ←",
+  "calls.noLongerWants": "لم يعد يريد",
+  "calls.wantReplaced": {
+    zero: "أشخاص يريدون استبدالها",
+    one: "شخص يريد استبدالها",
+    two: "شخصان يريدان استبدالها",
+    few: "أشخاص يريدون استبدالها",
+    many: "شخصًا يريدون استبدالها",
+    other: "شخص يريد استبدالها",
+  },
+  "calls.launchReplacement": "أطلق بديلًا",
+  "calls.publishCall": "انشر ندائي",
+  "steps.heading": "كيف تعمل المنصة",
+  "steps.contributeTitle": "1. ساهم",
+  "steps.contributeText":
+    "ادعم المشاريع التي تكلّمك، بالبطاقة وبعملتها — و20 $ من المساهمات المتراكمة تفتح لك إنشاء مشروعك.",
+  "steps.launchTitle": "2. أطلق مشروعك",
+  "steps.launchText":
+    "النشر حكر على من ساهم من قبل. حدّد هدفك، وقسّم خطتك إلى مراحل واضحة.",
+  "steps.unlockTitle": "3. افتح الأموال مرحلة بمرحلة",
+  "steps.unlockText":
+    "تبقى الأموال في وديعة. عند كل مرحلة تعرض إثبات تقدّم، ويصوّت مساهموك.",
+  "steps.reboundTitle": "4. فشلت؟ انهض من جديد",
+  "steps.reboundText":
+    "الفشل ليس خروجًا: يُسترد للمساهمين مالهم، ونوجّهك نحو فرص جديدة.",
+  "steps.detailsLink": "التفاصيل الكاملة — الوديعة، التصويت، الاستردادات",
+  "featured.heading": "في حملة",
+  "featured.seeAll": "عرض الكل ←",
+  "pulse.heading": "نبض GeniGain",
+  "pulse.subheading": "ما حدث للتو على المنصة",
+  "pulse.anonymous": "شخص ما",
+  "pulse.supported": "دعم «{title}»",
+  "pulse.launched": "أطلق «{title}»",
+  "pulse.update": "مستجدّ من «{title}»:",
+  "pulse.joined": "انضم إلى GeniGain",
+} satisfies Messages["home"];

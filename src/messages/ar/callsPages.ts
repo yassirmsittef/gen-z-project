@@ -1,3 +1,141 @@
 import type { Messages } from "../types";
 
-export const callsPages = {} satisfies Messages["callsPages"];
+export const callsPages = {
+  // ---------- /appels (le fil) ----------
+  "meta.listTitle": "النداءات",
+  "meta.listDescription":
+    "العلامات التي لم يعد المجتمع يريدها، والمشاريع التي تنطلق لتحل محلها.",
+  "sort.orphelins": "بلا بديل",
+  "sort.soutenus": "الأكثر دعمًا",
+  "sort.recents": "الأحدث",
+  "hero.label": "التدفّق",
+  "hero.title": "ما لم نعد نريده — وما نضعه مكانه",
+  "hero.body":
+    "ينشر كل نداءٍ عضوٌ باسمه. يسمّي علامة لم يعد يريدها، ويصف ما كان سيشتريه بدلًا منها. يأخذه صاحب مشروع، ويموّله المجتمع: هكذا نستبدل بدل أن نكتفي بالرفض.",
+  "hero.disclaimer": "تستضيف GeniGain هذه النداءات وليست مؤلفتها.",
+  "cta.publish": "انشر نداءً",
+  "search.placeholder": "علامة، قطاع، كلمة…",
+  "search.label": "البحث عن نداء",
+  "search.submit": "بحث",
+  "filters.sort": "الترتيب",
+  "filters.sectors": "القطاعات",
+  "filters.allSectors": "كل القطاعات",
+  "results.count": {
+    zero: "لا نداءات",
+    one: "نداء واحد",
+    two: "نداءان",
+    few: "{count} نداءات",
+    many: "{count} نداءً",
+    other: "{count} نداء",
+  },
+  "results.forQuery": " لـ «{query}»",
+  "empty.noneYetTitle": "لا نداء في التدفّق بعد.",
+  "empty.noneYetBody":
+    "كن أول من يسمّي علامة لم يعد يريدها — ويقول ما الذي سيشتريه بدلًا منها.",
+  "empty.allAnsweredTitle": "كل النداءات وجدت بديلها.",
+  "empty.allAnsweredBody":
+    "هذه علامة جيدة. افتح نداءً آخر إن بقيت علامة عالقة في حلقك.",
+  "empty.noMatchTitle": "لا نداء يطابق البحث.",
+  "empty.noMatchBody": "غيّر المرشّح — أو انشر نداءك.",
+
+  // ---------- /appels/nouveau ----------
+  "meta.newTitle": "انشر نداءً",
+  "back.toFeed": "العودة إلى التدفّق",
+  "new.label": "نداء جديد",
+  "new.title": "سمِّ ما تريد أن تراه مستبدَلًا",
+  "new.body":
+    "النداء ليس صرخة غضب: إنه طلبية موجّهة إلى من يعرفون كيف يبنون. كلما وصفت بدقة ما كنت ستشتريه بدلًا منها، زادت فرص أن يأخذه صاحب مشروع.",
+
+  // ---------- /appels/[slug] ----------
+  "meta.detailFallback": "نداء",
+  "meta.detailTitle": "استبدال {target}",
+  "removed.title": "سُحب هذا النداء",
+  "removed.byModeration": "سحبته الإشراف — {reason}.",
+  "removed.defaultReason": "غير مطابق لميثاق النداءات",
+  "removed.byAuthor": "سحبه من نشره.",
+  "badge.answered": {
+    zero: "لا بدائل معلنة",
+    one: "بديل واحد معلن",
+    two: "بديلان معلنان",
+    few: "{count} بدائل معلنة",
+    many: "{count} بديلًا معلنًا",
+    other: "{count} بديل معلن",
+  },
+  "badge.none": "لا بديل حتى الآن",
+  "target.label": "لم يعد يريد",
+  "weight.calls": {
+    zero: "لا نداءات",
+    one: "نداء واحد",
+    two: "نداءان",
+    few: "{count} نداءات",
+    many: "{count} نداءً",
+    other: "{count} نداء",
+  },
+  "weight.aim": "تستهدف هذه العلامة، تحملها",
+  "weight.total": "صوتًا في المجموع.",
+  "author.fallback": "عضو",
+  "motive.title": "السبب",
+  "wanted.title": "ما ينبغي أن يحلّ محلها",
+  "sources.title": "المصادر التي ساقها صاحب النداء",
+  "frame.disclaimer":
+    "نداء نشره أحد الأعضاء. تستضيف GeniGain هذا المحتوى، وليست مؤلفته ولا تتبنّاه. ويمكن لأي علامة معنيّة أن تطلب سحبه عبر",
+  "share.title": "استبدال {target}",
+  "share.text": {
+    zero: "{count} شخص يريد استبدال {target}. بدلًا منها: {wanted}",
+    one: "شخص واحد يريد استبدال {target}. بدلًا منها: {wanted}",
+    two: "شخصان يريدان استبدال {target}. بدلًا منها: {wanted}",
+    few: "{count} أشخاص يريدون استبدال {target}. بدلًا منها: {wanted}",
+    many: "{count} شخصًا يريدون استبدال {target}. بدلًا منها: {wanted}",
+    other: "{count} شخص يريد استبدال {target}. بدلًا منها: {wanted}",
+  },
+  "actions.removeMine": "سحب ندائي",
+  "actions.removeModeration": "سحب (إشراف)",
+  "replacements.title": "البدائل",
+  "replacements.body":
+    "هذه المشاريع أعلنت نفسها على هذا النداء. تمويلها هو ما يجعل البديل موجودًا.",
+  "replacements.emptyTitle": "لم يستبدلها أحد بعد",
+  "replacements.emptyBody":
+    "هذا النداء ينتظر صاحبه. والداعمون أعلاه هم أول المساهمين.",
+  "replacements.withdrawMine": "سحب هذا المشروع من النداء",
+  "replacements.detach": "فصل هذا المشروع (إنه يستغل النداء)",
+  "videos.title": "الشهادات المصوّرة",
+  "videos.attached": {
+    zero: "لا شهادات مرتبطة بهذا النداء —",
+    one: "شهادة واحدة مرتبطة بهذا النداء —",
+    two: "شهادتان مرتبطتان بهذا النداء —",
+    few: "{count} شهادات مرتبطة بهذا النداء —",
+    many: "{count} شهادةً مرتبطة بهذا النداء —",
+    other: "{count} شهادة مرتبطة بهذا النداء —",
+  },
+  "videos.seeLive": "شاهدها في المباشر",
+  "videos.emptyBody": "الكاميرا تقول في ثلاثين ثانية ما تحتاج فقرة كاملة لإثباته.",
+  "login.cta": "سجّل الدخول",
+  "videos.loginSuffix": "لتصوير شهادتك.",
+  "discussion.title": "النقاش",
+  "discussion.body":
+    "تأكيد، تفصيل، اعتراض. وللشركة المعنيّة أن تردّ هنا كأي أحد آخر.",
+  "discussion.removeComment": "سحب هذا التعليق",
+  "discussion.shown": "تُعرض أحدث {shown} ردود، من أصل {total}.",
+  "discussion.loginSuffix": "للرد على هذا النداء.",
+  "siblings.title": "نداءات أخرى تستهدف {target}",
+  "siblings.body": "نُشرت منفصلة، من أعضاء آخرين، لأسباب أخرى.",
+  "siblings.voices": "صوت",
+  "siblings.by": "بقلم {name}",
+  "siblings.anonymous": "أحد الأعضاء",
+  "siblings.answers": {
+    zero: " · لا بدائل",
+    one: " · بديل واحد",
+    two: " · بديلان",
+    few: " · {count} بدائل",
+    many: " · {count} بديلًا",
+    other: " · {count} بديل",
+  },
+
+  // ---------- /direct ----------
+  "meta.directTitle": "المباشر",
+  "meta.directDescription":
+    "شهادات المجتمع المصوّرة: لماذا لم نعد نريد هذه العلامات، وما الذي نريده بدلًا منها.",
+  "direct.label": "المباشر",
+  "direct.title": "ما لم نعد نريده، مصوَّرًا",
+  "direct.publish": "انشر",
+} satisfies Messages["callsPages"];

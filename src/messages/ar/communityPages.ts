@@ -1,3 +1,92 @@
 import type { Messages } from "../types";
 
-export const communityPages = {} satisfies Messages["communityPages"];
+export const communityPages = {
+  // ---------- Compteurs partagés ----------
+  "count.members": {
+    zero: "لا أعضاء",
+    one: "عضو واحد",
+    two: "عضوان",
+    few: "{count} أعضاء",
+    many: "{count} عضوًا",
+    other: "{count} عضو",
+  },
+  "count.projects": {
+    zero: "لا مشاريع",
+    one: "مشروع واحد",
+    two: "مشروعان",
+    few: "{count} مشاريع",
+    many: "{count} مشروعًا",
+    other: "{count} مشروع",
+  },
+  "count.supports": {
+    zero: "لا مساندات",
+    one: "مساندة واحدة",
+    two: "مساندتان",
+    few: "{count} مساندات",
+    many: "{count} مساندةً",
+    other: "{count} مساندة",
+  },
+
+  // ---------- /communaute ----------
+  "meta.communityTitle": "المجتمع",
+  "community.title": "المجتمع",
+  "stats.cities": {
+    zero: "لا مدن على الكرة الأرضية",
+    one: "مدينة واحدة على الكرة الأرضية",
+    two: "مدينتان على الكرة الأرضية",
+    few: "{count} مدن على الكرة الأرضية",
+    many: "{count} مدينةً على الكرة الأرضية",
+    other: "{count} مدينة على الكرة الأرضية",
+  },
+  "stats.network": "الشبكة في المدار",
+  "globe.clearCity": "إزالة مرشّح المدينة",
+  "globe.empty":
+    "الكرة الأرضية تنتظر إشاراتها الأولى — أضف مدينتك من لوحة تحكمك",
+  "globe.hintDesktop": "اسحب للاستكشاف · انقر نقطة",
+  "globe.hintMobile": "إصبع واحد: تدوير · إصبعان: إمالة",
+  "locate.notYet": "أنت لا تظهر بعد على الكرة الأرضية.",
+  "locate.cta": "أضف مدينتك من لوحة تحكمك ←",
+  "search.placeholder": "اسم، مهارة (مونتاج، خياطة...)",
+  "search.memberLabel": "البحث عن عضو",
+  "search.cityPlaceholder": "كل المدن",
+  "search.cityLabel": "التصفية حسب المدينة",
+  "search.submit": "بحث",
+  "search.reset": "إعادة تعيين",
+  "results.inCity": " في {city}",
+  "results.forQuery": " لـ «{query}»",
+  "results.empty": "لا أحد يطابق هذا البحث.",
+  "results.resetCta": "إعادة تعيين المرشّحات ←",
+  "member.offRadar": "خارج الرادار",
+  "member.contact": "مراسلة {name}",
+  "member.invested": "{amount} مستثمَرة",
+
+  // ---------- /classements ----------
+  "meta.rankingsTitle": "التصنيفات",
+  "rankings.title": "التصنيفات",
+  "rankings.subtitle": "المشاريع التي تُنعش المجتمع",
+  "rankings.empty": "لا شيء للتصنيف حاليًا.",
+  "rankings.active": "في حملة",
+  "rankings.funded": "مموَّلة ومنجَزة",
+  "brands.title": "العلامات التي نريد استبدالها",
+  "brands.body":
+    "الوزن المتراكم لكل النداءات التي تستهدف العلامة نفسها. ينشرها الأعضاء — وتستضيف GeniGain هذا التدفّق وليست مؤلفته.",
+  "brands.calls": {
+    zero: "لا نداءات",
+    one: "نداء واحد",
+    two: "نداءان",
+    few: "{count} نداءات",
+    many: "{count} نداءً",
+    other: "{count} نداء",
+  },
+  "brands.answersOnTheWay": {
+    zero: " · لا بدائل في الطريق",
+    one: " · بديل واحد في الطريق",
+    two: " · بديلان في الطريق",
+    few: " · {count} بدائل في الطريق",
+    many: " · {count} بديلًا في الطريق",
+    other: " · {count} بديل في الطريق",
+  },
+  "brands.nobodyYet": " · لا أحد يتصدى لها بعد",
+  "brands.upForGrabs": "متاحة للأخذ",
+  "brands.voices": "صوت",
+} satisfies Messages["communityPages"];
