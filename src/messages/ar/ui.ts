@@ -85,4 +85,15 @@ export const ui = {
 
   // Badge de réputation
   "reputationBadge.title": "السمعة: {reputation}",
+
+  // Traduction sur l'appareil (Translator du navigateur — aucun service tiers)
+  "translate.action": "ترجمة",
+  "translate.title": "ترجم هذا النص إلى لغتك، على جهازك",
+  "translate.working": "جارٍ الترجمة…",
+  "translate.downloading": "جارٍ تنزيل النموذج… {percent}٪",
+  "translate.showOriginal": "اعرض الأصل",
+  "translate.badge": "تُرجم على جهازك",
+  "translate.sameLanguage": "هذا النص بلغتك أصلًا.",
+  "translate.unavailablePair": "متصفحك لا يترجم هذه اللغة.",
+  "translate.failed": "لم تنجح الترجمة — أعد المحاولة.",
 } satisfies Messages["ui"];

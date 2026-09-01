@@ -7,6 +7,7 @@ import { MAX_PROOF_ATTEMPTS } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
 import { formatDate } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
+import { TranslateButton } from "@/components/translate-button";
 import { cn } from "@/lib/utils";
 
 type MilestoneWithProofs = Prisma.MilestoneGetPayload<{
@@ -156,7 +157,13 @@ export async function MilestoneTimeline({
                       )}
                     </div>
 
-                    <p className="whitespace-pre-line">{proof.content}</p>
+                    {/* La preuve est LE texte sur lequel on vote pour
+                        débloquer de l'argent : un contributeur qui ne la lit
+                        pas vote à l'aveugle. */}
+                    <div>
+                      <p className="whitespace-pre-line">{proof.content}</p>
+                      {!isOwner && <TranslateButton texte={proof.content} />}
+                    </div>
 
                     {proof.links.length > 0 && (
                       <ul className="space-y-1">

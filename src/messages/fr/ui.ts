@@ -68,4 +68,15 @@ export const ui = {
 
   // Badge de réputation
   "reputationBadge.title": "Réputation : {reputation}",
+
+  // Traduction sur l'appareil (Translator du navigateur — aucun service tiers)
+  "translate.action": "Traduire",
+  "translate.title": "Traduire ce texte dans ta langue, sur ton appareil",
+  "translate.working": "Traduction…",
+  "translate.downloading": "Téléchargement du modèle… {percent} %",
+  "translate.showOriginal": "Voir l'original",
+  "translate.badge": "Traduit sur ton appareil",
+  "translate.sameLanguage": "Ce texte est déjà dans ta langue.",
+  "translate.unavailablePair": "Ton navigateur ne sait pas traduire cette langue.",
+  "translate.failed": "La traduction n'a pas abouti — réessaie.",
 } as const satisfies Dict;

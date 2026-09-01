@@ -15,6 +15,7 @@ import { CallSupportButton } from "@/components/call-support-button";
 import { ProjectCard } from "@/components/project-card";
 import { ReportButton } from "@/components/report-button";
 import { ShareButton } from "@/components/share-button";
+import { TranslateButton } from "@/components/translate-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
@@ -169,6 +170,8 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
           <section>
             <h2 className="data-label mb-2">{t("motive.title")}</h2>
             <p className="whitespace-pre-line leading-relaxed text-foreground/90">{call.reason}</p>
+            {/* Traduire le motif de qui a lancé l'appel — pas le sien. */}
+            {!isAuthor && <TranslateButton texte={call.reason} />}
           </section>
 
           <section className="rounded-xl border border-secondary/20 bg-secondary/[0.06] p-5">
@@ -177,6 +180,7 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
               {t("wanted.title")}
             </h2>
             <p className="whitespace-pre-line leading-relaxed text-foreground/90">{call.wanted}</p>
+            {!isAuthor && <TranslateButton texte={call.wanted} />}
           </section>
 
           {call.sources.length > 0 && (
@@ -371,6 +375,9 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
                   <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
                     {comment.body}
                   </p>
+                  {/* Chaque message du fil a son bouton — sauf celui qu'on
+                      vient d'écrire soi-même. */}
+                  {comment.userId !== userId && <TranslateButton texte={comment.body} />}
                 </li>
               );
             })}

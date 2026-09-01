@@ -24,6 +24,7 @@ import { ReputationRing } from "@/components/reputation-ring";
 import { CategoryRoomCard } from "@/components/category-room-card";
 import { SkillTag } from "@/components/skill-tag";
 import { StatusBadge } from "@/components/status-badge";
+import { TranslateButton } from "@/components/translate-button";
 import { UserAvatar } from "@/components/user-avatar";
 import { categoryLabel } from "@/lib/i18n/labels";
 import { getRequestLocale, getT } from "@/lib/i18n/server";
@@ -185,7 +186,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             ))}
           </p>
         )}
-        <p className="max-w-3xl text-lg font-medium text-muted-foreground">{project.pitch}</p>
+        {/* Le pitch est du texte de membre : traduisible sur l'appareil du
+            lecteur. Le wrapper garde le bouton collé au pitch — en enfant
+            direct de `space-y-4`, il flotterait à mi-chemin de l'auteur. */}
+        <div>
+          <p className="max-w-3xl text-lg font-medium text-muted-foreground">{project.pitch}</p>
+          {!isOwner && <TranslateButton texte={project.pitch} />}
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           <Link href={`/u/${project.owner.id}`} className="group inline-flex items-center gap-2">
             <ReputationRing reputation={project.owner.reputation} admin={project.owner.role === "ADMIN"}>
@@ -274,6 +281,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             <p className="whitespace-pre-line leading-relaxed text-foreground/90">
               {project.description}
             </p>
+            {!isOwner && <TranslateButton texte={project.description} />}
             {project.neededSkills.length > 0 && (
               <div className="mt-6 space-y-2">
                 <p className="data-label">{t("detail.skillsLabel")}</p>
@@ -373,6 +381,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                     <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
                       {update.body}
                     </p>
+                    {/* Les actus sont écrites par le porteur : inutile de lui
+                        proposer de traduire sa propre langue. */}
+                    {!isOwner && <TranslateButton texte={update.body} />}
                   </li>
                 ))}
               </ol>
@@ -459,6 +470,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                         <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
                           {comment.body}
                         </p>
+                        {viewerId !== comment.userId && (
+                          <TranslateButton texte={comment.body} />
+                        )}
                       </div>
                     </li>
                   );

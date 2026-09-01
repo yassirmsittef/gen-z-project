@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CheckCircle2, Clock, Handshake, XCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
+import { TranslateButton } from "@/components/translate-button";
 import { formatDate } from "@/lib/format";
 import { compensationLabel } from "@/lib/i18n/labels";
 import { getRequestLocale, getT } from "@/lib/i18n/server";
@@ -115,9 +116,12 @@ export default async function PartnershipTrackingPage({
                     )}
                   </p>
                   {request.ownerReply && (
-                    <p className="mt-2 whitespace-pre-line leading-relaxed text-foreground/90">
-                      {request.ownerReply}
-                    </p>
+                    <>
+                      <p className="mt-2 whitespace-pre-line leading-relaxed text-foreground/90">
+                        {request.ownerReply}
+                      </p>
+                      <TranslateButton texte={request.ownerReply} />
+                    </>
                   )}
                 </div>
               </div>

@@ -15,6 +15,7 @@ import { GroupMessageActions } from "@/components/group-message-actions";
 import { GroupMessageForm } from "@/components/group-message-form";
 import { ReportButton } from "@/components/report-button";
 import { ThreadAutoScroll } from "@/components/thread-autoscroll";
+import { TranslateButton } from "@/components/translate-button";
 import { UserAvatar } from "@/components/user-avatar";
 import { getConversations } from "@/lib/chat";
 import { getGroupBySlug, getGroupThread, getMyGroups, markGroupRead } from "@/lib/chat-groups";
@@ -142,6 +143,11 @@ export default async function GroupThreadPage({
                 <p dir="auto" className="text-sm text-muted-foreground ltr:text-left rtl:text-right">
                   {group.purpose}
                 </p>
+                {/* La raison d'être d'un salon de MEMBRE est du texte libre :
+                    c'est la première phrase qu'un lecteur d'une autre langue
+                    rencontre. Celle d'un salon de LANGUE reste dans sa langue
+                    — c'est son identité, pas un message. */}
+                {!group.official && <TranslateButton texte={group.purpose} />}
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t("groupThread.animatedBy")}{" "}
                   <Link href={`/u/${group.owner.id}`} className="hover:text-foreground">
@@ -261,6 +267,10 @@ export default async function GroupThreadPage({
                           <p dir="auto" className="whitespace-pre-line break-words">
                             {message.body}
                           </p>
+                          {/* Traduire ne se propose que sous le message d'un
+                              AUTRE : on ne traduit pas ce qu'on vient d'écrire
+                              soi-même. */}
+                          {!mine && <TranslateButton texte={message.body} />}
                           <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                             <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                               {formatDate(message.createdAt, locale)}

@@ -21,6 +21,7 @@ import { ReportButton } from "@/components/report-button";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
 import { SkillTag } from "@/components/skill-tag";
+import { TranslateButton } from "@/components/translate-button";
 import { UserAvatar } from "@/components/user-avatar";
 import { formatDate } from "@/lib/format";
 import { getRequestLocale, getT } from "@/lib/i18n/server";
@@ -118,7 +119,11 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
             <span>{t("profile.memberSince", { date: formatDate(user.createdAt, locale) })}</span>
           </div>
           {user.bio && (
-            <p className="max-w-xl text-sm leading-relaxed text-foreground/85">{user.bio}</p>
+            <>
+              <p className="max-w-xl text-sm leading-relaxed text-foreground/85">{user.bio}</p>
+              {/* Traduire sa propre bio n'aurait aucun sens : bouton réservé aux autres. */}
+              {session?.user?.id !== user.id && <TranslateButton texte={user.bio} />}
+            </>
           )}
           {user.links.length > 0 && (
             <div className="flex flex-wrap gap-x-4 gap-y-1 pt-0.5">

@@ -71,4 +71,15 @@ export const ui = {
 
   // Distintivo de reputação
   "reputationBadge.title": "Reputação: {reputation}",
+
+  // Traduction sur l'appareil (Translator du navigateur — aucun service tiers)
+  "translate.action": "Traduzir",
+  "translate.title": "Traduz este texto para a tua língua, no teu dispositivo",
+  "translate.working": "A traduzir…",
+  "translate.downloading": "A descarregar o modelo… {percent} %",
+  "translate.showOriginal": "Ver o original",
+  "translate.badge": "Traduzido no teu dispositivo",
+  "translate.sameLanguage": "Este texto já está na tua língua.",
+  "translate.unavailablePair": "O teu navegador não sabe traduzir esta língua.",
+  "translate.failed": "A tradução não resultou — tenta de novo.",
 } satisfies Messages["ui"];

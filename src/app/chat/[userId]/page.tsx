@@ -10,6 +10,7 @@ import { MessageForm } from "@/components/message-form";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { SkillTag } from "@/components/skill-tag";
 import { ThreadAutoScroll } from "@/components/thread-autoscroll";
+import { TranslateButton } from "@/components/translate-button";
 import { UserAvatar } from "@/components/user-avatar";
 import { getConversations, getThread } from "@/lib/chat";
 import { getMyGroups } from "@/lib/chat-groups";
@@ -124,6 +125,9 @@ export default async function ChatThreadPage({
                       )}
                     >
                       <p className="whitespace-pre-line break-words">{message.body}</p>
+                      {/* Traduire ne se propose que sous le message reçu : on
+                          ne traduit pas ce qu'on vient d'écrire soi-même. */}
+                      {!mine && <TranslateButton texte={message.body} />}
                       <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                         {formatDate(message.createdAt, locale)}
                       </p>

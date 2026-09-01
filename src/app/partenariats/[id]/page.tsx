@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DeepAnalysis } from "@/components/deep-analysis";
 import { PartnershipAnalysisPanel } from "@/components/partnership-analysis-panel";
 import { PartnershipResponseForm } from "@/components/partnership-response-form";
+import { TranslateButton } from "@/components/translate-button";
 import { aiEnabled, getOrCreateAnalysis } from "@/lib/partnership-ai";
 import { formatDate } from "@/lib/format";
 import { compensationLabel, partnershipStatusLabel } from "@/lib/i18n/labels";
@@ -124,6 +125,7 @@ export default async function PartnershipDetailPage({
               <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
                 {request.message}
               </p>
+              <TranslateButton texte={request.message} />
             </div>
 
             {request.deliverables && (
@@ -132,6 +134,7 @@ export default async function PartnershipDetailPage({
                 <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
                   {request.deliverables}
                 </p>
+                <TranslateButton texte={request.deliverables} />
               </div>
             )}
           </CardContent>

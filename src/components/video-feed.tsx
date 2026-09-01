@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Megaphone, Pause, Play, Target, Volume2, VolumeX } from "lucide-react";
 import { useT } from "@/components/i18n-provider";
 import { ReportButton } from "@/components/report-button";
+import { TranslateButton } from "@/components/translate-button";
 import { UserAvatar } from "@/components/user-avatar";
 import { removeVideoAction } from "@/actions/call-videos";
 import { Button } from "@/components/ui/button";
@@ -259,9 +260,19 @@ export function VideoFeed({
                 </span>
               </Link>
 
-              <p className="max-w-2xl text-sm leading-relaxed text-foreground/95 sm:text-base">
-                {video.caption}
-              </p>
+              {/* La légende est le seul texte écrit par le membre sur cet
+                  écran : elle porte le bouton, dans son propre conteneur pour
+                  ne pas hériter de l'espacement de la pile. */}
+              {/* Le calque vit dans un article `overflow-hidden` haut d'un
+                  écran : une traduction longue grandirait vers le haut et
+                  serait coupée sans recours. On la borne et on la rend
+                  défilable — mieux vaut faire défiler que perdre du texte. */}
+              <div className="max-h-[38vh] max-w-2xl overflow-y-auto overscroll-contain">
+                <p className="text-sm leading-relaxed text-foreground/95 sm:text-base">
+                  {video.caption}
+                </p>
+                <TranslateButton texte={video.caption} />
+              </div>
 
               <div className="flex flex-wrap items-center gap-3">
                 <Link

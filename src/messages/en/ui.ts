@@ -71,4 +71,15 @@ export const ui = {
 
   // Reputation badge
   "reputationBadge.title": "Reputation: {reputation}",
+
+  // Traduction sur l'appareil (Translator du navigateur — aucun service tiers)
+  "translate.action": "Translate",
+  "translate.title": "Translate this text into your language, on your device",
+  "translate.working": "Translating…",
+  "translate.downloading": "Downloading the model… {percent}%",
+  "translate.showOriginal": "Show original",
+  "translate.badge": "Translated on your device",
+  "translate.sameLanguage": "This text is already in your language.",
+  "translate.unavailablePair": "Your browser can't translate this language.",
+  "translate.failed": "The translation didn't go through — try again.",
 } satisfies Messages["ui"];
