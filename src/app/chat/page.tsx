@@ -38,7 +38,7 @@ export default async function ChatPage() {
 
       <div className="grid items-start gap-6 lg:grid-cols-[320px_1fr]">
         <ChatSidebar conversations={conversations} groups={groups} />
-        <div className="glass hidden flex-col items-center justify-center gap-3 rounded-2xl rounded-tr-sm p-12 text-center lg:flex">
+        <div className="glass hidden flex-col items-center justify-center gap-3 rounded-2xl rounded-se-sm p-12 text-center lg:flex">
           <MessagesSquare className="h-10 w-10 text-muted-foreground" aria-hidden />
           <p className="max-w-sm text-sm text-muted-foreground">
             {t("chatIndex.pickConversation")}

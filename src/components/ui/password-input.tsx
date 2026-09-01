@@ -27,14 +27,14 @@ export const PasswordInput = React.forwardRef<
         ref={ref}
         {...props}
         type={visible ? "text" : "password"}
-        className={cn("pr-11", className)}
+        className={cn("pe-11", className)}
       />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? t("passwordInput.hide") : t("passwordInput.show")}
         aria-pressed={visible}
-        className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-muted-foreground transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="absolute inset-y-0 end-0 flex w-11 items-center justify-center rounded-e-xl text-muted-foreground transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {visible ? (
           <EyeOff className="h-4 w-4" aria-hidden />

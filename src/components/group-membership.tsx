@@ -30,7 +30,7 @@ export function JoinGroupButton({
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="slug" value={slug} />
       <Button type="submit" size={size} disabled={pending || full}>
-        <LogIn aria-hidden />
+        <LogIn className="rtl:-scale-x-100" aria-hidden />
         {full
           ? t("joinGroupButton.full")
           : pending

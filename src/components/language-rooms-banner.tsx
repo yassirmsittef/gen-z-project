@@ -18,7 +18,7 @@ export function LanguageRoomsBanner({ missing }: { missing: number }) {
   const [state, formAction, pending] = useActionState(openLanguageRoomsAction, undefined);
 
   return (
-    <form action={formAction} className="glass rounded-2xl rounded-tr-sm p-5">
+    <form action={formAction} className="glass rounded-2xl rounded-se-sm p-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-start gap-3">
           <Languages className="mt-0.5 h-5 w-5 shrink-0 text-secondary" aria-hidden />

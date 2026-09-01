@@ -37,13 +37,13 @@ export async function CategoryRoomCard({
           <>
             <div className="flex items-start gap-3">
               <span
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl rounded-tr-sm border border-white/[0.12] bg-card/80 text-muted-foreground"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl rounded-se-sm border border-white/[0.12] bg-card/80 text-muted-foreground"
                 aria-hidden
               >
                 <Hash className="h-4 w-4" />
               </span>
               <div className="min-w-0">
-                <p dir="auto" className="text-left font-semibold">
+                <p dir="auto" className="text-start font-semibold">
                   {room.name}
                 </p>
                 <p className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
@@ -52,7 +52,7 @@ export async function CategoryRoomCard({
                 </p>
               </div>
             </div>
-            <p dir="auto" className="text-left text-sm text-muted-foreground">
+            <p dir="auto" className="text-start text-sm text-muted-foreground">
               {room.purpose}
             </p>
             {room.joined ? (

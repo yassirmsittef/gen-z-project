@@ -21,7 +21,7 @@ export function NotificationPrefs({ muted }: { muted: string[] }) {
       <summary className="flex cursor-pointer list-none items-center gap-2.5 p-4 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground transition-colors duration-200 hover:text-foreground [&::-webkit-details-marker]:hidden">
         <Settings2 className="h-4 w-4 text-primary" aria-hidden />
         {t("notificationPrefs.summary")}
-        <ChevronDown className="ml-auto h-4 w-4" aria-hidden />
+        <ChevronDown className="ms-auto h-4 w-4" aria-hidden />
       </summary>
       <form action={formAction} className="space-y-4 border-t border-white/[0.06] p-4">
         <div className="grid gap-x-8 gap-y-2.5 sm:grid-cols-2">

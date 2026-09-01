@@ -149,7 +149,7 @@ export function VideoFeed({
   return (
     <div className="relative">
       {/* Réglages persistants du fil, hors de la pile qui défile. */}
-      <div className="pointer-events-none absolute right-4 top-4 z-30 flex flex-col gap-2">
+      <div className="pointer-events-none absolute end-4 top-4 z-30 flex flex-col gap-2">
         <Button
           type="button"
           size="icon"
@@ -286,7 +286,7 @@ export function VideoFeed({
                   {CATEGORY_LABELS[video.call.category as keyof typeof CATEGORY_LABELS]}
                 </span>
 
-                <span className="ml-auto flex items-center gap-1">
+                <span className="ms-auto flex items-center gap-1">
                   <ReportButton targetType="CALL_VIDEO" targetId={video.id} iconOnly />
                   {video.peutRetirer && (
                     <form action={removeVideoAction}>

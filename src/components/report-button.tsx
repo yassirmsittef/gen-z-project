@@ -79,7 +79,7 @@ export function ReportButton({
               role="dialog"
               aria-modal="true"
               aria-label={t("reportButton.dialogLabel")}
-              className="glass mx-auto mt-[15vh] w-full max-w-md rounded-2xl rounded-tr-sm border border-white/[0.12] p-5 shadow-glow"
+              className="glass mx-auto mt-[15vh] w-full max-w-md rounded-2xl rounded-se-sm border border-white/[0.12] p-5 shadow-glow"
               style={{ overscrollBehavior: "contain" }}
               onClick={(event) => event.stopPropagation()}
             >

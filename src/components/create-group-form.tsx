@@ -35,7 +35,7 @@ export function CreateGroupForm({ defaultCategory }: { defaultCategory?: Project
   }
 
   return (
-    <form action={formAction} className="glass rounded-2xl rounded-tr-sm p-5">
+    <form action={formAction} className="glass rounded-2xl rounded-se-sm p-5">
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
           <h2 className="font-display text-lg font-semibold">{t("createGroupForm.heading")}</h2>

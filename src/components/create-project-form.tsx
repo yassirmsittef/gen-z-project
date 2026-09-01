@@ -73,7 +73,7 @@ export function CreateProjectForm({
       <input type="hidden" name="milestones" value={JSON.stringify(milestones)} />
 
       {answersCall && (
-        <section className="rounded-2xl rounded-tr-sm border border-secondary/25 bg-secondary/[0.07] p-5">
+        <section className="rounded-2xl rounded-se-sm border border-secondary/25 bg-secondary/[0.07] p-5">
           <input type="hidden" name="callSlug" value={answersCall.slug} />
           <p className="data-label flex items-center gap-1.5">
             <Swords aria-hidden className="h-3 w-3" />

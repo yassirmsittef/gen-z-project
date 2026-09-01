@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { IBM_Plex_Sans_Arabic, Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { stripeLive } from "@/lib/stripe-mode";
@@ -30,6 +30,22 @@ const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains",
   display: "swap",
+});
+
+/**
+ * L'arabe : aucune des trois polices latines n'en a les glyphes — sans
+ * celle-ci, le navigateur retombe sur une police système au hasard, et les
+ * `data-label` en JetBrains Mono n'affichaient rien de tenu.
+ * IBM Plex Sans Arabic est un grotesque géométrique qui s'accorde à Space
+ * Grotesk et Inter. `preload: false` : les six autres langues ne la
+ * téléchargent jamais.
+ */
+const plexArabic = IBM_Plex_Sans_Arabic({
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-arabic",
+  display: "swap",
+  preload: false,
 });
 
 /** URL canonique du site (aperçus de partage, sitemap, robots). */
@@ -72,7 +88,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html
       lang={locale}
       dir={dirOf(locale)}
-      className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrains.variable}`}
+      className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrains.variable} ${plexArabic.variable}`}
     >
       <body className="flex min-h-screen flex-col font-sans antialiased">
         <I18nProvider locale={locale} messages={clientMessages(locale)}>

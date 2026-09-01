@@ -94,14 +94,19 @@ export default async function GroupThreadPage({
           href="/chat/groupes"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
+          <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
           {t("groupThread.allGroups")}
         </Link>
-        {/* dir="auto" ordonne correctement un nom arabe ; text-left le garde
-            ancré à la mise en page (sinon il part à l'autre bout de l'écran,
-            loin de son sous-titre). Même parti pris partout où un nom de
-            groupe occupe un bloc pleine largeur. */}
-        <h1 dir="auto" className="text-left text-4xl font-semibold tracking-tight">
+        {/* dir="auto" ordonne correctement un nom arabe ; l'alignement, lui,
+            suit la PAGE et non le nom — d'où `ltr:text-left rtl:text-right`
+            plutôt que `text-start`, qui se résoudrait sur la direction
+            détectée du nom et enverrait un titre arabe à l'autre bout d'une
+            page française, loin de son sous-titre. Même parti pris partout où
+            un nom de groupe occupe un bloc pleine largeur. */}
+        <h1
+          dir="auto"
+          className="text-4xl font-semibold tracking-tight ltr:text-left rtl:text-right"
+        >
           {group.name}
         </h1>
         <p className="data-label">
@@ -121,20 +126,20 @@ export default async function GroupThreadPage({
           />
         </div>
 
-        <div className="glass flex min-h-[60vh] min-w-0 flex-col rounded-2xl rounded-tr-sm">
+        <div className="glass flex min-h-[60vh] min-w-0 flex-col rounded-2xl rounded-se-sm">
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/[0.06] p-4">
             <div className="flex min-w-0 items-start gap-3">
               <span
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl rounded-tr-sm border border-white/[0.12] bg-card/80 text-muted-foreground"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl rounded-se-sm border border-white/[0.12] bg-card/80 text-muted-foreground"
                 aria-hidden
               >
                 <Hash className="h-4 w-4" />
               </span>
               <div className="min-w-0">
-                <p dir="auto" className="text-left font-semibold">
+                <p dir="auto" className="font-semibold ltr:text-left rtl:text-right">
                   {group.name}
                 </p>
-                <p dir="auto" className="text-left text-sm text-muted-foreground">
+                <p dir="auto" className="text-sm text-muted-foreground ltr:text-left rtl:text-right">
                   {group.purpose}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -232,8 +237,8 @@ export default async function GroupThreadPage({
                           className={cn(
                             "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm",
                             mine
-                              ? "rounded-br-sm border border-primary/30 bg-primary/10"
-                              : "rounded-bl-sm border border-white/[0.08] bg-card/80"
+                              ? "rounded-ee-sm border border-primary/30 bg-primary/10"
+                              : "rounded-es-sm border border-white/[0.08] bg-card/80"
                           )}
                         >
                           {!mine && (

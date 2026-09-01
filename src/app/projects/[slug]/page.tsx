@@ -254,7 +254,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       </div>
 
       {project.coverUrl && (
-        <div className="mb-8 overflow-hidden rounded-2xl rounded-tr-sm border border-white/[0.08]">
+        <div className="mb-8 overflow-hidden rounded-2xl rounded-se-sm border border-white/[0.08]">
           {/* Domaine libre (URL collée par le porteur) : <img> natif, pas next/image. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -316,7 +316,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             <h2 className="mb-1 text-2xl font-semibold tracking-tight">
               {t("detail.updatesTitle")}
               {project.updates.length > 0 && (
-                <span className="ml-2 font-mono text-sm font-normal text-muted-foreground">
+                <span className="ms-2 font-mono text-sm font-normal text-muted-foreground">
                   {project.updates.length}
                 </span>
               )}
@@ -342,11 +342,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                 </p>
               )
             ) : (
-              <ol className="relative space-y-6 border-l border-white/[0.08] pl-6">
+              <ol className="relative space-y-6 border-s border-white/[0.08] ps-6">
                 {project.updates.map((update) => (
                   <li key={update.id} className="relative">
                     <span
-                      className="absolute -left-[30px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent-gradient shadow-glow"
+                      className="absolute -start-[30px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent-gradient shadow-glow"
                       aria-hidden
                     />
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -384,7 +384,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             <h2 className="mb-1 text-2xl font-semibold tracking-tight">
               {t("detail.commentsTitle")}
               {project.comments.length > 0 && (
-                <span className="ml-2 font-mono text-sm font-normal text-muted-foreground">
+                <span className="ms-2 font-mono text-sm font-normal text-muted-foreground">
                   {project.comments.length}
                 </span>
               )}
@@ -419,7 +419,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                       <Link href={`/u/${comment.user.id}`} className="shrink-0">
                         <UserAvatar name={comment.user.name} avatarUrl={comment.user.avatarUrl} className="h-9 w-9" />
                       </Link>
-                      <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm border border-white/[0.08] bg-card/60 p-3.5">
+                      <div className="min-w-0 flex-1 rounded-2xl rounded-ss-sm border border-white/[0.08] bg-card/60 p-3.5">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                           <Link
                             href={`/u/${comment.user.id}`}
@@ -431,7 +431,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                           <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                             {formatDate(comment.createdAt, locale)}
                           </span>
-                          <span className="ml-auto flex items-center gap-1.5">
+                          <span className="ms-auto flex items-center gap-1.5">
                             {viewerId && viewerId !== comment.userId && (
                               <ReportButton
                                 targetType="COMMENT"
@@ -502,7 +502,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
               {(project.status === "FUNDED" || project.status === "COMPLETED") && (
                 <p className="rounded-xl border border-white/[0.08] bg-muted/50 p-3 text-sm">
-                  <LockOpen className="mr-1 inline h-4 w-4 text-success" aria-hidden />
+                  <LockOpen className="me-1 inline h-4 w-4 text-success" aria-hidden />
                   <span className="font-semibold">
                     {formatMoney(project.released, project.currency, locale)}
                   </span>{" "}
@@ -561,7 +561,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                     <Link href={`/u/${contributor.id}`} className="truncate font-bold hover:text-primary">
                       {contributor.name}
                     </Link>
-                    <span className="ml-auto font-bold text-muted-foreground">
+                    <span className="ms-auto font-bold text-muted-foreground">
                       {formatMoney(contributor.total, project.currency, locale)}
                     </span>
                   </div>
@@ -579,7 +579,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                     <span className="truncate font-bold text-muted-foreground">
                       {t("detail.anonymous")}
                     </span>
-                    <span className="ml-auto font-bold text-muted-foreground">
+                    <span className="ms-auto font-bold text-muted-foreground">
                       {formatMoney(anonymousTotal, project.currency, locale)}
                     </span>
                   </div>

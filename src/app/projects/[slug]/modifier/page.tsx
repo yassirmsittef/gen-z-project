@@ -55,9 +55,9 @@ export default async function EditProjectPage({
   return (
     <div className="container max-w-3xl space-y-8 py-10">
       <div className="space-y-2">
-        <Button variant="ghost" size="sm" asChild className="-ml-3 text-muted-foreground">
+        <Button variant="ghost" size="sm" asChild className="-ms-3 text-muted-foreground">
           <Link href={`/projects/${slug}`}>
-            <ArrowLeft aria-hidden />
+            <ArrowLeft aria-hidden className="rtl:-scale-x-100" />
             {t("edit.back")}
           </Link>
         </Button>
@@ -71,7 +71,7 @@ export default async function EditProjectPage({
       </div>
 
       {/* Cadre financier figé : c'est l'engagement sur lequel on contribue. */}
-      <section className="glass rounded-2xl rounded-tr-sm p-5">
+      <section className="glass rounded-2xl rounded-se-sm p-5">
         <p className="data-label flex items-center gap-2">
           <Lock className="h-3.5 w-3.5" aria-hidden />
           {t("edit.frozenLabel")}

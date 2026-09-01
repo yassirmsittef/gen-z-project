@@ -27,7 +27,7 @@ export default function CguPage() {
       </p>
 
       {!stripeLive && (
-        <div className="glass mt-6 rounded-2xl rounded-tr-sm p-4">
+        <div className="glass mt-6 rounded-2xl rounded-se-sm p-4">
           <p className="mt-0 text-sm leading-relaxed text-muted-foreground">
             <strong>Phase de test.</strong> GeniGain fonctionne actuellement avec des paiements
             Stripe en <strong>mode test</strong> : aucune carte n’est réellement débitée. Les

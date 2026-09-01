@@ -35,7 +35,7 @@ export function MemberActions({
       <input type="hidden" name="targetId" value={targetId} />
 
       {state?.error && (
-        <p role="alert" className="w-full text-right text-sm font-medium text-destructive">
+        <p role="alert" className="w-full text-end text-sm font-medium text-destructive">
           {state.error}
         </p>
       )}

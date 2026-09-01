@@ -78,7 +78,7 @@ function RankedList({
                 {project.owner.name}
               </span>
             </div>
-            <div className="shrink-0 text-right">
+            <div className="shrink-0 text-end">
               <p className="font-mono text-sm">
                 {formatMoney(project.raised, project.currency, locale)}
               </p>
@@ -189,7 +189,7 @@ export default async function RankingsPage() {
                         {t("brands.upForGrabs")}
                       </span>
                     )}
-                    <span className="shrink-0 text-right">
+                    <span className="shrink-0 text-end">
                       <span className="block font-mono text-lg font-semibold tabular-nums text-secondary">
                         {brand.voices}
                       </span>

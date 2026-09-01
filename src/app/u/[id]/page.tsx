@@ -148,7 +148,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
           )}
         </div>
         {session?.user?.id === user.id && (
-          <div className="ml-auto">
+          <div className="ms-auto">
             <Button variant="outline" size="sm" asChild>
               <Link href="/dashboard#profil">
                 <PenLine aria-hidden />
@@ -158,7 +158,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
           </div>
         )}
         {session?.user?.id && session.user.id !== user.id && (
-          <div className="ml-auto flex items-center gap-1.5">
+          <div className="ms-auto flex items-center gap-1.5">
             <Button variant="outline" size="sm" asChild>
               <Link href={`/chat/${user.id}`}>
                 <MessagesSquare aria-hidden />
@@ -233,7 +233,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
                   </div>
                   <span
                     className={cn(
-                      "ml-auto shrink-0 font-bold",
+                      "ms-auto shrink-0 font-bold",
                       event.delta >= 0 ? "text-success" : "text-destructive"
                     )}
                   >

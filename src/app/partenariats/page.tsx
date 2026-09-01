@@ -57,7 +57,7 @@ export default async function PartnershipsInboxPage() {
             <p className="mt-2">{t("partnershipsInbox.emptyHint")}</p>
           </div>
         ) : (
-          <ul data-spotlight className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-tr-sm">
+          <ul data-spotlight className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-se-sm">
             {requests.map((request) => (
               <li key={request.id}>
                 <Link
@@ -68,7 +68,7 @@ export default async function PartnershipsInboxPage() {
                     <p className="truncate font-semibold">
                       {request.brandName}
                       {request.budget != null && (
-                        <span className="ml-2 font-mono text-sm text-primary">
+                        <span className="ms-2 font-mono text-sm text-primary">
                           {t("partnership.budgetUsd", { amount: request.budget })}
                         </span>
                       )}

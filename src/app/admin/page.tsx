@@ -181,12 +181,12 @@ export default async function AdminCockpitPage() {
             className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors duration-200 hover:border-white/20 hover:text-foreground"
           >
             {t("cockpit.moderationQueue")}
-            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+            <ArrowUpRight className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
           </Link>
         </header>
 
         {/* Collecte par jour — la seule visualisation, tout le reste en tuiles. */}
-        <section className="glass rounded-2xl rounded-tr-sm p-5">
+        <section className="glass rounded-2xl rounded-se-sm p-5">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <p className="text-xs text-muted-foreground">
               {t("chart.caption", { days: DAYS })}
@@ -416,7 +416,7 @@ function Tile({
   return (
     <div
       id={id}
-      className={`glass h-full scroll-mt-24 rounded-2xl rounded-tr-sm p-4 ${
+      className={`glass h-full scroll-mt-24 rounded-2xl rounded-se-sm p-4 ${
         tone === "amber" ? "border-amber-400/25" : tone === "red" ? "border-destructive/30" : ""
       } ${interactive ? "transition duration-200 ease-out group-hover:-translate-y-1 group-hover:border-white/20" : ""}`}
     >

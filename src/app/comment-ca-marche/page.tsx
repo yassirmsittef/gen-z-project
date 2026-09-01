@@ -104,12 +104,12 @@ export default async function CommentCaMarchePage() {
         </p>
 
         {/* Trajectoire à nœuds : le parcours entier, du premier soutien au versement. */}
-        <ol className="relative mt-12 space-y-10 border-l border-white/10 pl-8 [border-image:linear-gradient(to_bottom,#5EEAD4,#38BDF8,transparent)_1]">
+        <ol className="relative mt-12 space-y-10 border-s border-white/10 ps-8 [border-image:linear-gradient(to_bottom,#5EEAD4,#38BDF8,transparent)_1]">
           {stages.map((stage, i) => (
             <li key={stage.title} className="relative">
               <span
                 aria-hidden
-                className="absolute -left-[45px] flex h-7 w-7 items-center justify-center rounded-full border border-primary/40 bg-card font-mono text-xs font-bold text-primary shadow-glow"
+                className="absolute -start-[45px] flex h-7 w-7 items-center justify-center rounded-full border border-primary/40 bg-card font-mono text-xs font-bold text-primary shadow-glow"
               >
                 {i + 1}
               </span>
@@ -134,7 +134,7 @@ export default async function CommentCaMarchePage() {
             <details
               key={item.q}
               id={item.anchor}
-              className="glass group scroll-mt-24 rounded-2xl rounded-tr-sm px-5 py-4"
+              className="glass group scroll-mt-24 rounded-2xl rounded-se-sm px-5 py-4"
             >
               <summary className="cursor-pointer list-none text-sm font-semibold marker:hidden [&::-webkit-details-marker]:hidden">
                 <span className="flex items-center justify-between gap-3">

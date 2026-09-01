@@ -26,7 +26,7 @@ export async function CallCard({
   const answers = call._count.answers;
 
   return (
-    <Card className="flex h-full flex-col rounded-tr-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:border-secondary/25 hover:shadow-glow-violet">
+    <Card className="flex h-full flex-col rounded-se-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:border-secondary/25 hover:shadow-glow-violet">
       <CardHeader className="space-y-3">
         <div className="flex items-center gap-2">
           <Badge variant="outline">{CATEGORY_LABELS[call.category]}</Badge>

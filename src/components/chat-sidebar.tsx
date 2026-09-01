@@ -71,18 +71,18 @@ export function ChatSidebar({
           >
             {t(labelKey)}
             {key === "prive" && conversations.length > 0 && (
-              <span className="ml-1.5 font-mono text-[11px] tabular-nums opacity-60">
+              <span className="ms-1.5 font-mono text-[11px] tabular-nums opacity-60">
                 {conversations.length}
               </span>
             )}
             {key === "groupes" && groups.length > 0 && (
-              <span className="ml-1.5 font-mono text-[11px] tabular-nums opacity-60">
+              <span className="ms-1.5 font-mono text-[11px] tabular-nums opacity-60">
                 {groups.length}
               </span>
             )}
             {key === "groupes" && unreadGroups > 0 && tab !== "groupes" && (
               <span
-                className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-accent-gradient align-middle shadow-glow"
+                className="ms-1 inline-block h-1.5 w-1.5 rounded-full bg-accent-gradient align-middle shadow-glow"
                 aria-label={t("chatSidebar.unreadGroupsDot", { count: unreadGroups })}
               />
             )}
@@ -149,7 +149,7 @@ export function ChatSidebar({
                     )}
                   >
                     <span
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl rounded-tr-sm border border-white/[0.12] bg-card/80 text-muted-foreground"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl rounded-se-sm border border-white/[0.12] bg-card/80 text-muted-foreground"
                       aria-hidden
                     >
                       <Hash className="h-4 w-4" />

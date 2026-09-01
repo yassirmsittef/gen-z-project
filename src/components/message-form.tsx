@@ -31,7 +31,7 @@ export function MessageForm({ recipientId }: { recipientId: string }) {
           className="flex-1"
         />
         <Button type="submit" size="icon" disabled={pending} title={t("messageForm.send")}>
-          <SendHorizontal aria-hidden />
+          <SendHorizontal className="rtl:-scale-x-100" aria-hidden />
           <span className="sr-only">{t("messageForm.send")}</span>
         </Button>
       </div>

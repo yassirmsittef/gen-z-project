@@ -60,7 +60,7 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
   if (call.removedAt) {
     return (
       <div className="container max-w-3xl py-16">
-        <div className="glass rounded-2xl rounded-tr-sm p-8 text-center">
+        <div className="glass rounded-2xl rounded-se-sm p-8 text-center">
           <h1 className="font-display text-2xl font-semibold">{t("removed.title")}</h1>
           <p className="mt-2 text-muted-foreground">
             {call.removedById
@@ -106,11 +106,11 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
         href="/appels"
         className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
       >
-        <ArrowLeft aria-hidden className="h-4 w-4" />
+        <ArrowLeft aria-hidden className="h-4 w-4 rtl:-scale-x-100" />
         {t("back.toFeed")}
       </Link>
 
-      <article className="glass rounded-2xl rounded-tr-sm p-6 sm:p-8">
+      <article className="glass rounded-2xl rounded-se-sm p-6 sm:p-8">
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <Badge variant="outline">{categoryLabel(locale, call.category)}</Badge>
           {call.answers.length > 0 ? (
@@ -256,7 +256,7 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
               <div key={answer.id} className="space-y-2">
                 <ProjectCard project={answer.project} />
                 {(answer.project.ownerId === userId || isAuthor || admin) && (
-                  <form action={withdrawAnswerAction} className="text-right">
+                  <form action={withdrawAnswerAction} className="text-end">
                     <input type="hidden" name="callId" value={call.id} />
                     <input type="hidden" name="projectId" value={answer.projectId} />
                     <Button type="submit" variant="ghost" size="sm">
@@ -276,7 +276,7 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
         <h2 className="font-display text-2xl font-semibold tracking-tight">
           {t("videos.title")}
           {nbVideos > 0 && (
-            <span className="ml-2 font-mono text-base font-normal text-muted-foreground">
+            <span className="ms-2 font-mono text-base font-normal text-muted-foreground">
               {nbVideos}
             </span>
           )}
@@ -312,7 +312,7 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
         <h2 className="font-display text-2xl font-semibold tracking-tight">
           {t("discussion.title")}
           {call._count.comments > 0 && (
-            <span className="ml-2 font-mono text-base font-normal text-muted-foreground">
+            <span className="ms-2 font-mono text-base font-normal text-muted-foreground">
               {call._count.comments}
             </span>
           )}
@@ -344,7 +344,7 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
                     <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                       {formatRelative(comment.createdAt, locale)}
                     </span>
-                    <span className="ml-auto flex shrink-0 items-center gap-1">
+                    <span className="ms-auto flex shrink-0 items-center gap-1">
                       {userId && comment.userId !== userId && (
                         <ReportButton
                           targetType="CALL_COMMENT"

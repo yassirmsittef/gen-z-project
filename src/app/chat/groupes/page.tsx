@@ -166,11 +166,11 @@ export default async function GroupsDirectoryPage({
               {groups.map((group) => (
                 <li
                   key={group.id}
-                  className="glass flex flex-col gap-3 rounded-2xl rounded-tr-sm p-5"
+                  className="glass flex flex-col gap-3 rounded-2xl rounded-se-sm p-5"
                 >
                   <div className="flex items-start gap-3">
                     <span
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl rounded-tr-sm border border-white/[0.12] bg-card/80 text-muted-foreground"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl rounded-se-sm border border-white/[0.12] bg-card/80 text-muted-foreground"
                       aria-hidden
                     >
                       <Hash className="h-4 w-4" />
@@ -179,7 +179,7 @@ export default async function GroupsDirectoryPage({
                       <Link
                         href={`/chat/groupes/${group.slug}`}
                         dir="auto"
-                        className="block truncate text-left font-display text-lg font-semibold transition-colors duration-200 hover:text-primary"
+                        className="block truncate font-display text-lg font-semibold transition-colors duration-200 hover:text-primary ltr:text-left rtl:text-right"
                       >
                         {group.name}
                       </Link>
@@ -193,7 +193,7 @@ export default async function GroupsDirectoryPage({
                     </div>
                   </div>
 
-                  <p dir="auto" className="line-clamp-2 text-left text-sm text-muted-foreground">
+                  <p dir="auto" className="line-clamp-2 text-sm text-muted-foreground ltr:text-left rtl:text-right">
                     {group.purpose}
                   </p>
 

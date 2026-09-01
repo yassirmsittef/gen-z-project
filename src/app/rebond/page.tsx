@@ -56,7 +56,7 @@ export default async function ReboundPage({
   return (
     <div className="container py-16">
       <div className="mb-12 flex flex-col items-center gap-5 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-2xl rounded-br-sm border border-success/30 bg-success/15 shadow-glow-teal">
+        <span className="flex h-16 w-16 items-center justify-center rounded-2xl rounded-ee-sm border border-success/30 bg-success/15 shadow-glow-teal">
           <Sparkles className="h-8 w-8 text-success" aria-hidden />
         </span>
         <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">

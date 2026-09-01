@@ -33,7 +33,7 @@ export function CallAnswerForm({
 
   if (projects.length === 0) {
     return (
-      <div className="glass rounded-2xl rounded-tr-sm p-5">
+      <div className="glass rounded-2xl rounded-se-sm p-5">
         <h2 className="font-display text-lg font-semibold">{t("callAnswerForm.emptyHeading")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("callAnswerForm.emptyBody")}</p>
         <Button asChild className="mt-4">
@@ -49,7 +49,7 @@ export function CallAnswerForm({
   }
 
   return (
-    <form action={formAction} className="glass rounded-2xl rounded-tr-sm p-5">
+    <form action={formAction} className="glass rounded-2xl rounded-se-sm p-5">
       <h2 className="font-display text-lg font-semibold">{t("callAnswerForm.heading")}</h2>
       <p className="mt-1 text-sm text-muted-foreground">{t("callAnswerForm.body")}</p>
 

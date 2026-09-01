@@ -38,7 +38,7 @@ export default async function PartnershipRequestPage({
             href={`/projects/${project.slug}`}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
           >
-            <ArrowLeft className="h-4 w-4" aria-hidden />
+            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
             {t("partnership.back")}
           </Link>
           <h1 className="flex items-center gap-3 text-4xl font-semibold tracking-tight">
@@ -57,7 +57,7 @@ export default async function PartnershipRequestPage({
           </p>
         </div>
 
-        <Card className="rounded-tr-sm">
+        <Card className="rounded-se-sm">
           <CardContent className="relative pt-6">
             <PartnershipForm projectId={project.id} />
           </CardContent>

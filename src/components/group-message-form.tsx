@@ -31,7 +31,7 @@ export function GroupMessageForm({ groupId, groupName }: { groupId: string; grou
           className="flex-1"
         />
         <Button type="submit" size="icon" disabled={pending} title={t("groupMessageForm.send")}>
-          <SendHorizontal aria-hidden />
+          <SendHorizontal className="rtl:-scale-x-100" aria-hidden />
           <span className="sr-only">{t("groupMessageForm.send")}</span>
         </Button>
       </div>

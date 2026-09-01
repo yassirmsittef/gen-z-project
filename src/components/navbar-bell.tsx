@@ -65,7 +65,7 @@ export function NavbarBell({
         <Bell aria-hidden />
         {unread > 0 && (
           <span
-            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono text-[9px] font-bold text-primary-foreground shadow-glow"
+            className="absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono text-[9px] font-bold text-primary-foreground shadow-glow"
             aria-hidden
           >
             {unread > 9 ? t("navbarBell.overflow") : unread}

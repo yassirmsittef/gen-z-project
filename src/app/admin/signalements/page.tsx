@@ -231,11 +231,11 @@ export default async function ModerationPage() {
             {open.map((report) => {
               const tgt = target(report);
               return (
-                <li key={report.id} className="glass space-y-3 rounded-2xl rounded-tr-sm p-5">
+                <li key={report.id} className="glass space-y-3 rounded-2xl rounded-se-sm p-5">
                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                     <span className="data-label">{t(`target.${report.targetType}`)}</span>
                     <span className="text-sm font-semibold">{report.reason}</span>
-                    <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    <span className="ms-auto font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                       {formatRelative(report.createdAt, locale)}
                     </span>
                   </div>
@@ -296,7 +296,7 @@ export default async function ModerationPage() {
                       </Button>
                     </form>
                     {tgt.commentId && (
-                      <form action={deleteCommentAction} className="ml-auto">
+                      <form action={deleteCommentAction} className="ms-auto">
                         <input type="hidden" name="commentId" value={tgt.commentId} />
                         <Button type="submit" variant="destructive" size="sm">
                           <Trash2 aria-hidden />
@@ -305,7 +305,7 @@ export default async function ModerationPage() {
                       </form>
                     )}
                     {tgt.callVideoId && (
-                      <form action={removeVideoAction} className="ml-auto">
+                      <form action={removeVideoAction} className="ms-auto">
                         <input type="hidden" name="videoId" value={tgt.callVideoId} />
                         <Button type="submit" variant="destructive" size="sm">
                           <Trash2 aria-hidden />
@@ -314,7 +314,7 @@ export default async function ModerationPage() {
                       </form>
                     )}
                     {tgt.callCommentId && (
-                      <form action={deleteCallCommentAction} className="ml-auto">
+                      <form action={deleteCallCommentAction} className="ms-auto">
                         <input type="hidden" name="commentId" value={tgt.callCommentId} />
                         <Button type="submit" variant="destructive" size="sm">
                           <Trash2 aria-hidden />
@@ -323,7 +323,7 @@ export default async function ModerationPage() {
                       </form>
                     )}
                     {tgt.groupMessageId && (
-                      <form action={deleteGroupMessageFormAction} className="ml-auto">
+                      <form action={deleteGroupMessageFormAction} className="ms-auto">
                         <input type="hidden" name="messageId" value={tgt.groupMessageId} />
                         <Button type="submit" variant="destructive" size="sm">
                           <Trash2 aria-hidden />

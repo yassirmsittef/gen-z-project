@@ -37,7 +37,7 @@ export async function PartnershipAnalysisPanel({ analysis }: { analysis: Partner
   const t = await getT("calls");
 
   return (
-    <section data-spotlight className="glass space-y-6 rounded-2xl rounded-tr-sm p-6">
+    <section data-spotlight className="glass space-y-6 rounded-2xl rounded-se-sm p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
           <Sparkles className="h-5 w-5 text-primary" aria-hidden />
@@ -87,7 +87,7 @@ export async function PartnershipAnalysisPanel({ analysis }: { analysis: Partner
                   aria-hidden
                 />
                 <span>
-                  <span className="mr-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  <span className="me-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                     {t(SIGNAL_KEYS[signal.niveau])}
                   </span>
                   {signal.texte}

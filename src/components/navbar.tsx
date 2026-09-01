@@ -50,7 +50,7 @@ export async function Navbar() {
       <div className="container flex h-16 items-center justify-between gap-2">
         <Link href="/" className="group flex shrink-0 items-center gap-2.5">
           {/* Logo 3D vivant : le masque en toupie */}
-          <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl rounded-br-sm border border-white/[0.12] bg-card/70 shadow-glow transition-shadow duration-200 group-hover:shadow-glow-strong">
+          <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl rounded-ee-sm border border-white/[0.12] bg-card/70 shadow-glow transition-shadow duration-200 group-hover:shadow-glow-strong">
             <NavbarSigilLoader />
           </span>
           <span className="hidden font-display text-lg font-semibold tracking-tight min-[420px]:inline">
@@ -122,7 +122,7 @@ export async function Navbar() {
                     <ShieldAlert aria-hidden />
                     {openReports > 0 && (
                       <span
-                        className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 font-mono text-[9px] font-bold text-destructive-foreground"
+                        className="absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 font-mono text-[9px] font-bold text-destructive-foreground"
                         aria-hidden
                       >
                         {openReports > 9 ? "9+" : openReports}
@@ -147,7 +147,7 @@ export async function Navbar() {
                   title={t("signOut")}
                   className={iconButton}
                 >
-                  <LogOut />
+                  <LogOut className="rtl:-scale-x-100" />
                   <span className="sr-only">{t("signOut")}</span>
                 </Button>
               </form>

@@ -146,7 +146,7 @@ export default async function ProjectsPage({
             />
           ))}
           <span className="mx-1.5 h-5 w-px shrink-0 self-center bg-white/[0.12]" aria-hidden />
-          <span className="data-label mr-1 self-center">{t("filters.sortLabel")}</span>
+          <span className="data-label me-1 self-center">{t("filters.sortLabel")}</span>
           {SORT_KEYS.map((value) => (
             <FilterChip
               key={value}

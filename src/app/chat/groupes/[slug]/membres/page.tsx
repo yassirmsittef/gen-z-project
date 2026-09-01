@@ -44,10 +44,10 @@ export default async function GroupMembersPage({
           href={`/chat/groupes/${group.slug}`}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
+          <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
           {t("groupMembers.backToThread")}
         </Link>
-        <h1 dir="auto" className="text-left text-4xl font-semibold tracking-tight">
+        <h1 dir="auto" className="text-4xl font-semibold tracking-tight ltr:text-left rtl:text-right">
           {group.name}
         </h1>
         <p className="data-label">
@@ -59,7 +59,7 @@ export default async function GroupMembersPage({
       </div>
 
       <div className="mx-auto max-w-3xl space-y-8">
-        <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-tr-sm">
+        <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-se-sm">
           {members.map(({ user, manager, joinedAt }) => {
             const isOwner = user.id === group.owner.id;
             return (

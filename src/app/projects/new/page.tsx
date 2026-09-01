@@ -58,7 +58,7 @@ export default async function NewProjectPage({
     return (
       <div className="container max-w-4xl py-16">
         <div className="mb-12 flex flex-col items-center gap-5 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-2xl rounded-br-sm border border-secondary/30 bg-secondary/15 shadow-glow-violet">
+          <span className="flex h-16 w-16 items-center justify-center rounded-2xl rounded-ee-sm border border-secondary/30 bg-secondary/15 shadow-glow-violet">
             <Lock className="h-8 w-8 text-secondary" aria-hidden />
           </span>
           <h1 className="text-4xl font-semibold tracking-tight">{t("gate.title")}</h1>
@@ -67,7 +67,7 @@ export default async function NewProjectPage({
           </p>
 
           {/* La jauge du gate : traînée lumineuse vers les 50 $ */}
-          <div className="glass w-full max-w-md space-y-3 rounded-2xl rounded-tr-sm p-5 text-left">
+          <div className="glass w-full max-w-md space-y-3 rounded-2xl rounded-se-sm p-5 text-start">
             <div className="flex items-baseline justify-between gap-3">
               <p className="data-label">{t("gate.progressLabel")}</p>
               <p className="font-display text-2xl font-semibold text-primary">
@@ -90,7 +90,7 @@ export default async function NewProjectPage({
           {/* Le gate ne doit pas faire oublier l'appel : on rappelle la
               promesse et on garde le lien de retour, paramètre compris. */}
           {answersCall && (
-            <div className="w-full max-w-md rounded-2xl rounded-tr-sm border border-secondary/25 bg-secondary/[0.07] p-4 text-left">
+            <div className="w-full max-w-md rounded-2xl rounded-se-sm border border-secondary/25 bg-secondary/[0.07] p-4 text-start">
               <p className="data-label">{t("gate.callLabel")}</p>
               <p className="mt-1 font-display text-lg font-semibold" dir="auto">
                 {answersCall.target}

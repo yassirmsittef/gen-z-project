@@ -205,20 +205,20 @@ export default async function DashboardPage({
               {t("dashboard.editProfile")}
             </Link>
           </div>
-          <ReputationBadge reputation={user.reputation} admin={user.role === "ADMIN"} className="ml-auto" />
+          <ReputationBadge reputation={user.reputation} admin={user.role === "ADMIN"} className="ms-auto" />
         </div>
 
         {user.role === "ADMIN" && (
           <Link
             href="/admin"
-            className="glass flex items-center gap-3 rounded-2xl rounded-tr-sm p-4 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-white/20 sm:hidden"
+            className="glass flex items-center gap-3 rounded-2xl rounded-se-sm p-4 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-white/20 sm:hidden"
           >
             <ShieldAlert
               className={cn("h-5 w-5", openReports > 0 ? "text-destructive" : "text-primary")}
               aria-hidden
             />
             <span className="text-sm font-medium">{t("dashboard.adminCockpit")}</span>
-            <span className="ml-auto text-xs text-muted-foreground">
+            <span className="ms-auto text-xs text-muted-foreground">
               {openReports > 0
                 ? t("dashboard.reportsToHandle", { count: openReports })
                 : t("dashboard.nothingToModerate")}
@@ -242,7 +242,7 @@ export default async function DashboardPage({
         )}
 
         {/* HUD — l'audace de l'écran : trois jauges orbitales sur verre */}
-        <section data-reveal data-spotlight className="glass rounded-2xl rounded-tr-sm p-8">
+        <section data-reveal data-spotlight className="glass rounded-2xl rounded-se-sm p-8">
           <div className="grid gap-8 sm:grid-cols-3">
             <StatRing
               tint="violet"
@@ -297,7 +297,7 @@ export default async function DashboardPage({
             </h2>
             <div className="relative">
               <span
-                className="absolute left-0 right-0 top-[13px] h-px bg-gradient-to-r from-transparent via-primary/40 to-primary/10"
+                className="absolute start-0 end-0 top-[13px] h-px from-transparent via-primary/40 to-primary/10 ltr:bg-gradient-to-r rtl:bg-gradient-to-l"
                 aria-hidden
               />
               <ol className="relative grid gap-6 sm:grid-cols-5">
@@ -330,7 +330,7 @@ export default async function DashboardPage({
 
         {pendingPartnerships > 0 && (
           <p className="rounded-2xl border border-secondary/40 bg-secondary/10 p-4 text-sm font-medium">
-            <Handshake className="mr-2 inline h-4 w-4 text-secondary" aria-hidden />
+            <Handshake className="me-2 inline h-4 w-4 text-secondary" aria-hidden />
             {t("dashboard.pendingPartnerships", { count: pendingPartnerships })}{" "}
             <Link href="/partenariats" className="font-semibold text-secondary hover:underline">
               {t("dashboard.seeWithCopilot")}
@@ -382,7 +382,7 @@ export default async function DashboardPage({
                 <Link href="/appels/nouveau">{t("dashboard.publishCall")}</Link>
               </Button>
             </div>
-            <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-tr-sm">
+            <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-se-sm">
               {myCalls.map((call) => (
                 <li key={call.id}>
                   <Link
@@ -456,7 +456,7 @@ export default async function DashboardPage({
                             {contribution.refunded && ` · ${t("dashboard.refunded")}`}
                           </p>
                         </div>
-                        <span className="ml-auto shrink-0 text-right font-mono text-sm">
+                        <span className="ms-auto shrink-0 text-end font-mono text-sm">
                           {converted != null ? (
                             <>
                               {`≈ ${formatMoney(converted, displayCurrency, locale)}`}

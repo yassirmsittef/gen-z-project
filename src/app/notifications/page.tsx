@@ -109,7 +109,7 @@ export default async function NotificationsPage() {
             {t("notifications.empty")}
           </p>
         ) : (
-          <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-tr-sm">
+          <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-se-sm">
             {notifications.map((notification) => {
               const { Icon, tone } = TYPE_STYLES[notification.type];
               const isNew = unreadSet.has(notification.id);

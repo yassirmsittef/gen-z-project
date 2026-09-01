@@ -256,7 +256,7 @@ export default async function HomePage() {
                 <dt className="data-label mt-1">{stat.label}</dt>
               </div>
             ))}
-            <div className="glass col-span-2 rounded-2xl rounded-tr-sm px-5 py-4">
+            <div className="glass col-span-2 rounded-2xl rounded-se-sm px-5 py-4">
               <dd className="font-display bg-accent-gradient bg-clip-text text-3xl font-semibold text-transparent [overflow-wrap:anywhere]">
                 {invested}
               </dd>
@@ -294,7 +294,7 @@ export default async function HomePage() {
                 <li key={call.id} data-reveal style={{ transitionDelay: `${i * 0.08}s` }}>
                   <Link
                     href={`/appels/${call.slug}`}
-                    className="glass flex h-full flex-col rounded-2xl rounded-tr-sm p-5 transition-all duration-200 ease-out hover:-translate-y-1 hover:border-secondary/25 hover:shadow-glow-violet"
+                    className="glass flex h-full flex-col rounded-2xl rounded-se-sm p-5 transition-all duration-200 ease-out hover:-translate-y-1 hover:border-secondary/25 hover:shadow-glow-violet"
                   >
                     <p className="data-label">{t("calls.noLongerWants")}</p>
                     <p
@@ -350,7 +350,7 @@ export default async function HomePage() {
             <Card key={step.title} data-reveal style={{ transitionDelay: `${i * 0.08}s` }}>
               <CardContent className="space-y-3 pt-6">
                 <span
-                  className={`flex h-12 w-12 items-center justify-center rounded-xl rounded-br-sm border ${step.chip}`}
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl rounded-ee-sm border ${step.chip}`}
                 >
                   <step.icon className="h-6 w-6" aria-hidden />
                 </span>
@@ -366,7 +366,7 @@ export default async function HomePage() {
             className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
           >
             {t("steps.detailsLink")}
-            <ArrowRight className="h-4 w-4" aria-hidden />
+            <ArrowRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
           </Link>
         </p>
       </section>
@@ -407,7 +407,7 @@ export default async function HomePage() {
             <p data-reveal className="data-label mb-8 text-center">
               {t("pulse.subheading")}
             </p>
-            <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-tr-sm">
+            <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-se-sm">
               {pulse.map((item, index) => (
                 <li key={index}>
                   <Link

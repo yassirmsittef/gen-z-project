@@ -43,7 +43,7 @@ export function FilterChip({
     >
       {label}
       {count !== undefined && count > 0 && (
-        <span className="ml-1.5 font-mono text-[11px] tabular-nums opacity-70">{count}</span>
+        <span className="ms-1.5 font-mono text-[11px] tabular-nums opacity-70">{count}</span>
       )}
     </Link>
   );

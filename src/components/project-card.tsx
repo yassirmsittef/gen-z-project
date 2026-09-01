@@ -32,8 +32,8 @@ export async function ProjectCard({
 
   return (
     <Link href={`/projects/${project.slug}`} data-reveal className="group block h-full">
-      {/* Coin signature (rounded-tr-sm) + hover : élévation et glow, jamais de scale */}
-      <Card className="flex h-full flex-col overflow-hidden rounded-tr-sm transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:border-primary/25 group-hover:shadow-glow">
+      {/* Coin signature (rounded-se-sm) + hover : élévation et glow, jamais de scale */}
+      <Card className="flex h-full flex-col overflow-hidden rounded-se-sm transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:border-primary/25 group-hover:shadow-glow">
         {project.coverUrl && (
           <div className="border-b border-white/[0.06]">
             {/* Domaine libre (URL collée par le porteur) : <img> natif, pas next/image. */}
@@ -99,7 +99,7 @@ export async function ProjectCard({
             reputation={project.owner.reputation}
             admin={project.owner.role === "ADMIN"}
             showScore={false}
-            className="ml-auto"
+            className="ms-auto"
           />
         </CardFooter>
       </Card>

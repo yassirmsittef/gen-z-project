@@ -22,7 +22,7 @@ export function PartnershipForm({ projectId }: { projectId: string }) {
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="projectId" value={projectId} />
       {/* Pot-de-miel anti-bot : invisible pour les humains. */}
-      <div aria-hidden className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden">
+      <div aria-hidden className="absolute start-[-9999px] top-auto h-px w-px overflow-hidden">
         <label>
           Taille de l&apos;entreprise
           <input type="text" name="companySize" tabIndex={-1} autoComplete="off" />
@@ -131,7 +131,7 @@ export function PartnershipForm({ projectId }: { projectId: string }) {
       )}
 
       <Button type="submit" disabled={pending}>
-        <Send aria-hidden />
+        <Send className="rtl:-scale-x-100" aria-hidden />
         {pending ? t("partnershipForm.pending") : t("partnershipForm.submit")}
       </Button>
       <p className="text-xs text-muted-foreground">{t("partnershipForm.afterSend")}</p>

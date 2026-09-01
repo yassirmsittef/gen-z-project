@@ -17,7 +17,7 @@ export default async function LegalLayout({ children }: { children: React.ReactN
         <p className="data-label">{t("layout.frame")}</p>
         <LegalNav />
         {locale !== "fr" && (
-          <p className="mt-6 border-l-2 border-primary/40 pl-4 text-sm text-muted-foreground">
+          <p className="mt-6 border-s-2 border-primary/40 ps-4 text-sm text-muted-foreground">
             {t("frenchPrevails")}
           </p>
         )}

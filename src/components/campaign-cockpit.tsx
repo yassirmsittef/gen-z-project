@@ -71,7 +71,7 @@ export async function CampaignCockpit({
   const released = milestones.filter((m) => m.status === "RELEASED").length;
 
   return (
-    <section className="glass space-y-4 rounded-2xl rounded-tr-sm p-5">
+    <section className="glass space-y-4 rounded-2xl rounded-se-sm p-5">
       <p className="data-label flex items-center gap-2">
         <Gauge className="h-3.5 w-3.5 text-primary" aria-hidden />
         {t("campaignCockpit.heading")}
@@ -197,7 +197,7 @@ export async function CampaignCockpit({
           <dd className="font-display text-lg font-semibold">
             {followerIds.length}
             {followerIds.length > 0 && (
-              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+              <span className="ms-1.5 text-xs font-normal text-muted-foreground">
                 {t("campaignCockpit.convertedShare", {
                   percent: Math.round((converted / followerIds.length) * 100),
                 })}

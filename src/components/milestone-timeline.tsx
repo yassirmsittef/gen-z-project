@@ -102,7 +102,7 @@ export async function MilestoneTimeline({
                 >
                   {t(config.labelKey)}
                 </span>
-                <span className="ml-auto font-mono text-xs text-muted-foreground">
+                <span className="ms-auto font-mono text-xs text-muted-foreground">
                   {formatMoney(milestone.amount, project.currency)}
                 </span>
               </div>

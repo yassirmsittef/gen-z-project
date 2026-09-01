@@ -61,7 +61,7 @@ export default async function PartnershipDetailPage({
             href="/partenariats"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
           >
-            <ArrowLeft className="h-4 w-4" aria-hidden />
+            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
             {t("partnershipDetail.allRequests")}
           </Link>
           <div className="flex flex-wrap items-center gap-3">
@@ -80,7 +80,7 @@ export default async function PartnershipDetailPage({
         </div>
 
         {/* L'offre de la marque */}
-        <Card className="rounded-tr-sm">
+        <Card className="rounded-se-sm">
           <CardContent className="space-y-4 pt-6">
             <div className="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
               <p className="flex items-center gap-2 text-muted-foreground">
@@ -111,7 +111,7 @@ export default async function PartnershipDetailPage({
                 <span className="mt-1 block">
                   {compensationLabel(locale, request.compensation)}
                   {request.budget != null && (
-                    <span className="ml-2 font-mono text-primary">
+                    <span className="ms-2 font-mono text-primary">
                       {t("partnership.budgetUsd", { amount: request.budget })}
                     </span>
                   )}

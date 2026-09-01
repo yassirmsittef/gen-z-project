@@ -32,7 +32,7 @@ export function CreateCallForm() {
 
   return (
     <form action={formAction} className="space-y-6">
-      <section className="glass rounded-2xl rounded-tr-sm p-5">
+      <section className="glass rounded-2xl rounded-se-sm p-5">
         <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-semibold">
           <ShieldAlert aria-hidden className="h-5 w-5 text-secondary" />
           {t("createCallForm.charterHeading")}

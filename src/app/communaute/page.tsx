@@ -121,12 +121,12 @@ export default async function CommunityPage({
         {/* L'audace de l'écran : la Terre en points, membres en signaux bleus */}
         <section
           data-reveal
-          className="glass relative h-[400px] overflow-hidden rounded-2xl rounded-tr-sm sm:h-[540px]"
+          className="glass relative h-[400px] overflow-hidden rounded-2xl rounded-se-sm sm:h-[540px]"
         >
           <CommunityGlobe markers={markers} selectedCity={selectedCity} query={query} />
 
           {selectedMarker && (
-            <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-primary/40 bg-card/80 py-1 pl-4 pr-1 backdrop-blur-md">
+            <div className="absolute start-4 top-4 flex items-center gap-2 rounded-full border border-primary/40 bg-card/80 py-1 pe-1 ps-4 backdrop-blur-md">
               <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-primary">
                 {selectedMarker.city} · {t("count.members", { count: selectedMarker.count })}
               </span>
@@ -145,10 +145,10 @@ export default async function CommunityPage({
             </div>
           ) : (
             <>
-              <p className="pointer-events-none absolute bottom-4 left-4 hidden font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:block">
+              <p className="pointer-events-none absolute bottom-4 start-4 hidden font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:block">
                 {t("globe.hintDesktop")}
               </p>
-              <p className="pointer-events-none absolute bottom-4 left-4 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:hidden">
+              <p className="pointer-events-none absolute bottom-4 start-4 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:hidden">
                 {t("globe.hintMobile")}
               </p>
             </>
@@ -173,7 +173,7 @@ export default async function CommunityPage({
           >
             <div className="relative flex-1">
               <Search
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                 aria-hidden
               />
               <Input
@@ -181,13 +181,13 @@ export default async function CommunityPage({
                 name="q"
                 defaultValue={query}
                 placeholder={t("search.placeholder")}
-                className="pl-9"
+                className="ps-9"
                 aria-label={t("search.memberLabel")}
               />
             </div>
             <div className="relative sm:w-64">
               <MapPin
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                 aria-hidden
               />
               <Input
@@ -196,7 +196,7 @@ export default async function CommunityPage({
                 defaultValue={selectedCity ?? ""}
                 placeholder={t("search.cityPlaceholder")}
                 autoComplete="off"
-                className="pl-9"
+                className="ps-9"
                 aria-label={t("search.cityLabel")}
               />
               <datalist id="cities-filter">

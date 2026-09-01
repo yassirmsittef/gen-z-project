@@ -151,7 +151,7 @@ export function CommandPalette({ className }: { className?: string }) {
               role="dialog"
               aria-modal="true"
               aria-label={t("commandPalette.dialogLabel")}
-              className="glass mx-auto mt-[12vh] w-full max-w-lg overflow-hidden rounded-2xl rounded-tr-sm border border-white/[0.12] shadow-glow"
+              className="glass mx-auto mt-[12vh] w-full max-w-lg overflow-hidden rounded-2xl rounded-se-sm border border-white/[0.12] shadow-glow"
               style={{ overscrollBehavior: "contain" }}
               onClick={(event) => event.stopPropagation()}
             >
@@ -197,7 +197,7 @@ export function CommandPalette({ className }: { className?: string }) {
                         </span>
                       </span>
                       {active === i && (
-                        <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+                        <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-primary rtl:-scale-x-100" aria-hidden />
                       )}
                     </Link>
                   );
@@ -237,7 +237,7 @@ export function CommandPalette({ className }: { className?: string }) {
                         </span>
                       </span>
                       {active === i && (
-                        <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+                        <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-primary rtl:-scale-x-100" aria-hidden />
                       )}
                     </Link>
                   );
@@ -266,10 +266,10 @@ export function CommandPalette({ className }: { className?: string }) {
                         <Hash className="h-3.5 w-3.5" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span dir="auto" className="block truncate text-left font-medium">
+                        <span dir="auto" className="block truncate text-start font-medium">
                           {room.name}
                         </span>
-                        <span dir="auto" className="block truncate text-left text-xs text-muted-foreground">
+                        <span dir="auto" className="block truncate text-start text-xs text-muted-foreground">
                           {t("commandPalette.roomMeta", {
                             count: room.memberCount,
                             purpose: room.purpose,
@@ -277,7 +277,7 @@ export function CommandPalette({ className }: { className?: string }) {
                         </span>
                       </span>
                       {active === i && (
-                        <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+                        <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-primary rtl:-scale-x-100" aria-hidden />
                       )}
                     </Link>
                   );
@@ -313,7 +313,7 @@ export function CommandPalette({ className }: { className?: string }) {
                         )}
                       </span>
                       {active === i && (
-                        <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+                        <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-primary rtl:-scale-x-100" aria-hidden />
                       )}
                     </Link>
                   );

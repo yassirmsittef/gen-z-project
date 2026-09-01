@@ -65,7 +65,7 @@ export default async function PartnershipTrackingPage({
           </p>
         </div>
 
-        <Card className="rounded-tr-sm">
+        <Card className="rounded-se-sm">
           <CardContent className="space-y-5 pt-6">
             <div className="text-sm text-muted-foreground">
               <p>
@@ -73,7 +73,7 @@ export default async function PartnershipTrackingPage({
                   compensation: compensationLabel(locale, request.compensation),
                 })}
                 {request.budget != null && (
-                  <span className="ml-1.5 font-mono text-primary">
+                  <span className="ms-1.5 font-mono text-primary">
                     {t("partnership.budgetUsd", { amount: request.budget })}
                   </span>
                 )}
@@ -109,7 +109,7 @@ export default async function PartnershipTrackingPage({
                       ? t("tracking.accepted")
                       : t("tracking.declined")}
                     {request.respondedAt && (
-                      <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                      <span className="ms-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                         {formatDate(request.respondedAt, locale)}
                       </span>
                     )}

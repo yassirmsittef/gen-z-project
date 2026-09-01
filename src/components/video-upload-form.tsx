@@ -182,7 +182,7 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
 
   if (state?.success) {
     return (
-      <div className="glass rounded-2xl rounded-tr-sm p-5">
+      <div className="glass rounded-2xl rounded-se-sm p-5">
         <p className="font-display text-lg font-semibold text-success">
           {t("videoUploadForm.successHeading")}
         </p>
@@ -197,7 +197,7 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
   }
 
   return (
-    <form ref={formRef} action={formAction} onSubmit={envoyer} className="glass rounded-2xl rounded-tr-sm p-5">
+    <form ref={formRef} action={formAction} onSubmit={envoyer} className="glass rounded-2xl rounded-se-sm p-5">
       <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
         <Video aria-hidden className="h-5 w-5 text-secondary" />
         {t("videoUploadForm.heading")}
@@ -223,7 +223,7 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
           type="file"
           accept={VIDEO_CONTENT_TYPES.join(",")}
           onChange={(e) => void choisir(e.target.files?.[0])}
-          className="block w-full cursor-pointer rounded-xl border border-input bg-background/60 p-2.5 text-sm file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-secondary/20 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-secondary"
+          className="block w-full cursor-pointer rounded-xl border border-input bg-background/60 p-2.5 text-sm file:me-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-secondary/20 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-secondary"
         />
         {mesures && (
           <p className="text-xs text-muted-foreground">

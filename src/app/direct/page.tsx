@@ -62,14 +62,14 @@ export default async function DirectPage({
     // la page, puis celui du fil. Le titre est donc posé en surimpression, et
     // le scroller occupe exactement la hauteur sous la navbar.
     <div className="relative">
-      <header className="pointer-events-none absolute left-0 right-0 top-0 z-20 flex items-start justify-between gap-3 p-4 sm:p-5">
+      <header className="pointer-events-none absolute start-0 end-0 top-0 z-20 flex items-start justify-between gap-3 p-4 sm:p-5">
         <div className="rounded-2xl bg-background/40 px-3 py-2 backdrop-blur-md">
           <p className="data-label">{t("direct.label")}</p>
           <h1 className="font-display text-lg font-semibold tracking-tight sm:text-xl">
             {t("direct.title")}
           </h1>
         </div>
-        <Button asChild variant="outline" size="sm" className="pointer-events-auto mr-14 shrink-0">
+        <Button asChild variant="outline" size="sm" className="pointer-events-auto me-14 shrink-0">
           <Link href="/appels">{t("direct.publish")}</Link>
         </Button>
       </header>

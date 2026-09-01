@@ -22,7 +22,7 @@ export default async function NouvelAppelPage() {
         href="/appels"
         className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
       >
-        <ArrowLeft aria-hidden className="h-4 w-4" />
+        <ArrowLeft aria-hidden className="h-4 w-4 rtl:-scale-x-100" />
         {t("back.toFeed")}
       </Link>
 

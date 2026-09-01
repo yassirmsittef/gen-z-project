@@ -414,3 +414,46 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- Arabe : sens de lecture droite→gauche ---------- */
+
+/*
+ * La police arabe passe DEVANT les trois latines, jamais à la place : les
+ * mots latins d'une phrase arabe (GeniGain, Stripe, un montant) gardent
+ * ainsi leur dessin d'origine, et l'arabe cesse de tomber sur une police
+ * système au hasard. JetBrains Mono n'ayant aucun glyphe arabe, les
+ * `data-label` sont explicitement rattrapés ici.
+ */
+[dir="rtl"] body,
+[dir="rtl"] .font-display,
+[dir="rtl"] .data-label,
+[dir="rtl"] .font-mono {
+  font-family: var(--font-arabic), var(--font-inter), system-ui, sans-serif;
+}
+
+/* Les chiffres restent latins (cf. localeTag : ar-u-nu-latn) — donc alignés
+   comme tels, sans forcer le sens dans les blocs de données. */
+[dir="rtl"] .data-label {
+  letter-spacing: 0;
+}
+
+/*
+ * RÈGLE DES ICÔNES (appliquée à la main, pas par CSS — d'où ce mémo) :
+ * une FLÈCHE exprime un sens de lecture et se retourne en arabe
+ * (`rtl:-scale-x-100` sur ArrowLeft, ArrowRight, ArrowUpRight, Undo2,
+ * LogOut…). Un PICTOGRAMME n'est pas une direction et ne se retourne
+ * jamais, même s'il penche : ExternalLink (« s'ouvre ailleurs »),
+ * Megaphone, Target, Clock, Heart. Sans cette frontière, on finit par
+ * mirer des dessins d'objets — un mégaphone à l'envers ne dit rien de
+ * plus à un lecteur arabophone.
+ */
+
+/*
+ * Les scènes 3D et le globe raisonnent en coordonnées écran : les
+ * retourner ferait tourner la Terre à l'envers. Elles restent en LTR,
+ * quel que soit le sens de lecture de la page.
+ */
+[dir="rtl"] canvas,
+[dir="rtl"] [data-ltr] {
+  direction: ltr;
+}

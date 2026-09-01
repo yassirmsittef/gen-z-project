@@ -62,7 +62,7 @@ export default async function ChatThreadPage({
           href="/chat"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground lg:hidden"
         >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
+          <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
           {t("chatThread.allConversations")}
         </Link>
         <h1 className="text-4xl font-semibold tracking-tight">{t("chatHeader.title")}</h1>
@@ -78,7 +78,7 @@ export default async function ChatThreadPage({
           />
         </div>
 
-        <div className="glass flex min-h-[60vh] flex-col rounded-2xl rounded-tr-sm">
+        <div className="glass flex min-h-[60vh] flex-col rounded-2xl rounded-se-sm">
           <div className="flex items-center gap-3 border-b border-white/[0.06] p-4">
             <Link href={`/u/${partner.id}`} className="flex items-center gap-3 hover:opacity-90">
               <UserAvatar name={partner.name} avatarUrl={partner.avatarUrl} className="h-10 w-10" />
@@ -119,8 +119,8 @@ export default async function ChatThreadPage({
                       className={cn(
                         "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm",
                         mine
-                          ? "rounded-br-sm border border-primary/30 bg-primary/10"
-                          : "rounded-bl-sm border border-white/[0.08] bg-card/80"
+                          ? "rounded-ee-sm border border-primary/30 bg-primary/10"
+                          : "rounded-es-sm border border-white/[0.08] bg-card/80"
                       )}
                     >
                       <p className="whitespace-pre-line break-words">{message.body}</p>
