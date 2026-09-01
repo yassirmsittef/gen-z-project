@@ -245,8 +245,17 @@ describe("rejoindre, écrire, quitter", () => {
     );
 
     // Rejoindre deux fois n'accueille pas deux fois (2 lignes : 2 arrivées).
+    // Le compte est BORNÉ AUX FIXTURES : `salon-english` est un vrai salon,
+    // partagé par toute la base — n'importe qui d'autre (une autre suite, un
+    // passage au navigateur en développement) peut y entrer, et un compte
+    // global ferait échouer ce test pour une raison étrangère à la règle
+    // qu'il vérifie.
     await joinGroup(arrivant.id, "salon-english");
-    expect(await prisma.groupMessage.count({ where: { groupId: anglais!.id } })).toBe(2);
+    expect(
+      await prisma.groupMessage.count({
+        where: { groupId: anglais!.id, senderId: { in: [installe.id, arrivant.id] } },
+      })
+    ).toBe(2);
 
     // Un groupe ordinaire porte la même clé : le salon ne décide plus de la
     // langue du mot d'accueil, le lecteur si.
