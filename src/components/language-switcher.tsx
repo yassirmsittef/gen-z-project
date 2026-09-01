@@ -18,6 +18,12 @@ export function LanguageSwitcher({ current }: { current: Locale }) {
       <Languages className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
       <select
         name="lang"
+        // `key` ET `defaultValue` : après la bascule, l'action revalide et
+        // React réconcilie — mais il ne touche PAS à la valeur d'un select
+        // non contrôlé, qui continuait d'annoncer la langue précédente alors
+        // que la page avait déjà changé. Le menu mentait sur l'état réel.
+        // Changer la clé le remonte, donc le realigne.
+        key={current}
         defaultValue={current}
         aria-label="Langue / Language / اللغة"
         onChange={() => formRef.current?.requestSubmit()}
