@@ -427,3 +427,22 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = labelG
     "STORAGE_ALERT",
   ] as const satisfies readonly NotificationType[]
 );
+
+// ---------- Traduction (service externe, mobile) ----------
+// Le modèle intégré au navigateur ne couvre que Chrome/Edge sur ordinateur ;
+// sur mobile — le public visé — la traduction passe par un service, dont le
+// palier gratuit est FINI. Ces bornes existent pour qu'un seul lecteur (ou un
+// script) ne puisse pas le vider pour tout le monde.
+
+/** Plus long texte traduisible : la description de projet (5 000) est le
+ *  champ le plus long de la plateforme — au-delà, ça ne vient pas d'un membre. */
+export const MAX_TRANSLATION_CHARS = 5_000;
+
+/** Cadence d'un lecteur : fenêtre glissante et volume autorisé dedans.
+ *  Large de quoi traduire un salon entier d'affilée, trop étroit pour aspirer. */
+export const TRANSLATION_WINDOW_MINUTES = 60;
+export const MAX_TRANSLATION_CHARS_PER_WINDOW = 60_000;
+
+/** Plafond mensuel de la plateforme, sous les 2 M offerts par le prestataire :
+ *  la marge absorbe le décalage entre notre mois glissant et son mois à lui. */
+export const MAX_TRANSLATION_CHARS_PER_MONTH = 1_800_000;

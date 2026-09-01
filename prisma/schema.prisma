@@ -422,6 +422,24 @@ model LoginAttempt {
   @@index([email, createdAt])
 }
 
+// Caractères envoyés au service de traduction (src/lib/translate-service.ts).
+// Sert deux gardes à la fois : la cadence d'un lecteur sur une fenêtre
+// glissante, et le plafond MENSUEL de la plateforme — le palier gratuit du
+// prestataire est fini, et personne ne doit pouvoir le vider pour tout le
+// monde. `key` vaut `user:<id>` pour un membre connecté, `ip:<sha256>` sinon
+// (traduire est offert aux visiteurs : le fil des appels est public).
+// Aucun texte n'est stocké ici — seulement combien de caractères, et quand.
+// Purgé par le cron au-delà de la fenêtre mensuelle.
+model TranslationUsage {
+  id        String   @id @default(cuid())
+  key       String
+  chars     Int
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+  @@index([createdAt])
+}
+
 // ---------- Signalements (modération) ----------
 
 enum ReportTargetType {

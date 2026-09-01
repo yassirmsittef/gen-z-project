@@ -16,7 +16,7 @@ export default function ConfidentialitePage() {
   return (
     <>
       <h1>Politique de confidentialité</h1>
-      <p className="data-label mt-3">Version du 23 août 2026</p>
+      <p className="data-label mt-3">Version du 1er septembre 2026</p>
 
       <p>
         Cette page décrit ce que GeniGain fait de tes données, sans jargon inutile. Le principe
@@ -84,7 +84,11 @@ export default function ConfidentialitePage() {
         </li>
         <li>
           <strong>Données techniques</strong> : journaux serveur de l’hébergeur (adresses IP,
-          horodatages) à des fins de sécurité et de diagnostic.
+          horodatages) à des fins de sécurité et de diagnostic. Si tu utilises le bouton
+          « Traduire » sans être connecté, on retient le <strong>nombre de caractères</strong>
+          traduits et la date, associés à ton adresse IP <strong>sous forme hachée</strong>
+          (jamais en clair) — uniquement pour tenir le quota du service de traduction. Le
+          texte traduit, lui, n’est pas conservé.
         </li>
       </ul>
       <p>
@@ -140,6 +144,16 @@ export default function ConfidentialitePage() {
           partenariat (le texte de la demande est analysé ; le résultat n’est montré qu’au
           porteur).
         </li>
+        <li>
+          <strong>Microsoft (Azure AI Translator)</strong> — traduction à la demande. Sur
+          Chrome et Edge pour ordinateur, « Traduire » utilise le modèle intégré au
+          navigateur et <strong>le texte ne quitte pas ta machine</strong>. Partout ailleurs
+          (téléphones, Safari, Firefox), il n’y a pas de modèle intégré : le texte est alors
+          envoyé à Microsoft pour être traduit. Cet envoi n’a lieu <strong>que si tu appuies
+          sur « Traduire »</strong>, et la première fois on te le dit et on te demande ton
+          accord. Microsoft ne conserve pas le texte soumis et ne s’en sert pas pour
+          entraîner ses modèles.
+        </li>
       </ul>
       <p>
         Certains de ces prestataires sont établis aux États-Unis : les transferts hors de Suisse
@@ -163,6 +177,10 @@ export default function ConfidentialitePage() {
           sous forme anonymisée pour les obligations comptables et l’intégrité du séquestre.
         </li>
         <li>Les liens de réinitialisation de mot de passe expirent au bout de 60 minutes.</li>
+        <li>
+          Les compteurs de traduction (caractères et date, jamais le texte) sont conservés
+          31 jours — le temps de la fenêtre qui tient le quota mensuel.
+        </li>
         <li>Les journaux techniques sont conservés sur de courtes durées par l’hébergeur.</li>
       </ul>
 

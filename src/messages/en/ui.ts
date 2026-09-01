@@ -74,12 +74,18 @@ export const ui = {
 
   // Traduction sur l'appareil (Translator du navigateur — aucun service tiers)
   "translate.action": "Translate",
-  "translate.title": "Translate this text into your language, on your device",
+  "translate.title": "Translate this text into your language",
   "translate.working": "Translating…",
   "translate.downloading": "Downloading the model… {percent}%",
   "translate.showOriginal": "Show original",
   "translate.badge": "Translated on your device",
   "translate.sameLanguage": "This text is already in your language.",
-  "translate.unavailablePair": "Your browser can't translate this language.",
+  "translate.unavailablePair": "This language can't be translated.",
   "translate.failed": "The translation didn't go through — try again.",
+  "translate.badgeService": "Translated by an external service",
+  "translate.tooFast": "Too many translations in a row — come back in a moment.",
+  "translate.saturated": "Automatic translation isn't available right now — try again later.",
+  "translate.consentBody": "Your device can't translate on its own. This text will be sent to an external translation service (Microsoft), which doesn't keep it.",
+  "translate.consentAccept": "OK, translate",
+  "translate.consentDecline": "No thanks",
 } satisfies Messages["ui"];

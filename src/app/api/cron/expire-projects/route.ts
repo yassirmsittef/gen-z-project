@@ -8,6 +8,7 @@ import { purgeStaleLoginAttempts } from "@/lib/login-rate-limit";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { executeDuePayouts, executeDueRefunds } from "@/lib/payouts";
 import { failExpiredProjects, failOverdueRealizations } from "@/lib/project-service";
+import { purgeStaleTranslationUsage } from "@/lib/translate-service";
 
 /**
  * Cron Vercel (une fois par jour à 3 h — plan Hobby, voir vercel.json) :
@@ -45,6 +46,9 @@ export async function GET(request: Request) {
   // Fichiers déposés sur le stockage dont la publication n'est jamais venue :
   // invisibles de la jauge (qui somme des lignes), ils se payaient sans fin.
   await purgeStaleUploadTickets();
+  // Compteurs de traduction sortis du mois glissant : ils ne tiennent plus
+  // ni la cadence d'un lecteur ni le plafond mensuel du service.
+  await purgeStaleTranslationUsage();
   // Mesurer AVANT de balayer : une taille inconnue rendait la jauge aveugle
   // sur tout ce qui précédait les migrations.
   await backfillStorageSizes();

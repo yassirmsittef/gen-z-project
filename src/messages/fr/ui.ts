@@ -71,12 +71,18 @@ export const ui = {
 
   // Traduction sur l'appareil (Translator du navigateur — aucun service tiers)
   "translate.action": "Traduire",
-  "translate.title": "Traduire ce texte dans ta langue, sur ton appareil",
+  "translate.title": "Traduire ce texte dans ta langue",
   "translate.working": "Traduction…",
   "translate.downloading": "Téléchargement du modèle… {percent} %",
   "translate.showOriginal": "Voir l'original",
   "translate.badge": "Traduit sur ton appareil",
   "translate.sameLanguage": "Ce texte est déjà dans ta langue.",
-  "translate.unavailablePair": "Ton navigateur ne sait pas traduire cette langue.",
+  "translate.unavailablePair": "Cette langue ne peut pas être traduite.",
   "translate.failed": "La traduction n'a pas abouti — réessaie.",
+  "translate.badgeService": "Traduit par un service externe",
+  "translate.tooFast": "Trop de traductions d'affilée — reviens dans un moment.",
+  "translate.saturated": "La traduction automatique n'est plus disponible pour le moment — réessaie plus tard.",
+  "translate.consentBody": "Ton appareil ne sait pas traduire tout seul. Ce texte sera envoyé à un service de traduction externe (Microsoft), qui ne le conserve pas.",
+  "translate.consentAccept": "D'accord, traduire",
+  "translate.consentDecline": "Non merci",
 } as const satisfies Dict;
