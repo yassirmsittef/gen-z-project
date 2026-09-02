@@ -1,4 +1,4 @@
-import type { Prisma, Project } from "@prisma/client";
+import type { Prisma, Project } from "@/generated/prisma/client";
 import { Check, ExternalLink, Hourglass, Lock, Scale, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { voteProofAction } from "@/actions/milestones";
 import { ProofForm } from "@/components/proof-form";

@@ -5,7 +5,7 @@ import { ChevronDown, Settings2 } from "lucide-react";
 import { updateNotificationPrefsAction } from "@/actions/notifications";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/components/i18n-provider";
-import type { NotificationType } from "@prisma/client";
+import type { NotificationType } from "@/generated/prisma/client";
 import { NOTIFICATION_TYPE_LABELS, isUnmutable } from "@/lib/constants";
 
 /**

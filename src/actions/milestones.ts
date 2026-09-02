@@ -3,7 +3,7 @@ import { domainErrorMessage } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { VoteDecision } from "@prisma/client";
+import type { VoteDecision } from "@/generated/prisma/client";
 import { auth } from "@/auth";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { castVote, DomainError, submitMilestoneProof } from "@/lib/project-service";

@@ -1,4 +1,4 @@
-import type { NotificationType, ProjectCategory } from "@prisma/client";
+import type { NotificationType, ProjectCategory } from "@/generated/prisma/client";
 import { labels as LABELS_FR } from "@/messages/fr/labels";
 
 /** Extrait un groupe `prefix.*` du namespace labels (français — les exports

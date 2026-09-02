@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import type { ProjectCategory } from "@prisma/client";
+import type { ProjectCategory } from "@/generated/prisma/client";
 import { Plus, X } from "lucide-react";
 import { createGroupAction } from "@/actions/chat-groups";
 import { useT } from "@/components/i18n-provider";

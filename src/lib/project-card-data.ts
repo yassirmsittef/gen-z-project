@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 /**
  * Ce qu'une carte projet a besoin de savoir — écrit UNE fois, importé par

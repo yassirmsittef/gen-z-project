@@ -4,7 +4,7 @@ import type {
   NotificationType,
   ProjectCategory,
   ProjectStatus,
-} from "@prisma/client";
+} from "@/generated/prisma/client";
 import type { Locale } from "@/lib/i18n/locales";
 import { MESSAGES } from "@/messages";
 

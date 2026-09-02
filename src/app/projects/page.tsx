@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ProjectCategory, ProjectStatus, type Prisma } from "@prisma/client";
+import { ProjectCategory, ProjectStatus } from "@/generated/prisma/enums";
+import type { Prisma } from "@/generated/prisma/client";
 import { Search } from "lucide-react";
 import { ChipRail, FilterChip } from "@/components/filter-chips";
 import { ProjectCard } from "@/components/project-card";

@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
-import type { NotificationType } from "@prisma/client";
+import type { NotificationType } from "@/generated/prisma/client";
 import { prisma } from "../src/lib/prisma";
 import { renderNotification } from "../src/lib/notification-render";
 import { createCall, removeCall } from "../src/lib/boycott";

@@ -1,7 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { gunzipSync, gzipSync } from "node:zlib";
 import { del, list, put } from "@vercel/blob";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -30,8 +29,6 @@ const MAGIC = Buffer.from("GGB1");
 
 /** Nom de propriété du client Prisma pour un modèle (`User` → `user`). */
 const delegate = (model: string) => model.charAt(0).toLowerCase() + model.slice(1);
-
-export const MODEL_NAMES: string[] = Prisma.dmmf.datamodel.models.map((m) => m.name);
 
 /** Ordre de restauration : chaque modèle après ceux qu'il référence. */
 export const RESTORE_ORDER: string[] = [
@@ -69,6 +66,11 @@ export const RESTORE_ORDER: string[] = [
   "CallVideo",
   "CallComment",
 ];
+
+/** Les modèles sauvegardés : la même liste que l'ordre de restauration — et
+ *  le test compare cette liste au schéma lui-même (`model X {`), pour qu'un
+ *  modèle ajouté sans être listé ici casse la suite, pas la sauvegarde. */
+export const MODEL_NAMES: string[] = RESTORE_ORDER;
 
 export type Dump = { version: 1; takenAt: string; tables: Record<string, unknown[]> };
 

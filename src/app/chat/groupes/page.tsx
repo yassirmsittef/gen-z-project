@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ProjectCategory } from "@prisma/client";
+import { ProjectCategory } from "@/generated/prisma/enums";
 import { Hash, MessagesSquare, Search, Users } from "lucide-react";
 import { auth } from "@/auth";
 import { categoryDescription, categoryLabel } from "@/lib/i18n/labels";

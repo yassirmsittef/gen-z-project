@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
-import type { PartnershipRequest, Prisma } from "@prisma/client";
+import type { PartnershipRequest, Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 

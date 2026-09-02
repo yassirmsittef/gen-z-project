@@ -1,13 +1,14 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  // Prisma 7 : le client est généré ICI (jamais commité, cf. .gitignore) et
+  // s'importe depuis "@/generated/prisma/client".
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  // Neon/serverless : url = connexion POOLÉE (runtime), directUrl = DIRECTE (migrations).
-  // En local, les deux pointent sur la même base.
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  // Prisma 7 : les URL vivent dans prisma.config.ts (migrations, DIRECT_URL)
+  // et dans src/lib/prisma.ts (runtime, DATABASE_URL poolée via l'adaptateur pg).
 }
 
 // ---------- Utilisateurs & Auth.js ----------

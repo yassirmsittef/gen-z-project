@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Hash, MessagesSquare, Users } from "lucide-react";
-import type { ProjectCategory } from "@prisma/client";
+import type { ProjectCategory } from "@/generated/prisma/client";
 import { JoinGroupButton } from "@/components/group-membership";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

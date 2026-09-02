@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isVideoBlob } from "@/lib/blob";
-import { PartnershipCompensation, ProjectCategory } from "@prisma/client";
+import { PartnershipCompensation, ProjectCategory } from "@/generated/prisma/enums";
 import { CURRENCY_CODES } from "@/lib/money";
 import { LOCALE_CODES } from "@/lib/i18n/locales";
 import { makeT, type Translator } from "@/lib/i18n/t";

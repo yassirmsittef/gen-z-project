@@ -1,4 +1,4 @@
-import type { Notification } from "@prisma/client";
+import type { Notification } from "@/generated/prisma/client";
 import { notificationTypeLabel } from "@/lib/i18n/labels";
 import type { Locale } from "@/lib/i18n/locales";
 import { makeT, type Vars } from "@/lib/i18n/t";

@@ -4,7 +4,7 @@ import type {
   NotificationType,
   ProjectCategory,
   ProjectStatus,
-} from "@prisma/client";
+} from "@/generated/prisma/client";
 import type { Dict } from "@/lib/i18n/t";
 
 /**

@@ -1,4 +1,4 @@
-import type { NotificationType, Prisma } from "@prisma/client";
+import type { NotificationType, Prisma } from "@/generated/prisma/client";
 import type { NotificationKey } from "@/lib/notification-catalog";
 import { isUnmutable } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";

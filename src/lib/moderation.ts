@@ -1,4 +1,4 @@
-import type { ReportStatus, ReportTargetType } from "@prisma/client";
+import type { ReportStatus, ReportTargetType } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { REPORT_REASONS } from "@/lib/constants";
 import { DomainError } from "@/lib/project-service";

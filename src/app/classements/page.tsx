@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { PROJECT_CARD_INCLUDE } from "@/lib/project-card-data";
 import { Flame, Rocket, Swords, Trophy } from "lucide-react";
 import { mostTargetedBrands } from "@/lib/boycott";

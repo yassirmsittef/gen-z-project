@@ -29,3 +29,6 @@ yarn-error.log*
 *.tsbuildinfo
 .vercel
 .env*
+
+# client Prisma généré (prisma generate) — jamais commité
+/src/generated/

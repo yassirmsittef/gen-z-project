@@ -1,4 +1,4 @@
-import type { ProjectStatus } from "@prisma/client";
+import type { ProjectStatus } from "@/generated/prisma/client";
 import { STATUS_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 

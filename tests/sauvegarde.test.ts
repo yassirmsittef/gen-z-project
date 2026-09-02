@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { prisma } from "../src/lib/prisma";
 import { MODEL_NAMES, RESTORE_ORDER, decryptDump, dumpDatabase, encryptDump } from "../src/lib/backup";
 
@@ -9,7 +10,10 @@ import { MODEL_NAMES, RESTORE_ORDER, decryptDump, dumpDatabase, encryptDump } fr
  */
 describe("sauvegarde chiffrée", () => {
   it("l'ordre de restauration couvre EXACTEMENT les modèles du schéma (un modèle ajouté sans ordre casse ici)", () => {
-    expect([...RESTORE_ORDER].sort()).toEqual([...MODEL_NAMES].sort());
+    const schema = readFileSync("prisma/schema.prisma", "utf8");
+    const dansLeSchema = [...schema.matchAll(/^model (\w+) \{/gm)].map((m) => m[1]);
+    expect([...RESTORE_ORDER].sort()).toEqual([...dansLeSchema].sort());
+    expect([...MODEL_NAMES].sort()).toEqual([...dansLeSchema].sort());
     expect(new Set(RESTORE_ORDER).size).toBe(RESTORE_ORDER.length);
   });
 

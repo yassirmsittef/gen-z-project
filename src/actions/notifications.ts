@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { NotificationType } from "@prisma/client";
+import { NotificationType } from "@/generated/prisma/enums";
 import { auth } from "@/auth";
 import { isUnmutable } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";

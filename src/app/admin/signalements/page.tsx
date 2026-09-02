@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Check, ExternalLink, ShieldAlert, Trash2, X } from "lucide-react";
-import type { Report } from "@prisma/client";
+import type { Report } from "@/generated/prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { deleteGroupMessageFormAction } from "@/actions/chat-groups";

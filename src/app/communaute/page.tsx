@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { MapPin, MessagesSquare, Search, X } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";

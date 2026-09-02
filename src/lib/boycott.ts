@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { Prisma, ProjectCategory } from "@prisma/client";
+import type { Prisma, ProjectCategory } from "@/generated/prisma/client";
 import { detachVideoFiles } from "@/lib/call-videos";
 import { PROJECT_CARD_INCLUDE } from "@/lib/project-card-data";
 import { prisma } from "@/lib/prisma";

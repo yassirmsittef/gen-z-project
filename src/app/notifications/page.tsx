@@ -22,7 +22,7 @@ import {
   Video,
   Vote,
 } from "lucide-react";
-import type { NotificationType } from "@prisma/client";
+import type { NotificationType } from "@/generated/prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NotificationPrefs } from "@/components/notification-prefs";

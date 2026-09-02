@@ -1,4 +1,4 @@
-import { Prisma, type ProjectCategory } from "@prisma/client";
+import { Prisma, type ProjectCategory } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { assertUnderLimit, recordHit } from "@/lib/throttle";
 import {

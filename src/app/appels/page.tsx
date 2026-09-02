@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ProjectCategory } from "@prisma/client";
+import { ProjectCategory } from "@/generated/prisma/enums";
 import { Megaphone, Search } from "lucide-react";
 import { auth } from "@/auth";
 import { CallCard } from "@/components/call-card";

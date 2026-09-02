@@ -9,7 +9,7 @@
  *   lea@demo.dev, max@demo.dev, zoe@demo.dev, sam@demo.dev, nina@demo.dev
  */
 import bcrypt from "bcryptjs";
-import type { ProjectCategory } from "@prisma/client";
+import type { ProjectCategory } from "@/generated/prisma/client";
 import { findCity } from "../src/lib/cities";
 import { openLanguageRooms } from "../src/lib/chat-groups";
 import { prisma } from "../src/lib/prisma";

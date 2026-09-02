@@ -1,4 +1,4 @@
-import { Prisma, type VoteDecision } from "@prisma/client";
+import { Prisma, type VoteDecision } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { GATE_USD_CENTS, MAX_PROOF_ATTEMPTS, REALIZATION_DAYS, REP } from "@/lib/constants";
 import type { City } from "@/lib/cities";
