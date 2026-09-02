@@ -60,6 +60,16 @@ ou vérification sur le serveur en mode production), jamais par relecture.
 - **Sauvegardes** : dump complet chiffré (AES-256-GCM) chaque nuit sur Vercel
   Blob, 14 conservés ; script de restauration ; **exercice de restauration
   réussi** (base de dev → base neuve, 14 tables identiques).
+- **Chiffrement au repos et en transit** (phase 4, vérifié à la source Neon,
+  pas de mémoire) : stockage chiffré AES-256, clés gérées par AWS KMS avec
+  rotation, TLS 1.2/1.3 exigé sur toute connexion, contrôles alignés
+  SOC 2 / ISO 27001 / ISO 27701 / RGPD.
+- **Majeures** (branche `majeures-next16-prisma7`, à déployer) : Next 16 et
+  Prisma 7, vérifiés en mode production local. Ferment `postcss`/`next` ;
+  restent 4 avis « high » dans la CLI Prisma (jamais exécutée en prod), dont
+  le remède est Prisma 8, encore en *release candidate*.
+- **CI GitHub** à chaque push : tests contre Postgres, build, audit bloquant
+  sur critique.
 - Divers : temps de réponse du login égalisé (oracle bcrypt), balises à jeton
   aléatoire autour du texte des marques dans le copilote IA, 3 « remplaçants »
   par projet et par jour.
