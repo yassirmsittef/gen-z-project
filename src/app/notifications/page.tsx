@@ -14,12 +14,13 @@ import {
   MessagesSquare,
   PartyPopper,
   Rocket,
+  ShieldAlert,
   ShieldX,
+  type LucideIcon,
   Undo2,
   Users,
   Video,
   Vote,
-  type LucideIcon,
 } from "lucide-react";
 import type { NotificationType } from "@prisma/client";
 import { auth } from "@/auth";
@@ -58,6 +59,7 @@ const TYPE_STYLES: Record<NotificationType, { Icon: LucideIcon; tone: string }> 
   CALL_COMMENT: { Icon: MessageCircle, tone: "text-secondary" },
   CALL_VIDEO: { Icon: Video, tone: "text-secondary" },
   STORAGE_ALERT: { Icon: HardDrive, tone: "text-destructive" },
+  SECURITY_ALERT: { Icon: ShieldAlert, tone: "text-destructive" },
 };
 
 export default async function NotificationsPage() {

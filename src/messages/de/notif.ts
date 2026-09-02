@@ -76,6 +76,13 @@ export const notif = {
   "storageAlert.full.body":
     "Der nächste Bericht könnte die Grenze sprengen: Die Ausgabe von Upload-Tokens ist ausgesetzt, bis Platz frei wird.",
 
+  "securityAlert.loginBurst.title": "Welle fehlgeschlagener Anmeldungen: {count} in {minutes} Min.",
+  "securityAlert.loginBurst.body": "Jemand probiert Passwörter in großem Stil aus. Die Sperren pro Konto und pro Adresse greifen; hält es an, die Vercel-Firewall aktivieren und das Protokoll prüfen.",
+  "securityAlert.dispute.title": "Bankstreitfall eröffnet ({reason}) — {count} Beitrag/Beiträge eingefroren",
+  "securityAlert.dispute.body": "Ein Beitragender ficht seine Zahlung bei seiner Bank an. Sein Beitrag zählt nicht mehr bei Abstimmungen und kann nicht mehr ausgezahlt werden. Im Stripe-Dashboard auf den Streitfall antworten.",
+  "securityAlert.translationSaturated.title": "Automatische Übersetzung für diesen Monat ausgeschöpft",
+  "securityAlert.translationSaturated.body": "Die Zeichengrenze ist erreicht: „Übersetzen“ antwortet bis nächsten Monat mit „ausgelastet“. Eine ungewöhnliche Spitze kann Missbrauch sein — die Tabelle TranslationUsage zeigt es.",
+
   "groupMessage.title": "{actor} hat in {groupName} geschrieben",
 
   "comment.title": "{actor} hat „{projectTitle}“ kommentiert",

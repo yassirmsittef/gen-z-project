@@ -30,6 +30,9 @@ export const EMAILED_TYPES: NotificationType[] = [
   // L'alerte de plafond de stockage ne vise que les admins, et attendre la
   // prochaine visite du cockpit pourrait suffire à saturer le direct.
   "STORAGE_ALERT",
+  // Une rafale de mots de passe ou un litige bancaire n'attendent pas la
+  // prochaine visite du cockpit.
+  "SECURITY_ALERT",
 ];
 
 /** Au-delà, l'info est froide : la cloche in-app suffit. */

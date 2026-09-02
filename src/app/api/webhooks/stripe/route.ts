@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { fulfillContribution } from "@/lib/project-service";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { executeDueRefunds } from "@/lib/payouts";
+import { alertAdmins } from "@/lib/security-alerts";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
 
 /**
@@ -88,6 +89,7 @@ export async function POST(request: Request) {
       });
       if (dispute) {
         console.error(`[stripe] litige ${dispute.id} (${dispute.reason}) sur ${paymentIntent} — ${count} contribution(s) gelée(s)`);
+        await alertAdmins("securityAlert.dispute", { reason: dispute.reason ?? "?", count });
       }
     }
   }

@@ -81,4 +81,5 @@ export const labels = {
   "notifType.CALL_COMMENT": "Respostas sob os meus apelos",
   "notifType.CALL_VIDEO": "Testemunhos em vídeo sob os meus apelos",
   "notifType.STORAGE_ALERT": "Alerta de armazenamento alojado (equipa)",
+  "notifType.SECURITY_ALERT": "Alertas de segurança (equipa)",
 } satisfies Messages["labels"];

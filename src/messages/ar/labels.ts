@@ -81,4 +81,5 @@ export const labels = {
   "notifType.CALL_COMMENT": "ردود تحت نداءاتي",
   "notifType.CALL_VIDEO": "شهادات فيديو تحت نداءاتي",
   "notifType.STORAGE_ALERT": "تنبيه سعة التخزين (الفريق)",
+  "notifType.SECURITY_ALERT": "تنبيهات الأمان (الفريق)",
 } satisfies Messages["labels"];

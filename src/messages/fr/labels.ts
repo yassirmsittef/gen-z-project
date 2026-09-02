@@ -94,6 +94,7 @@ export const labels = {
   "notifType.CALL_COMMENT": "Réponses sous mes appels",
   "notifType.CALL_VIDEO": "Témoignages vidéo sous mes appels",
   "notifType.STORAGE_ALERT": "Alerte de stockage hébergé (équipe)",
+  "notifType.SECURITY_ALERT": "Alertes de sécurité (équipe)",
 } as const satisfies Dict &
   Record<`category.${ProjectCategory}`, string> &
   Record<`categoryDesc.${ProjectCategory}`, string> &

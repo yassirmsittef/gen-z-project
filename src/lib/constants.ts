@@ -386,6 +386,9 @@ export const UNMUTABLE_NOTIFICATION_TYPES = [
   // notification sociale : un admin qui la coupe découvrirait le direct
   // saturé en même temps que les membres.
   "STORAGE_ALERT",
+  // Une alerte de sécurité est du même ordre : la couper, c'est ne plus voir
+  // la rafale de mots de passe ni le litige bancaire.
+  "SECURITY_ALERT",
 ] as const satisfies readonly NotificationType[];
 
 export function isUnmutable(type: NotificationType): boolean {
@@ -425,6 +428,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = labelG
     // STORAGE_ALERT : non masquable, donc jamais listé dans les préférences ;
     // seuls les admins en reçoivent.
     "STORAGE_ALERT",
+    "SECURITY_ALERT",
   ] as const satisfies readonly NotificationType[]
 );
 
@@ -474,3 +478,9 @@ export const MAX_MESSAGES_PER_HOUR = 60;
 export const MAX_COMMENTS_PER_HOUR = 30;
 /** Changements de photo de profil par membre et par heure. */
 export const MAX_AVATAR_CHANGES_PER_HOUR = 5;
+
+// ---------- Alertes de sécurité (src/lib/security-alerts.ts) ----------
+/** Échecs de connexion, tous comptes confondus, qui déclenchent une alerte
+ *  admin sur la fenêtre de LOGIN_WINDOW_MINUTES. Bien au-dessus d'une soirée
+ *  de membres qui se trompent, bien en dessous d'un balayage. */
+export const LOGIN_BURST_ALERT_THRESHOLD = 50;

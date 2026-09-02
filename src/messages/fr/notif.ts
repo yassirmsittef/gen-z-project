@@ -83,6 +83,13 @@ export const notif = {
   "storageAlert.full.body":
     "Le prochain témoignage risquerait de dépasser le plafond : la délivrance de jetons d'upload est suspendue jusqu'à ce que de la place se libère.",
 
+  "securityAlert.loginBurst.title": "Rafale d'échecs de connexion : {count} en {minutes} min",
+  "securityAlert.loginBurst.body": "Quelqu'un teste des mots de passe à grande échelle. Les verrous par compte et par adresse jouent ; si ça continue, activer le pare-feu Vercel et vérifier le journal.",
+  "securityAlert.dispute.title": "Litige bancaire ouvert ({reason}) — {count} contribution(s) gelée(s)",
+  "securityAlert.dispute.body": "Un contributeur conteste son paiement auprès de sa banque. Sa contribution ne pèse plus dans les votes et n'est plus versable. Répondre au litige depuis le tableau de bord Stripe.",
+  "securityAlert.translationSaturated.title": "Traduction automatique saturée pour le mois",
+  "securityAlert.translationSaturated.body": "Le plafond de caractères est atteint : « Traduire » répond « saturé » jusqu'au mois prochain. Un pic anormal peut être un abus — la table TranslationUsage le montre.",
+
   "groupMessage.title": "{actor} a écrit dans {groupName}",
 
   "comment.title": "{actor} a commenté « {projectTitle} »",

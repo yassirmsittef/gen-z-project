@@ -7,6 +7,7 @@ import {
   TRANSLATION_WINDOW_MINUTES,
 } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
+import { alertAdmins } from "@/lib/security-alerts";
 
 /**
  * Traduction par un SERVICE, pour les appareils qui n'ont pas de modèle
@@ -137,6 +138,10 @@ export async function serviceTranslate(input: {
     await tx.translationUsage.create({ data: { key: input.key, chars: texte.length } });
     return "ok" as const;
   });
+  if (verdict === "sature") {
+    // Le mois est fermé : les admins le savent avant les membres.
+    await alertAdmins("securityAlert.translationSaturated", {}, "/admin", { flushEmails: false });
+  }
   if (verdict !== "ok") return { statut: verdict };
 
   return callProvider(texte, input.cible);

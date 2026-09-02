@@ -17,6 +17,7 @@ import {
   type SessionClaims,
 } from "@/lib/session-claims";
 import { mfaRequired } from "@/lib/mfa";
+import { checkLoginBurst } from "@/lib/security-alerts";
 import { verifyTotp } from "@/lib/totp";
 import { MAX_LOGIN_FAILURES_PER_IP, LOGIN_IP_WINDOW_MINUTES } from "@/lib/constants";
 import { ipFromHeaders, ipKey, recordHit, throttleHits } from "@/lib/throttle";
@@ -77,6 +78,8 @@ const providers: Provider[] = [
       const echec = async () => {
         await recordLoginFailure(email);
         await recordHit(cleIp);
+        // Une rafale tous comptes confondus prévient les admins.
+        await checkLoginBurst();
         return null;
       };
 

@@ -76,6 +76,13 @@ export const notif = {
   "storageAlert.full.body":
     "O próximo testemunho arriscaria ultrapassar o teto: a entrega de tokens de upload está suspensa até haver espaço livre.",
 
+  "securityAlert.loginBurst.title": "Rajada de inícios de sessão falhados: {count} em {minutes} min",
+  "securityAlert.loginBurst.body": "Alguém está a testar palavras-passe em grande escala. Os bloqueios por conta e por endereço estão ativos; se continuar, ativa a firewall da Vercel e verifica o registo.",
+  "securityAlert.dispute.title": "Litígio bancário aberto ({reason}) — {count} contribuição(ões) congelada(s)",
+  "securityAlert.dispute.body": "Um contribuidor contesta o pagamento junto do seu banco. A sua contribuição já não conta nos votos nem pode ser paga. Responde ao litígio a partir do painel Stripe.",
+  "securityAlert.translationSaturated.title": "Tradução automática esgotada este mês",
+  "securityAlert.translationSaturated.body": "O limite de caracteres foi atingido: «Traduzir» responde «saturado» até ao próximo mês. Um pico anormal pode ser um abuso — a tabela TranslationUsage mostra-o.",
+
   "groupMessage.title": "{actor} escreveu em {groupName}",
 
   "comment.title": "{actor} comentou «{projectTitle}»",

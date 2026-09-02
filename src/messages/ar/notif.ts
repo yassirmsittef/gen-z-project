@@ -76,6 +76,13 @@ export const notif = {
   "storageAlert.full.body":
     "الشهادة القادمة قد تتجاوز السقف: تعليق تسليم رموز الرفع حتى تتحرر مساحة.",
 
+  "securityAlert.loginBurst.title": "موجة من محاولات تسجيل الدخول الفاشلة: {count} خلال {minutes} دقيقة",
+  "securityAlert.loginBurst.body": "أحدهم يجرّب كلمات المرور على نطاق واسع. أقفال الحساب والعنوان تعمل؛ إن استمر ذلك فعّل جدار حماية Vercel وراجع السجل.",
+  "securityAlert.dispute.title": "نزاع مصرفي مفتوح ({reason}) — {count} مساهمة مجمّدة",
+  "securityAlert.dispute.body": "أحد المساهمين يعترض على دفعته لدى مصرفه. لم تعد مساهمته تُحتسب في التصويت ولا يمكن صرفها. ردّ على النزاع من لوحة Stripe.",
+  "securityAlert.translationSaturated.title": "الترجمة الآلية استُنفدت لهذا الشهر",
+  "securityAlert.translationSaturated.body": "بلغ الحدّ الأقصى للأحرف: يجيب زر «ترجمة» بـ«مشبع» حتى الشهر القادم. الذروة غير الطبيعية قد تكون إساءة استخدام — يظهرها جدول TranslationUsage.",
+
   "groupMessage.title": "{actor} كتب في {groupName}",
 
   "comment.title": "{actor} علّق على «{projectTitle}»",

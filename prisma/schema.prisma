@@ -633,6 +633,7 @@ enum NotificationType {
   CALL_COMMENT // quelqu'un a commenté ton appel
   CALL_VIDEO // quelqu'un a posté un témoignage vidéo sous ton appel
   STORAGE_ALERT // réservé aux admins : le stockage vidéo approche ou atteint son plafond
+  SECURITY_ALERT // réservé aux admins : rafale d'échecs de connexion, litige bancaire, quota de traduction saturé
 }
 
 model Notification {

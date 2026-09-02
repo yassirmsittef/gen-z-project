@@ -76,6 +76,13 @@ export const notif = {
   "storageAlert.full.body":
     "La prossima testimonianza rischierebbe di superare il tetto: la consegna dei token di upload è sospesa finché non si libera spazio.",
 
+  "securityAlert.loginBurst.title": "Raffica di accessi falliti: {count} in {minutes} min",
+  "securityAlert.loginBurst.body": "Qualcuno sta provando password su larga scala. I blocchi per account e per indirizzo sono attivi; se continua, attiva il firewall Vercel e controlla il registro.",
+  "securityAlert.dispute.title": "Contestazione bancaria aperta ({reason}) — {count} contributo/i congelato/i",
+  "securityAlert.dispute.body": "Un contributore contesta il pagamento presso la sua banca. Il suo contributo non pesa più nei voti e non è più versabile. Rispondi alla contestazione dalla dashboard Stripe.",
+  "securityAlert.translationSaturated.title": "Traduzione automatica esaurita per il mese",
+  "securityAlert.translationSaturated.body": "Il tetto di caratteri è raggiunto: «Traduci» risponde «saturo» fino al mese prossimo. Un picco anomalo può essere un abuso — la tabella TranslationUsage lo mostra.",
+
   "groupMessage.title": "{actor} ha scritto in {groupName}",
 
   "comment.title": "{actor} ha commentato «{projectTitle}»",

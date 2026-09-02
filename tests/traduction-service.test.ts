@@ -50,6 +50,12 @@ beforeEach(() => {
 afterEach(async () => {
   vi.unstubAllGlobals();
   await prisma.translationUsage.deleteMany({ where: { key: { startsWith: PREFIXE } } });
+  // La saturation prévient les ADMIN (alerte de sécurité, relayée par email) :
+  // ne pas laisser cette alerte en attente dans la base de dev — un autre
+  // test compte les emails en attente et n'en attend qu'un.
+  await prisma.notification.deleteMany({
+    where: { type: "SECURITY_ALERT", key: "securityAlert.translationSaturated" },
+  });
 });
 
 afterAll(async () => {
