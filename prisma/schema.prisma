@@ -78,6 +78,7 @@ model User {
   reputationEvents ReputationEvent[]
   reports          Report[]
   resetTokens      PasswordResetToken[]
+  verificationTokens EmailVerificationToken[]
   votes            Vote[]
   messagesSent     Message[]           @relation("MessagesSent")
   messagesReceived Message[]           @relation("MessagesReceived")
@@ -413,6 +414,22 @@ model PasswordResetToken {
   id        String    @id @default(cuid())
   userId    String
   tokenHash String    @unique // SHA-256 du token — le token en clair ne vit que dans l'email
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+// Vérification de l'adresse email (src/lib/email-verification.ts) : même
+// mécanique que la réinitialisation — le jeton en clair ne vit que dans
+// l'email, la base n'en garde que le SHA-256. Usage unique, 24 h.
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())

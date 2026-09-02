@@ -9,6 +9,12 @@ export const email = {
   managePrefsText: "Gestiona tus preferencias: {link}",
   signature: "GeniGain — la comunidad que financia a tu generación",
 
+  "verify.subject": "Confirma tu dirección de email de GeniGain",
+  "verify.heading": "Confirma tu dirección de email",
+  "verify.intro": "¡Bienvenido! Queda un paso: confirmar que esta dirección es realmente tuya.",
+  "verify.validity": "El enlace es válido 24 horas y solo sirve una vez.",
+  "verify.cta": "Confirmar mi dirección",
+  "verify.ignore": "Si no has creado una cuenta en GeniGain, ignora este email.",
   "reset.subject": "Restablece tu contraseña de GeniGain",
   "reset.heading": "Restablece tu contraseña",
   "reset.intro": "Alguien (tú, normalmente) pidió restablecer tu contraseña de GeniGain.",

@@ -46,6 +46,9 @@ export const account = {
   "registerForm.signInLink": "سجّل الدخول",
 
   // ── password-form.tsx · PasswordForm ──────────────────────────────────
+  "verifyBanner.text": "لم يُؤكَّد عنوان بريدك بعد — راجع صندوق الوارد (والرسائل غير المرغوبة).",
+  "verifyBanner.resend": "إعادة إرسال الرسالة",
+  "verifyBanner.sent": "أُعيد إرسال الرسالة. إنها في الطريق.",
   "passwordForm.currentLabel": "كلمة المرور الحالية",
   "passwordForm.newLabel": "الجديدة (8 أحرف على الأقل)",
   "passwordForm.confirmLabel": "التأكيد",

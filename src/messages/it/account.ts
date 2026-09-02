@@ -51,6 +51,9 @@ export const account = {
   "registerForm.signInLink": "Accedi",
 
   // ── password-form.tsx · PasswordForm ──────────────────────────────────
+  "verifyBanner.text": "Il tuo indirizzo email non è ancora confermato — controlla la posta (e lo spam).",
+  "verifyBanner.resend": "Reinvia l'email",
+  "verifyBanner.sent": "Email reinviata. Sta arrivando.",
   "passwordForm.currentLabel": "Password attuale",
   "passwordForm.newLabel": "Nuova (min 8 caratteri)",
   "passwordForm.confirmLabel": "Conferma",

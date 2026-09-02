@@ -15,6 +15,10 @@ export const authPages = {
   "forgot.title": "Password dimenticata",
   "forgot.description":
     "Indica l'email del tuo account: ti mandiamo un link valido 1 ora per sceglierne una nuova.",
+  "verify.title": "Indirizzo confermato",
+  "verify.success": "Grazie — il tuo indirizzo è confermato. Tutto GeniGain è aperto per te.",
+  "verify.invalid": "Questo link non è valido o è scaduto. Richiedi una nuova email dal tuo pannello.",
+  "verify.cta": "Vai al pannello",
   "reset.title": "Scegli la tua nuova password",
   "reset.description": "Il link funziona una sola volta — appena è salvata, è morto.",
 } satisfies Messages["authPages"];

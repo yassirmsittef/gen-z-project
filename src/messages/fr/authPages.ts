@@ -15,6 +15,10 @@ export const authPages = {
   "forgot.title": "Mot de passe oublié",
   "forgot.description":
     "Donne l'email de ton compte : on t'envoie un lien valable 1 heure pour en choisir un nouveau.",
+  "verify.title": "Adresse confirmée",
+  "verify.success": "Merci — ton adresse est confirmée. Tout GeniGain t'est ouvert.",
+  "verify.invalid": "Ce lien est invalide ou a expiré. Demande un nouvel email depuis ton tableau de bord.",
+  "verify.cta": "Aller au tableau de bord",
   "reset.title": "Choisis ton nouveau mot de passe",
   "reset.description": "Le lien ne sert qu'une fois — dès que c'est enregistré, il est mort.",
 } as const satisfies Dict;

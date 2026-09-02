@@ -20,6 +20,7 @@ import { ConnectForm } from "@/components/connect-form";
 import { DeleteAccount } from "@/components/delete-account";
 import { LocationForm } from "@/components/location-form";
 import { MfaForm } from "@/components/mfa-form";
+import { VerifyEmailBanner } from "@/components/verify-email-banner";
 import { PasswordForm } from "@/components/password-form";
 import { otpauthUri } from "@/lib/totp";
 import { ProfileForm } from "@/components/profile-form";
@@ -178,6 +179,7 @@ export default async function DashboardPage({
   return (
     <div className="page-halo">
       <div className="container space-y-12 py-10">
+        {!user.emailVerified && user.passwordHash && <VerifyEmailBanner />}
         {connectBanner && (
           <p
             className={cn("rounded-2xl border p-4 text-sm font-medium", connectBanner.tone)}

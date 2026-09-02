@@ -9,6 +9,7 @@ import { findCity } from "@/lib/cities";
 import { MAX_SIGNUPS_PER_IP_PER_HOUR } from "@/lib/constants";
 import { CURRENCY_CODES } from "@/lib/money";
 import { signInPayload } from "@/lib/credentials-payload";
+import { sendVerificationEmail } from "@/lib/email-verification";
 import { hashPassword } from "@/lib/password";
 import { assertUnderLimit, ipFromHeaders, ipKey, recordHit } from "@/lib/throttle";
 import { prisma } from "@/lib/prisma";
@@ -79,6 +80,15 @@ export async function registerAction(
         : {}),
     },
   });
+
+  // L'email de confirmation part tout de suite ; s'il échoue (fournisseur
+  // absent, réseau), l'inscription n'en souffre pas — le tableau de bord
+  // propose de le renvoyer.
+  try {
+    await sendVerificationEmail(user.id);
+  } catch (error) {
+    console.error("[inscription] email de confirmation non envoyé :", error);
+  }
 
   // La langue choisie vaut aussi pour le visiteur redevenu anonyme : le
   // cookie suit la préférence du compte (déconnexion comprise).

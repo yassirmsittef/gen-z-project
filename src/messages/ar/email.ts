@@ -9,6 +9,12 @@ export const email = {
   managePrefsText: "أدر تفضيلاتك: {link}",
   signature: "GeniGain — المجتمع الذي يموّل جيلك",
 
+  "verify.subject": "أكّد عنوان بريدك في GeniGain",
+  "verify.heading": "أكّد عنوان بريدك الإلكتروني",
+  "verify.intro": "مرحبًا بك! بقيت خطوة واحدة: تأكيد أن هذا العنوان لك فعلًا.",
+  "verify.validity": "الرابط صالح لمدة 24 ساعة ويعمل مرة واحدة فقط.",
+  "verify.cta": "تأكيد عنواني",
+  "verify.ignore": "إن لم تُنشئ حسابًا في GeniGain فتجاهل هذه الرسالة.",
   "reset.subject": "أعد تعيين كلمة مرورك على GeniGain",
   "reset.heading": "أعد تعيين كلمة مرورك",
   "reset.intro": "طلب أحدهم (أنت عادةً) إعادة تعيين كلمة مرورك على GeniGain.",

@@ -42,6 +42,16 @@ async function main() {
   }
 
   const role = action === "retirer" ? "MEMBER" : "ADMIN";
+  if (role === "ADMIN") {
+    // Le rôle s'accorde sur une chaîne d'email : elle doit avoir été confirmée
+    // par un clic depuis la boîte, sinon n'importe qui peut s'inscrire avec
+    // l'adresse qu'on s'apprête à promouvoir.
+    const cible = await prisma.user.findUnique({ where: { email }, select: { emailVerified: true } });
+    if (!cible) throw new Error(`Aucun compte pour ${email}.`);
+    if (!cible.emailVerified) {
+      throw new Error(`${email} n'a pas confirmé son adresse : promotion refusée. (Lien dans l'email d'inscription, ou « Renvoyer » au tableau de bord.)`);
+    }
+  }
   const user = await prisma.user.update({ where: { email }, data: { role } });
   console.log(`${user.name} (${email}) → ${role}`);
 }
