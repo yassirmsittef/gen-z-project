@@ -43,12 +43,13 @@ export async function addCommentAction(
   }
   await recordHit(cle);
 
-  await prisma.comment.create({
+  const comment = await prisma.comment.create({
     data: {
       projectId: project.id,
       userId: session.user.id,
       body: parsed.data.body,
     },
+    select: { id: true },
   });
 
   if (project.ownerId !== session.user.id) {
@@ -56,6 +57,9 @@ export async function addCommentAction(
       userId: project.ownerId,
       type: "COMMENT",
       key: "comment",
+      // Retrouvable à la suppression : sans ce lien, le texte d'un
+      // commentaire effacé restait lisible à vie dans la cloche du porteur.
+      sourceId: comment.id,
       params: { actorName: session.user.name ?? null, projectTitle: project.title },
       excerpt:
         parsed.data.body.length > 120 ? `${parsed.data.body.slice(0, 117)}...` : parsed.data.body,
@@ -91,6 +95,12 @@ export async function deleteCommentAction(formData: FormData): Promise<void> {
   if (!canDelete) return;
 
   await prisma.comment.delete({ where: { id: commentId } });
+  // La notification qui le citait est rétractée : plus d'extrait, et le
+  // rendu la marque comme retirée (même mécanique que les messages).
+  await prisma.notification.updateMany({
+    where: { sourceId: commentId, type: "COMMENT" },
+    data: { retractedAt: new Date(), excerpt: null },
+  });
   revalidatePath(`/projects/${comment.project.slug}`);
 }
 

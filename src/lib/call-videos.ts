@@ -407,19 +407,31 @@ export async function postVideo(
   const storedBytes = tailleVideo + (taillePoster ?? 0);
   const jaugeAvant = (await storageStatus()).usedBytes;
 
-  const video = await prisma.callVideo.create({
-    data: {
-      callId: call.id,
-      authorId: userId,
-      url,
-      posterUrl: posterUrl ?? null,
-      caption: input.caption,
-      durationMs: input.durationMs,
-      width: input.width ?? null,
-      height: input.height ?? null,
-      storedBytes,
-    },
-    select: { id: true },
+  // Le plafond quotidien est RECOMPTÉ sous verrou par auteur au moment
+  // d'écrire : 20 dépôts simultanés en créaient 13 avec le seul compte du
+  // début (tous comptaient avant que les autres n'aient écrit).
+  const video = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
+    const auJour = await tx.callVideo.count({
+      where: { authorId: userId, createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+    });
+    if (auJour >= MAX_VIDEOS_PER_DAY) {
+      throw new DomainError(`${MAX_VIDEOS_PER_DAY} témoignages par jour maximum. Reviens demain.`);
+    }
+    return tx.callVideo.create({
+      data: {
+        callId: call.id,
+        authorId: userId,
+        url,
+        posterUrl: posterUrl ?? null,
+        caption: input.caption,
+        durationMs: input.durationMs,
+        width: input.width ?? null,
+        height: input.height ?? null,
+        storedBytes,
+      },
+      select: { id: true },
+    });
   });
 
   // Les jetons que ce dépôt honore ne sont plus « en vol » : leurs octets

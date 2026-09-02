@@ -120,21 +120,30 @@ export async function createCall(authorId: string, input: BoycottCallInput): Pro
   const base = slugify(input.target) || "appel";
   const slug = `${base}-${Math.random().toString(36).slice(2, 6)}`;
 
-  const call = await prisma.boycottCall.create({
-    data: {
-      authorId,
-      slug,
-      target: input.target,
-      targetKey,
-      category: input.category,
-      reason: input.reason,
-      wanted: input.wanted,
-      sources: input.sources,
-      // L'auteur soutient son propre appel : sinon un appel naît à zéro voix
-      // et paraît mort-né.
-      supports: { create: { userId: authorId } },
-    },
-    select: { slug: true },
+  // Recompté sous verrou par auteur au moment d'écrire : 100 appels
+  // concurrents en passaient 100, chacun comptant avant l'écriture des autres.
+  const call = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${authorId}))`;
+    const auJour = await tx.boycottCall.count({ where: { authorId, createdAt: { gte: since } } });
+    if (auJour >= MAX_CALLS_PER_DAY) {
+      throw new DomainError(`${MAX_CALLS_PER_DAY} appels par jour maximum. Reviens demain.`);
+    }
+    return tx.boycottCall.create({
+      data: {
+        authorId,
+        slug,
+        target: input.target,
+        targetKey,
+        category: input.category,
+        reason: input.reason,
+        wanted: input.wanted,
+        sources: input.sources,
+        // L'auteur soutient son propre appel : sinon un appel naît à zéro voix
+        // et paraît mort-né.
+        supports: { create: { userId: authorId } },
+      },
+      select: { slug: true },
+    });
   });
 
   return call.slug;

@@ -16,6 +16,8 @@ import { hashPassword } from "@/lib/password";
 import { signIn, signOut } from "@/auth";
 import { eraseAccount } from "@/lib/account";
 import { isOwnBlob } from "@/lib/blob";
+import { MAX_AVATAR_CHANGES_PER_HOUR } from "@/lib/constants";
+import { assertUnderLimit, recordHit } from "@/lib/throttle";
 import { DomainError } from "@/lib/project-service";
 import { parseList } from "@/lib/validation";
 import { requestSchemas } from "@/lib/validation-locale";
@@ -156,6 +158,18 @@ export async function updateProfileAction(
     where: { id: session.user.id },
     select: { avatarUrl: true, avatarBytes: true },
   });
+  // Cadence : 50 dépôts simultanés laissaient 50 fichiers dont 49 orphelins
+  // et facturés. Une photo se change rarement ; cinq par heure suffisent.
+  const fichierPhoto = formData.get("avatar");
+  if (fichierPhoto instanceof File && fichierPhoto.size > 0) {
+    const cle = `avatar:user:${session.user.id}`;
+    try {
+      await assertUnderLimit(cle, { max: MAX_AVATAR_CHANGES_PER_HOUR, fenetreMinutes: 60 });
+    } catch {
+      return { error: await tErr("tooManyRequests") };
+    }
+    await recordHit(cle);
+  }
   // Relevé AVANT le dépôt : les photos comptent dans la jauge, donc elles
   // peuvent franchir un palier — et le franchissement ne se constate qu'en
   // comparant l'avant et l'après.

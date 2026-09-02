@@ -783,6 +783,19 @@ async function failProjectTx(tx: Tx, projectId: string, reason: FailReason) {
       where: { id: c.id },
       data: { refunded: true, refundDueMinor: refund },
     });
+    // Le droit de poster (20 $ contribués) ne se recycle pas : la part
+    // remboursée sort du cumul, au prorata — jamais sous zéro.
+    if (refund > 0 && c.amount > 0) {
+      const retire = Math.floor((c.usdCents * refund) / c.amount);
+      const contributeur = await tx.user.findUnique({
+        where: { id: c.userId },
+        select: { contributedUsdCents: true },
+      });
+      await tx.user.update({
+        where: { id: c.userId },
+        data: { contributedUsdCents: Math.max(0, (contributeur?.contributedUsdCents ?? 0) - retire) },
+      });
+    }
   }
 
   await tx.project.update({

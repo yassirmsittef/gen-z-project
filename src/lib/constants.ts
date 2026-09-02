@@ -472,3 +472,5 @@ export const MAX_TRANSLATION_REQUESTS_PER_WINDOW = 200;
 export const MAX_MESSAGES_PER_HOUR = 60;
 /** Commentaires de projet postés par un membre en une heure. */
 export const MAX_COMMENTS_PER_HOUR = 30;
+/** Changements de photo de profil par membre et par heure. */
+export const MAX_AVATAR_CHANGES_PER_HOUR = 5;

@@ -458,7 +458,19 @@ export async function joinGroup(userId: string, slug: string): Promise<string> {
   }
 
   try {
-    await prisma.chatGroupMember.create({ data: { groupId: group.id, userId } });
+    // Recompté sous verrou par salon : une rafale simultanée faisait passer
+    // le plafond de 199 à 214, chaque requête comptant avant que les autres
+    // n'aient écrit.
+    await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${group.id}))`;
+      const membres = await tx.chatGroupMember.count({ where: { groupId: group.id } });
+      if (membres >= MAX_GROUP_MEMBERS) {
+        throw new DomainError(
+          `Ce groupe est complet (${MAX_GROUP_MEMBERS} membres) — ouvre-en un autre dans la même catégorie.`
+        );
+      }
+      await tx.chatGroupMember.create({ data: { groupId: group.id, userId } });
+    });
   } catch (error) {
     // Double clic / deux onglets : la contrainte de clé primaire a tranché.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {

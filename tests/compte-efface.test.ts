@@ -84,3 +84,56 @@ describe("droit à l'effacement", () => {
     expect(après!.passwordHash).toBeNull();
   });
 });
+
+describe("ce que l'effacement laissait derrière lui (audit du 02/09)", () => {
+  it("retire le nom réel des lignes « X a rejoint », des notifications des autres et des signalements", async () => {
+    const personne = await mkUser({ name: "Prénom Réel" });
+    const temoin = await mkUser({ name: "Témoin" });
+    const salon = await prisma.chatGroup.create({
+      data: {
+        name: `Salon efface ${Date.now().toString(36)}`,
+        slug: `salon-efface-${Date.now().toString(36)}`,
+        purpose: "x",
+        category: "TECH",
+        ownerId: temoin.id,
+        members: { create: [{ userId: temoin.id }, { userId: personne.id }] },
+      },
+    });
+    const ligne = await prisma.groupMessage.create({
+      data: {
+        groupId: salon.id,
+        senderId: personne.id,
+        system: true,
+        systemKey: "joined",
+        systemParams: { name: "Prénom Réel" },
+        body: "Prénom Réel a rejoint le groupe. Bienvenue !",
+      },
+    });
+    const notif = await prisma.notification.create({
+      data: {
+        userId: temoin.id,
+        type: "MESSAGE",
+        key: "message.new",
+        params: { actorName: "Prénom Réel" },
+        excerpt: "coucou",
+        href: `/chat/${personne.id}`,
+      },
+    });
+    const signalement = await prisma.report.create({
+      data: { reporterId: personne.id, targetType: "USER", targetId: temoin.id, reason: "spam", detail: "texte libre identifiant" },
+    });
+
+    await eraseAccount(personne.id);
+
+    const apresLigne = await prisma.groupMessage.findUniqueOrThrow({ where: { id: ligne.id } });
+    expect((apresLigne.systemParams as { name: string | null }).name).toBeNull();
+    expect(apresLigne.body).not.toContain("Prénom Réel");
+    const apresNotif = await prisma.notification.findUniqueOrThrow({ where: { id: notif.id } });
+    expect((apresNotif.params as { actorName: string }).actorName).toBe("Membre retiré");
+    expect(apresNotif.excerpt).toBeNull();
+    const apresSignalement = await prisma.report.findUniqueOrThrow({ where: { id: signalement.id } });
+    expect(apresSignalement.detail).toBeNull();
+
+    await prisma.chatGroup.delete({ where: { id: salon.id } });
+  });
+});

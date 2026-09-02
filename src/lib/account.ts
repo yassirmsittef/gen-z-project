@@ -74,6 +74,42 @@ export async function eraseAccount(userId: string) {
     // ressusciterait le compte (l'email neutralisé se déduit de l'id public).
     await tx.passwordResetToken.deleteMany({ where: { userId } });
 
+    // Ce que l'audit a trouvé APRÈS l'anonymisation de la ligne User : le nom
+    // réel survivait ailleurs, chez les autres.
+    // 1. Les lignes « X a rejoint le salon » (matière rendue à la lecture) :
+    //    plus de nom, la phrase devient « Un membre a rejoint ».
+    await tx.groupMessage.updateMany({
+      where: { senderId: userId, system: true },
+      data: { systemParams: { name: null }, body: "Un membre a rejoint le groupe. Bienvenue !" },
+    });
+    // 2. Les notifications reçues par les AUTRES (« X t'a écrit », « X a
+    //    commenté ») portent le nom dans leurs paramètres. On ne sait pas
+    //    toutes les retrouver par un identifiant — on prend celles qui
+    //    pointent vers la personne (son profil, sa conversation) et celles
+    //    dont l'acteur porte exactement son nom.
+    const avantNom = await tx.user.findUnique({ where: { id: userId }, select: { name: true } });
+    const touchees = await tx.notification.findMany({
+      where: {
+        OR: [
+          { href: { contains: `/u/${userId}` } },
+          { href: { contains: `/chat/${userId}` } },
+          ...(avantNom?.name ? [{ params: { path: ["actorName"], equals: avantNom.name } }] : []),
+        ],
+      },
+      select: { id: true, params: true },
+    });
+    for (const n of touchees) {
+      const params = (n.params ?? {}) as Record<string, unknown>;
+      if (!("actorName" in params)) continue;
+      await tx.notification.update({
+        where: { id: n.id },
+        data: { params: { ...params, actorName: "Membre retiré" }, excerpt: null },
+      });
+    }
+    // 3. Le texte libre des signalements qu'elle a écrits : le motif (jeu
+    //    fermé) suffit à la modération, la précision libre est à elle.
+    await tx.report.updateMany({ where: { reporterId: userId }, data: { detail: null } });
+
     await tx.user.update({
       where: { id: userId },
       data: {
