@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * Politique de sécurité du contenu (CSP), posée à chaque requête.
+ * Politique de sécurité du contenu (CSP), posée à chaque requête (proxy Next 16,
+ * ex-middleware).
  *
  * Pourquoi ici et pas dans next.config.ts : un nonce n'a de valeur que s'il est
  * DIFFÉRENT à chaque réponse. Un en-tête statique ne peut pas le fournir, et une
@@ -63,7 +64,10 @@ function politique(nonce: string, dev: boolean): string {
   return rendu.join("; ");
 }
 
-export function middleware(request: NextRequest) {
+// Next 16 : la convention `middleware` devient `proxy` (runtime Node, plus
+// d'edge) — le nom dit mieux ce que fait ce fichier : il s'interpose sur
+// chaque requête pour poser la CSP, rien de plus.
+export function proxy(request: NextRequest) {
   const dev = process.env.NODE_ENV !== "production";
   const nonce = crypto.randomUUID();
   const csp = politique(nonce, dev);
