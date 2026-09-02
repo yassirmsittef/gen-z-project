@@ -3,8 +3,9 @@ import type { Prisma, ProjectCategory } from "@prisma/client";
 import { detachVideoFiles } from "@/lib/call-videos";
 import { PROJECT_CARD_INCLUDE } from "@/lib/project-card-data";
 import { prisma } from "@/lib/prisma";
+import { assertUnderLimit, recordHit } from "@/lib/throttle";
 import {
-  MAX_CALLS_PER_DAY,
+  MAX_CALLS_PER_DAY, MAX_ANSWERS_PER_PROJECT_PER_DAY,
   MAX_COMMENTS_RENDERED,
   MAX_CALL_COMMENTS_PER_HOUR,
   MAX_COMMENTS_PER_CALL,
@@ -228,6 +229,12 @@ export async function answerCall(userId: string, callId: string, projectId: stri
     return;
   }
 
+  // Trouvé par l'audit : un projet pouvait se déclarer remplaçant de N'IMPORTE
+  // QUEL appel, sans lien — et chaque déclaration notifie tous les soutiens de
+  // l'appel. Trois par projet et par jour : de quoi répondre, pas arroser.
+  const cleReponse = `answer:project:${projectId}`;
+  await assertUnderLimit(cleReponse, { max: MAX_ANSWERS_PER_PROJECT_PER_DAY, fenetreMinutes: 24 * 60 });
+  await recordHit(cleReponse);
   await prisma.boycottAnswer.create({ data: { callId, projectId } });
 
   // L'auteur et les soutiens, sans doublon ni auto-notification du porteur.

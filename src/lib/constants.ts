@@ -486,3 +486,5 @@ export const MAX_AVATAR_CHANGES_PER_HOUR = 5;
 export const LOGIN_BURST_ALERT_THRESHOLD = 50;
 /** Adhésions à un même salon par membre et par 24 h. */
 export const MAX_GROUP_JOINS_PER_DAY = 3;
+/** Appels auxquels un même projet peut se déclarer « remplaçant » par jour. */
+export const MAX_ANSWERS_PER_PROJECT_PER_DAY = 3;

@@ -23,6 +23,10 @@ import { MAX_LOGIN_FAILURES_PER_IP, LOGIN_IP_WINDOW_MINUTES } from "@/lib/consta
 import { ipFromHeaders, ipKey, recordHit, throttleHits } from "@/lib/throttle";
 import { loginSchema } from "@/lib/validation";
 
+/** Hachage leurre (coût 12, comme les vrais) : le temps de réponse d'un
+ *  compte inconnu doit ressembler à celui d'un compte existant. */
+const LEURRE_BCRYPT = "$2a$12$RYOKCF.XQQ2U9FCcyecO4.LmgsmXeSrUQLmB.2HVDcEVo2l1Z0Jcm";
+
 /** Trop d'échecs récents : le code traverse Auth.js jusqu'à loginAction. */
 class LoginRateLimited extends CredentialsSignin {
   code = "rate-limited";
@@ -84,10 +88,12 @@ const providers: Provider[] = [
       };
 
       const user = await prisma.user.findUnique({ where: { email } });
-      if (!user?.passwordHash) return echec();
-
-      const valid = await verifyPassword(password, user.passwordHash);
-      if (!valid) return echec();
+      // Compte inconnu (ou sans mot de passe) : on compare quand même, contre
+      // un hachage leurre — trouvé par l'audit : ~240 ms pour un compte
+      // existant contre ~34 ms sinon, de quoi énumérer les comptes au
+      // chronomètre malgré le message identique.
+      const valid = await verifyPassword(password, user?.passwordHash ?? LEURRE_BCRYPT);
+      if (!user?.passwordHash || !valid) return echec();
 
       // Le code n'est demandé qu'APRÈS un mot de passe juste : qui ne l'a pas
       // n'apprend même pas que la double authentification existe. Un code
