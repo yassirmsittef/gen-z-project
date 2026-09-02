@@ -4,6 +4,7 @@ import {
   purgeStaleUploadTickets,
   sweepOrphanVideoBlobs,
 } from "@/lib/call-videos";
+import { runDailyBackup } from "@/lib/backup";
 import { purgeStaleLoginAttempts } from "@/lib/login-rate-limit";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { executeDuePayouts, executeDueRefunds } from "@/lib/payouts";
@@ -65,7 +66,17 @@ export async function GET(request: Request) {
   // sur tout ce qui précédait les migrations.
   await backfillStorageSizes();
   const balayage = await sweepOrphanVideoBlobs();
+  // La sauvegarde chiffrée du jour, en DERNIER : après le ménage, et sans
+  // jamais faire échouer le reste du cron si le stockage boude.
+  let sauvegarde: Awaited<ReturnType<typeof runDailyBackup>>;
+  try {
+    sauvegarde = await runDailyBackup();
+  } catch (error) {
+    console.error("[sauvegarde] échec :", error);
+    sauvegarde = { url: null, raison: "échec (voir journal)" };
+  }
   return NextResponse.json({
+    sauvegarde: sauvegarde.url ? { octets: sauvegarde.octets, purgees: sauvegarde.purgees } : { raison: sauvegarde.raison },
     ok: true,
     ranAt: new Date().toISOString(),
     blobsOrphelins: balayage.orphelins,
