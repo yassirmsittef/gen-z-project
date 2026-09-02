@@ -15,6 +15,7 @@ import bcrypt from "bcryptjs";
 import { hashPassword } from "@/lib/password";
 import { signIn, signOut } from "@/auth";
 import { eraseAccount } from "@/lib/account";
+import { isOwnBlob } from "@/lib/blob";
 import { DomainError } from "@/lib/project-service";
 import { parseList } from "@/lib/validation";
 import { requestSchemas } from "@/lib/validation-locale";
@@ -125,9 +126,6 @@ export async function changePasswordAction(
 
 export type ProfileFormState = { error?: string; success?: boolean } | undefined;
 
-/** Un avatar hébergé par NOUS (remplaçable/supprimable), pas un lien externe. */
-const isOwnBlob = (url: string | null): url is string =>
-  Boolean(url?.includes(".blob.vercel-storage.com/"));
 
 /**
  * Identité publique (pseudo, photo, bio, liens) + devise d'affichage.
@@ -170,7 +168,11 @@ export async function updateProfileAction(
   const removeAvatar = formData.get("removeAvatar") === "1";
 
   if (file instanceof File && file.size > 0) {
-    if (!file.type.startsWith("image/")) {
+    // Le type DÉCLARÉ ne vaut rien (l'audit a fait passer un SVG scripté, servi
+    // comme image) : on lit les premiers octets. JPEG, PNG, WebP, GIF —
+    // jamais de SVG, qui est du XML exécutable dès qu'un navigateur l'ouvre.
+    const sniffed = await sniffImageType(file);
+    if (!sniffed) {
       return { error: await tErr("photoMustBeImage") };
     }
     if (file.size > 1_500_000) {
@@ -182,7 +184,7 @@ export async function updateProfileAction(
     const blob = await put(`avatars/${session.user.id}.webp`, file, {
       access: "public",
       addRandomSuffix: true, // URL nouvelle à chaque photo : jamais de cache périmé
-      contentType: file.type,
+      contentType: sniffed,
     });
     avatarUrl = blob.url;
     // Les photos partagent le magasin avec les témoignages : sans cette
@@ -282,4 +284,18 @@ export async function updateLocationAction(
   await updateUserLocation(session.user.id, city);
   revalidatePath("/", "layout");
   return { success: true };
+}
+
+/**
+ * Le vrai type d'une image, lu dans ses premiers octets. `null` pour tout ce
+ * qui n'est pas une image raster connue — un SVG, un HTML, un PDF renommé.
+ */
+async function sniffImageType(file: File): Promise<string | null> {
+  const tete = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const ascii = (a: number, b: number) => String.fromCharCode(...tete.slice(a, b));
+  if (tete[0] === 0xff && tete[1] === 0xd8 && tete[2] === 0xff) return "image/jpeg";
+  if (tete[0] === 0x89 && ascii(1, 4) === "PNG") return "image/png";
+  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "image/webp";
+  if (ascii(0, 4) === "GIF8") return "image/gif";
+  return null;
 }

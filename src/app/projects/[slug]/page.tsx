@@ -71,7 +71,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         orderBy: { order: "asc" },
         include: { proofs: { include: { votes: true } } },
       },
-      contributions: { include: { user: true }, orderBy: { createdAt: "desc" } },
+      // Jamais la ligne User entière : elle porte passwordHash, email, Stripe…
+      contributions: {
+        include: { user: { select: { name: true, avatarUrl: true } } },
+        orderBy: { createdAt: "desc" },
+      },
       updates: { orderBy: { createdAt: "desc" } },
       comments: {
         orderBy: { createdAt: "desc" },

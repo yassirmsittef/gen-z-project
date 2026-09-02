@@ -3,6 +3,7 @@ import {
   MAX_TRANSLATION_CHARS,
   MAX_TRANSLATION_CHARS_PER_MONTH,
   MAX_TRANSLATION_CHARS_PER_WINDOW,
+  MAX_TRANSLATION_REQUESTS_PER_WINDOW,
   TRANSLATION_WINDOW_MINUTES,
 } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
@@ -105,19 +106,38 @@ export async function serviceTranslate(input: {
   if (!translationServiceConfigured()) return { statut: "non-supporte" };
   if (texte.length < 2 || texte.length > MAX_TRANSLATION_CHARS) return { statut: "echec" };
 
-  const [moisEcoule, fenetreEcoulee] = await Promise.all([
-    charsDepuis({ depuis: debutMois() }),
-    charsDepuis({ key: input.key, depuis: debutFenetre() }),
-  ]);
-  if (moisEcoule + texte.length > MAX_TRANSLATION_CHARS_PER_MONTH) return { statut: "sature" };
-  if (fenetreEcoulee + texte.length > MAX_TRANSLATION_CHARS_PER_WINDOW) {
-    return { statut: "trop-frequent" };
-  }
-
-  // Compté AVANT l'appel : un appel qui part puis échoue a quand même été
-  // facturé au palier gratuit, et une rafale d'échecs ne doit pas être un
-  // moyen de contourner le plafond.
-  await recordTranslationChars(input.key, texte.length);
+  // Compter PUIS écrire, sous verrou par lecteur : l'audit a fait sauter le
+  // plafond avec 20 requêtes simultanées, chacune comptant avant que les
+  // autres n'aient écrit. Le verrou consultatif sérialise le geste ; il est
+  // relâché au commit, avant l'appel réseau. Le nombre de requêtes est borné
+  // aussi : des textes de deux caractères ne pèsent rien en caractères mais
+  // coûtent un appel chacun.
+  const verdict = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${input.key}))`;
+    const depuisMois = debutMois();
+    const depuisFenetre = debutFenetre();
+    const [mois, fenetre, requetes] = await Promise.all([
+      tx.translationUsage.aggregate({ _sum: { chars: true }, where: { createdAt: { gt: depuisMois } } }),
+      tx.translationUsage.aggregate({
+        _sum: { chars: true },
+        where: { key: input.key, createdAt: { gt: depuisFenetre } },
+      }),
+      tx.translationUsage.count({ where: { key: input.key, createdAt: { gt: depuisFenetre } } }),
+    ]);
+    if ((mois._sum.chars ?? 0) + texte.length > MAX_TRANSLATION_CHARS_PER_MONTH) return "sature" as const;
+    if (
+      (fenetre._sum.chars ?? 0) + texte.length > MAX_TRANSLATION_CHARS_PER_WINDOW ||
+      requetes >= MAX_TRANSLATION_REQUESTS_PER_WINDOW
+    ) {
+      return "trop-frequent" as const;
+    }
+    // Compté AVANT l'appel : un appel qui part puis échoue a quand même été
+    // facturé au palier gratuit, et une rafale d'échecs ne doit pas être un
+    // moyen de contourner le plafond.
+    await tx.translationUsage.create({ data: { key: input.key, chars: texte.length } });
+    return "ok" as const;
+  });
+  if (verdict !== "ok") return { statut: verdict };
 
   return callProvider(texte, input.cible);
 }

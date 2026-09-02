@@ -458,3 +458,17 @@ export const MAX_SIGNUPS_PER_IP_PER_HOUR = 5;
 export const MAX_RESET_REQUESTS_PER_IP_PER_HOUR = 10;
 /** Demandes de partenariat (formulaire public) depuis une même adresse. */
 export const MAX_PARTNERSHIP_REQUESTS_PER_IP_PER_HOUR = 5;
+
+/** Échecs de connexion depuis une même adresse avant verrou (tous comptes
+ *  confondus) — le frein au « password spraying ». Large pour un wifi
+ *  partagé, trop étroit pour balayer un dictionnaire. */
+export const MAX_LOGIN_FAILURES_PER_IP = 30;
+export const LOGIN_IP_WINDOW_MINUTES = 15;
+
+/** Requêtes de traduction par lecteur et par fenêtre, en plus des
+ *  caractères : un texte minuscule ne pèse rien mais coûte un appel. */
+export const MAX_TRANSLATION_REQUESTS_PER_WINDOW = 200;
+/** Messages privés envoyés par un membre en une heure. */
+export const MAX_MESSAGES_PER_HOUR = 60;
+/** Commentaires de projet postés par un membre en une heure. */
+export const MAX_COMMENTS_PER_HOUR = 30;

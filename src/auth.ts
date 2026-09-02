@@ -18,6 +18,8 @@ import {
 } from "@/lib/session-claims";
 import { mfaRequired } from "@/lib/mfa";
 import { verifyTotp } from "@/lib/totp";
+import { MAX_LOGIN_FAILURES_PER_IP, LOGIN_IP_WINDOW_MINUTES } from "@/lib/constants";
+import { ipFromHeaders, ipKey, recordHit, throttleHits } from "@/lib/throttle";
 import { loginSchema } from "@/lib/validation";
 
 /** Trop d'échecs récents : le code traverse Auth.js jusqu'à loginAction. */
@@ -57,26 +59,32 @@ const providers: Provider[] = [
       email: { label: "Email", type: "email" },
       password: { label: "Mot de passe", type: "password" },
     },
-    async authorize(credentials) {
+    async authorize(credentials, request) {
       const parsed = loginSchema.safeParse(credentials);
       if (!parsed.success) return null;
       const { email, password } = parsed.data;
 
-      // Anti brute-force : vérifié AVANT bcrypt, même pour un email inconnu
-      // (coût identique pour l'attaquant, existence du compte jamais révélée).
+      // Anti brute-force, deux axes vérifiés AVANT bcrypt (coût identique pour
+      // l'attaquant, existence du compte jamais révélée) : par COMPTE (10
+      // échecs / 15 min) et par ADRESSE — sans ce second axe, le « password
+      // spraying » (un mot de passe courant contre mille emails) ne
+      // déclenchait jamais un seul verrou.
+      const cleIp = ipKey("login", ipFromHeaders(request.headers));
+      const echecsIp = await throttleHits(cleIp, LOGIN_IP_WINDOW_MINUTES);
+      if (echecsIp >= MAX_LOGIN_FAILURES_PER_IP) throw new LoginRateLimited();
       if (await isLoginLocked(email)) throw new LoginRateLimited();
 
-      const user = await prisma.user.findUnique({ where: { email } });
-      if (!user?.passwordHash) {
+      const echec = async () => {
         await recordLoginFailure(email);
+        await recordHit(cleIp);
         return null;
-      }
+      };
+
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user?.passwordHash) return echec();
 
       const valid = await verifyPassword(password, user.passwordHash);
-      if (!valid) {
-        await recordLoginFailure(email);
-        return null;
-      }
+      if (!valid) return echec();
 
       // Le code n'est demandé qu'APRÈS un mot de passe juste : qui ne l'a pas
       // n'apprend même pas que la double authentification existe. Un code
@@ -86,7 +94,7 @@ const providers: Provider[] = [
         const code = parsed.data.code?.trim();
         if (!code) throw new TotpRequired();
         if (!verifyTotp(user.totpSecret!, code)) {
-          await recordLoginFailure(email);
+          await echec();
           throw new TotpInvalid();
         }
       }

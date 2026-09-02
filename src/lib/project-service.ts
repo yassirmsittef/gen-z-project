@@ -240,6 +240,9 @@ export async function fulfillContribution(input: {
 
   let refundNeeded = false;
   await prisma.$transaction(async (tx) => {
+    // Deux paiements simultanés lisaient le même `raised` et l'un écrasait
+    // l'autre : le second contributeur payait sans que le projet le compte.
+    await lockProjectMoney(tx, projectId);
     const project = await tx.project.findUnique({ where: { id: projectId } });
     if (!project) {
       // Projet disparu entre checkout et webhook (retrait) : cas résiduel,
@@ -467,7 +470,16 @@ export async function castVote(userId: string, proofId: string, decision: VoteDe
       include: { milestone: { include: { project: true } }, votes: true },
     });
     if (!proof) throw new DomainError("Preuve introuvable.");
-    const project = proof.milestone.project;
+    // Verrou, PUIS relecture : le projet joint à la preuve a pu être arrêté
+    // entre-temps par son porteur — voter sur un projet FAILED figerait un
+    // versement sur un séquestre déjà promis au remboursement.
+    await lockProjectMoney(tx, proof.milestone.projectId);
+    const project = await tx.project.findUniqueOrThrow({
+      where: { id: proof.milestone.projectId },
+    });
+    if (project.status !== "FUNDED" && project.status !== "ACTIVE") {
+      throw new DomainError("Ce projet n'est plus en cours : le vote est clos.");
+    }
 
     if (proof.status !== "PENDING") throw new DomainError("Cette preuve a déjà été tranchée.");
     if (project.ownerId === userId) {
@@ -477,8 +489,11 @@ export async function castVote(userId: string, proofId: string, decision: VoteDe
       throw new DomainError("Tu as déjà voté sur cette preuve.");
     }
 
+    // Une contribution REMBOURSÉE (paiement arrivé après la clôture, litige,
+    // remboursement) ne pèse plus : sinon on vote avec de l'argent qu'on a
+    // récupéré pour débloquer celui des autres.
     const stake = await tx.contribution.aggregate({
-      where: { projectId: project.id, userId },
+      where: { projectId: project.id, userId, refunded: false },
       _sum: { amount: true },
     });
     const weight = stake._sum.amount ?? 0;
@@ -701,6 +716,21 @@ async function rejectProofTx(tx: Tx, proofId: string) {
   }
 }
 
+/**
+ * UN SEUL mouvement d'argent à la fois par projet.
+ *
+ * Trouvé par l'audit, reproduit 6 fois sur 12 : un vote qui débloque une
+ * étape et l'arrêt du projet par le porteur, lancés dans la même seconde,
+ * lisaient chacun le projet AVANT le commit de l'autre (READ COMMITTED).
+ * L'un figeait 600 $ de versement, l'autre remboursait 1 000 $ — 1 600 $
+ * sortis d'un séquestre de 1 000 $, la différence prise sur la plateforme.
+ * Le verrou consultatif tient jusqu'au commit et force les deux chemins à se
+ * suivre ; ce qui est lu APRÈS lui est l'état réel.
+ */
+async function lockProjectMoney(tx: Tx, projectId: string) {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${projectId}))`;
+}
+
 // ---------- Échec & remboursement ----------
 
 /**
@@ -714,6 +744,7 @@ const failReasonFr = (reason: FailReason) =>
   tNotifFr(`failReason.${reason.key}`, { days: reason.days ?? null });
 
 async function failProjectTx(tx: Tx, projectId: string, reason: FailReason) {
+  await lockProjectMoney(tx, projectId);
   const project = await tx.project.findUniqueOrThrow({
     where: { id: projectId },
     include: { contributions: { where: { refunded: false } } },

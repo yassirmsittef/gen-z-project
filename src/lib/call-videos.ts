@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { deleteOwnBlob, isVideoBlob, listOwnBlobs, statOwnBlob } from "@/lib/blob";
+import { canonicalBlobUrl, deleteOwnBlob, isVideoBlob, listOwnBlobs, statOwnBlob } from "@/lib/blob";
 import {
   AVATAR_BLOB_PREFIX,
   JETONS_PAR_PUBLICATION,
@@ -379,7 +379,11 @@ export async function postVideo(
   // les deux URL dans les deux colonnes. Sans ce contrôle, publier l'URL du
   // témoignage d'un autre suffisait à pouvoir le détruire (retirer sa propre
   // ligne supprime le fichier) et à faire compter deux fois les mêmes octets.
-  const urls = [input.url, ...(input.posterUrl ? [input.posterUrl] : [])];
+  // Forme CANONIQUE (hôte en minuscules, sans query) : « ?v=1 » ou une
+  // majuscule dans l'hôte ne font plus d'un même fichier deux références.
+  const url = canonicalBlobUrl(input.url);
+  const posterUrl = input.posterUrl ? canonicalBlobUrl(input.posterUrl) : undefined;
+  const urls = [url, ...(posterUrl ? [posterUrl] : [])];
   const déjàPris = await prisma.callVideo.findFirst({
     where: { OR: [{ url: { in: urls } }, { posterUrl: { in: urls } }] },
     select: { id: true },
@@ -394,8 +398,8 @@ export async function postVideo(
   // du jeton d'upload : on refuse de le référencer plutôt que de l'afficher
   // hors de toute portée.
   const [tailleVideo, taillePoster] = await Promise.all([
-    statOwnBlob(input.url),
-    statOwnBlob(input.posterUrl),
+    statOwnBlob(url),
+    statOwnBlob(posterUrl),
   ]);
   if (tailleVideo === null) {
     throw new DomainError("Ce fichier n'est pas hébergé par GeniGain. Renvoie ta vidéo.");
@@ -407,8 +411,8 @@ export async function postVideo(
     data: {
       callId: call.id,
       authorId: userId,
-      url: input.url,
-      posterUrl: input.posterUrl ?? null,
+      url,
+      posterUrl: posterUrl ?? null,
       caption: input.caption,
       durationMs: input.durationMs,
       width: input.width ?? null,

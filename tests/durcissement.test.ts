@@ -5,6 +5,7 @@ import { eraseAccount } from "../src/lib/account";
 import { ERASED_EMAIL_DOMAIN } from "../src/lib/constants";
 import { BCRYPT_COST, hashPassword, needsRehash, verifyPassword } from "../src/lib/password";
 import { createResetToken, resetPassword } from "../src/lib/password-reset";
+import { canonicalBlobUrl, isOwnBlob, isVideoBlob } from "../src/lib/blob";
 import { signInPayload } from "../src/lib/credentials-payload";
 import { isSameOrigin } from "../src/lib/request-origin";
 import { REVALIDATE_MS, needsRevalidation, reconcileClaims } from "../src/lib/session-claims";
@@ -171,5 +172,25 @@ describe("charge utile de connexion", () => {
     expect("code" in signInPayload({ ...base, code: "" })).toBe(false);
     expect("code" in signInPayload({ ...base, code: "   " })).toBe(false);
     expect(signInPayload({ ...base, code: " 123456 " })).toEqual({ ...base, code: "123456" });
+  });
+});
+
+describe("fichiers « à nous » (Vercel Blob)", () => {
+  it("lit l'URL comme le navigateur : hôte exact, https, et rien dans la query ne compte", () => {
+    expect(isOwnBlob("https://abc123.public.blob.vercel-storage.com/temoignages/x.mp4")).toBe(true);
+    // L'audit : la sous-chaîne dans la query suffisait à passer.
+    expect(isOwnBlob("https://evil.example/?x=.blob.vercel-storage.com/")).toBe(false);
+    expect(isOwnBlob("https://evil.example/.blob.vercel-storage.com/x")).toBe(false);
+    expect(isOwnBlob("https://public.blob.vercel-storage.com.evil.example/x")).toBe(false);
+    expect(isOwnBlob("http://abc123.public.blob.vercel-storage.com/x")).toBe(false);
+    expect(isOwnBlob("pas une url")).toBe(false);
+    expect(isOwnBlob(null)).toBe(false);
+    // Une majuscule dans l'hôte : c'est bien notre fichier (le DNS s'en
+    // moque) — mais la forme canonique, elle, est unique.
+    expect(isOwnBlob("https://ABC123.PUBLIC.BLOB.VERCEL-STORAGE.COM/temoignages/x.mp4")).toBe(true);
+    expect(canonicalBlobUrl("https://ABC123.PUBLIC.BLOB.VERCEL-STORAGE.COM/temoignages/x.mp4?v=1#f")).toBe(
+      "https://abc123.public.blob.vercel-storage.com/temoignages/x.mp4"
+    );
+    expect(isVideoBlob("https://abc123.public.blob.vercel-storage.com/avatars/x.webp")).toBe(false);
   });
 });

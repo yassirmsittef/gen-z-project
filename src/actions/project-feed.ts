@@ -1,4 +1,6 @@
 "use server";
+import { MAX_COMMENTS_PER_HOUR } from "@/lib/constants";
+import { assertUnderLimit, recordHit } from "@/lib/throttle";
 import { tErr } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
@@ -31,6 +33,15 @@ export async function addCommentAction(
     select: { id: true, slug: true, title: true, ownerId: true },
   });
   if (!project) return { error: await tErr("projectNotFound") };
+
+  // Cadence par auteur : chaque commentaire notifie le porteur.
+  const cle = `comment:user:${session.user.id}`;
+  try {
+    await assertUnderLimit(cle, { max: MAX_COMMENTS_PER_HOUR, fenetreMinutes: 60 });
+  } catch {
+    return { error: await tErr("tooManyRequests") };
+  }
+  await recordHit(cle);
 
   await prisma.comment.create({
     data: {

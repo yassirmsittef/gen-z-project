@@ -1,4 +1,6 @@
 "use server";
+import { MAX_MESSAGES_PER_HOUR } from "@/lib/constants";
+import { assertUnderLimit, recordHit } from "@/lib/throttle";
 import { tErr } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
@@ -32,6 +34,17 @@ export async function sendMessageAction(
     select: { id: true },
   });
   if (!recipient) return { error: await tErr("recipientNotFound") };
+
+  // Cadence par expéditeur : 220 messages effaçaient toutes les autres
+  // conversations de la victime de son écran. Large pour un échange vif,
+  // trop étroit pour une inondation.
+  const cle = `msg:user:${session.user.id}`;
+  try {
+    await assertUnderLimit(cle, { max: MAX_MESSAGES_PER_HOUR, fenetreMinutes: 60 });
+  } catch {
+    return { error: await tErr("tooManyRequests") };
+  }
+  await recordHit(cle);
 
   await prisma.message.create({
     data: {

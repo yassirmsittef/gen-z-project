@@ -29,7 +29,16 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function GET(request: Request) {
+  // FERMÉ PAR DÉFAUT : sans CRON_SECRET en production, la route refuse tout
+  // — et non « accepte tout ». Elle déclenche des remboursements et des
+  // versements Stripe ; l'oubli d'une variable ne doit pas l'ouvrir à qui
+  // connaît son chemin. En développement seulement, l'absence de secret
+  // laisse tester le cron à la main.
   const secret = process.env.CRON_SECRET;
+  if (!secret && process.env.NODE_ENV === "production") {
+    console.error("[cron] CRON_SECRET absent : route fermée");
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
   if (secret && request.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }

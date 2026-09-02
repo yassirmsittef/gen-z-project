@@ -6,8 +6,31 @@ import { VIDEO_BLOB_PREFIX } from "@/lib/constants";
  * collées par les membres (visuel de projet pointant vers un domaine tiers).
  * On ne supprime jamais ce qu'on n'héberge pas.
  */
-export const isOwnBlob = (url: string | null | undefined): url is string =>
-  Boolean(url?.includes(".blob.vercel-storage.com/"));
+/**
+ * Trouvé par l'audit : « contient ".blob.vercel-storage.com/" » n'est pas un
+ * test d'hôte. `https://evil.example/?x=.blob.vercel-storage.com/` passait,
+ * et `https://X.PUBLIC.BLOB.VERCEL-STORAGE.COM/…` (une majuscule) déjouait
+ * l'unicité tout en restant « à nous » — de quoi accrocher, puis détruire, le
+ * témoignage d'un autre. On lit l'URL comme le navigateur : schéma https,
+ * hôte NORMALISÉ, suffixe exact précédé d'un sous-domaine.
+ */
+export function isOwnBlob(url: string | null | undefined): url is string {
+  if (!url) return false;
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" && /^[a-z0-9-]+\.public\.blob\.vercel-storage\.com$/.test(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/** La même URL, écrite d'une seule façon : hôte en minuscules, sans query
+ *  ni fragment — c'est sous cette forme qu'on la stocke et qu'on la compare,
+ *  sinon « ?v=1 » suffit à faire passer un fichier pour un autre. */
+export function canonicalBlobUrl(url: string): string {
+  const u = new URL(url);
+  return `${u.protocol}//${u.hostname.toLowerCase()}${u.pathname}`;
+}
 
 /**
  * Un fichier du DOSSIER DES TÉMOIGNAGES, et pas seulement du magasin.
