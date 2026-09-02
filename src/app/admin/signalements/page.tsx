@@ -259,6 +259,12 @@ export default async function ModerationPage() {
                       {report.detail}
                     </p>
                   )}
+                  {report.evidence && (
+                    <p className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 text-sm leading-relaxed">
+                      <span className="data-label mb-1 block">{t("resolve.evidence")}</span>
+                      {report.evidence}
+                    </p>
+                  )}
 
                   <p className="text-xs text-muted-foreground">
                     {t("moderation.reportedBy")}{" "}

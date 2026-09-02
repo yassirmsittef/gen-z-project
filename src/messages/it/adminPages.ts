@@ -91,6 +91,7 @@ export const adminPages = {
   "resolve.commentOn": "«{excerpt}» — su {project}",
   "resolve.commentDeleted": "Commento già eliminato",
   "resolve.messageIn": "«{excerpt}» — in {group}",
+  "resolve.evidence": "Contenuto rimosso dall'autore — conservato per la moderazione",
   "resolve.messageDeleted": "Messaggio già ritirato",
   "resolve.callMissing": "Appello non trovato",
   "resolve.callLabel": "«{target}» — {excerpt}",

@@ -545,9 +545,12 @@ describe("retirer un message", () => {
     await joinGroup(temoin.id, slug);
 
     const arrivee = await prisma.groupMessage.findFirstOrThrow({
-      where: { groupId, system: true },
+      where: { groupId, system: true, senderId: bavard.id },
     });
-    await expect(deleteGroupMessage(animateur.id, arrivee.id)).rejects.toThrow(DomainError);
+    // L'auteur d'une ligne d'arrivée ne la retire pas (sinon la ligne est un
+    // jouet) ; l'animation, si — audit du 02/09.
+    await expect(deleteGroupMessage(bavard.id, arrivee.id)).rejects.toThrow(DomainError);
+    await deleteGroupMessage(animateur.id, arrivee.id);
 
     const genant = await postGroupMessage(bavard.id, { groupId, body: "Un propos déplacé." });
     // On ne signale pas son propre message : on le retire.

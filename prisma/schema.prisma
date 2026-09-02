@@ -509,6 +509,10 @@ model Report {
   targetId   String // id de l'objet visé (projet, commentaire, membre)
   reason     String // motif choisi dans REPORT_REASONS
   detail     String? // précision libre du signaleur
+  /// Le contenu visé, copié ici quand son AUTEUR le retire alors qu'un
+  /// signalement est ouvert : la preuve survit à l'effacement, et c'est un
+  /// humain qui tranche — pas la personne signalée.
+  evidence   String?
   status     ReportStatus     @default(OPEN)
   handledAt  DateTime?
   handledBy  String? // id de l'admin qui a tranché

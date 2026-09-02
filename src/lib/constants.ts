@@ -484,3 +484,5 @@ export const MAX_AVATAR_CHANGES_PER_HOUR = 5;
  *  admin sur la fenêtre de LOGIN_WINDOW_MINUTES. Bien au-dessus d'une soirée
  *  de membres qui se trompent, bien en dessous d'un balayage. */
 export const LOGIN_BURST_ALERT_THRESHOLD = 50;
+/** Adhésions à un même salon par membre et par 24 h. */
+export const MAX_GROUP_JOINS_PER_DAY = 3;

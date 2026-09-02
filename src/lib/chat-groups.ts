@@ -1,10 +1,11 @@
 import { Prisma, type ProjectCategory } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { assertUnderLimit, recordHit } from "@/lib/throttle";
 import {
   LANGUAGE_ROOMS,
   MAX_GROUPS_JOINED,
   MAX_GROUPS_OWNED,
-  MAX_GROUP_MEMBERS,
+  MAX_GROUP_MEMBERS, MAX_GROUP_JOINS_PER_DAY,
   roomTexts,
 } from "@/lib/constants";
 import type { Locale } from "@/lib/i18n/locales";
@@ -457,6 +458,12 @@ export async function joinGroup(userId: string, slug: string): Promise<string> {
     throw new DomainError(`${MAX_GROUPS_JOINED} groupes suivis maximum — quittes-en un d'abord.`);
   }
 
+  // Trois adhésions par salon et par 24 h : rejoindre-quitter en boucle
+  // était gratuit et sans trace.
+  const cleAdhesion = `join:user:${userId}:group:${group.id}`;
+  await assertUnderLimit(cleAdhesion, { max: MAX_GROUP_JOINS_PER_DAY, fenetreMinutes: 24 * 60 });
+  await recordHit(cleAdhesion);
+
   try {
     // Recompté sous verrou par salon : une rafale simultanée faisait passer
     // le plafond de 199 à 214, chaque requête comptant avant que les autres
@@ -482,6 +489,19 @@ export async function joinGroup(userId: string, slug: string): Promise<string> {
   // Un fil qui accueille dans SA langue : personne n'entre dans le silence.
   // Ligne d'événement (system) — elle ne notifie personne et ne fait pas
   // sonner « non lu » chez les autres membres.
+  // Une arrivée est un ÉVÉNEMENT, pas un compteur : pas de seconde ligne
+  // pour quelqu'un qui revient dans la journée.
+  const dejaAccueilli = await prisma.groupMessage.findFirst({
+    where: {
+      groupId: group.id,
+      senderId: userId,
+      system: true,
+      createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+    },
+    select: { id: true },
+  });
+  if (dejaAccueilli) return group.id;
+
   const arrivant = await prisma.user.findUnique({
     where: { id: userId },
     select: { name: true },
@@ -726,25 +746,44 @@ export async function deleteGroupMessage(actorId: string, messageId: string) {
     select: {
       senderId: true,
       system: true,
+      body: true,
       group: { select: { id: true, ownerId: true } },
     },
   });
   if (!message) throw new DomainError("Message introuvable.");
-  if (message.system) throw new DomainError("Une ligne d'arrivée ne se supprime pas.");
 
-  if (message.senderId !== actorId) {
-    const powers = await groupPowers(message.group, actorId);
-    if (!powers.manager) {
-      throw new DomainError("Seuls son auteur et l'animation du salon peuvent le retirer.");
-    }
+  const auteur = message.senderId === actorId;
+  const { manager: anime } = await groupPowers(message.group, actorId);
+
+  // Une ligne d'arrivée n'appartient pas à son auteur : lui ne la retire pas
+  // (sinon la ligne est un jouet), l'animation et les ADMIN si — trouvé par
+  // l'audit : 110 aller-retours suffisaient à repousser toute la discussion
+  // hors de l'écran, et ces lignes étaient indélébiles pour tout le monde.
+  if (message.system && !anime) {
+    throw new DomainError("Une ligne d'arrivée ne se supprime pas — l'animation du salon peut la retirer.");
+  }
+  if (!message.system && !auteur && !anime) {
+    throw new DomainError("Seuls son auteur et l'animation du salon peuvent le retirer.");
   }
 
-  await prisma.groupMessage.delete({ where: { id: messageId } });
-  // Un signalement encore ouvert sur ce message n'a plus d'objet.
-  await prisma.report.updateMany({
-    where: { targetType: "GROUP_MESSAGE", targetId: messageId, status: "OPEN" },
-    data: { status: "RESOLVED", handledAt: new Date(), handledBy: actorId },
-  });
+  // Trouvé par l'audit : l'auteur d'un message signalé le supprimait, et le
+  // signalement se fermait tout seul À SON NOM — la file de modération n'en
+  // gardait rien. Désormais, seule l'animation qui retire le message d'un
+  // AUTRE clôt le dossier ; quand c'est l'auteur qui efface, le contenu est
+  // copié dans le dossier, qui reste OUVERT pour qu'un humain tranche.
+  const dossiers = { targetType: "GROUP_MESSAGE" as const, targetId: messageId, status: "OPEN" as const };
+  if (anime && !auteur) {
+    await prisma.groupMessage.delete({ where: { id: messageId } });
+    await prisma.report.updateMany({
+      where: dossiers,
+      data: { status: "RESOLVED", handledAt: new Date(), handledBy: actorId },
+    });
+  } else {
+    await prisma.$transaction([
+      prisma.report.updateMany({ where: dossiers, data: { evidence: message.body } }),
+      prisma.groupMessage.delete({ where: { id: messageId } }),
+    ]);
+  }
 }
 
 /**

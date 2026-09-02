@@ -110,6 +110,7 @@ export const adminPages = {
   "resolve.commentOn": "«{excerpt}» — على {project}",
   "resolve.commentDeleted": "التعليق محذوف سلفًا",
   "resolve.messageIn": "«{excerpt}» — في {group}",
+  "resolve.evidence": "محتوى حذفه صاحبه — محفوظ للإشراف",
   "resolve.messageDeleted": "الرسالة مسحوبة سلفًا",
   "resolve.callMissing": "النداء غير موجود",
   "resolve.callLabel": "«{target}» — {excerpt}",
