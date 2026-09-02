@@ -19,7 +19,9 @@ import { ReputationRing } from "@/components/reputation-ring";
 import { ConnectForm } from "@/components/connect-form";
 import { DeleteAccount } from "@/components/delete-account";
 import { LocationForm } from "@/components/location-form";
+import { MfaForm } from "@/components/mfa-form";
 import { PasswordForm } from "@/components/password-form";
+import { otpauthUri } from "@/lib/totp";
 import { ProfileForm } from "@/components/profile-form";
 import { SkillsForm } from "@/components/skills-form";
 import { getConnectStatus } from "@/lib/payouts";
@@ -526,6 +528,13 @@ export default async function DashboardPage({
             <Card>
               <CardContent className="space-y-6 pt-6">
                 <PasswordForm />
+                {user.role === "ADMIN" && (
+                  <MfaForm
+                    enabledAt={user.totpEnabledAt ? formatDate(user.totpEnabledAt, locale) : null}
+                    pendingSecret={user.totpEnabledAt ? null : user.totpSecret}
+                    pendingUri={user.totpEnabledAt || !user.totpSecret ? null : otpauthUri(user.totpSecret, user.email)}
+                  />
+                )}
                 <div className="space-y-2">
                   <h3 className="text-sm font-semibold">{t("dashboard.myData")}</h3>
                   <p className="text-xs text-muted-foreground">{t("dashboard.myDataBody")}</p>

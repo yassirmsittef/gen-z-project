@@ -1,4 +1,7 @@
 "use server";
+import { headers } from "next/headers";
+import { MAX_PARTNERSHIP_REQUESTS_PER_IP_PER_HOUR } from "@/lib/constants";
+import { assertUnderLimit, ipFromHeaders, ipKey, recordHit } from "@/lib/throttle";
 import { tErr } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
@@ -39,6 +42,14 @@ export async function submitPartnershipAction(
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
+  // Le formulaire est PUBLIC : sans compte, seul le réseau peut le tenir.
+  const cle = ipKey("partner", ipFromHeaders(await headers()));
+  try {
+    await assertUnderLimit(cle, { max: MAX_PARTNERSHIP_REQUESTS_PER_IP_PER_HOUR, fenetreMinutes: 60 });
+  } catch {
+    return { error: await tErr("tooManyRequests") };
+  }
+
   const project = await prisma.project.findUnique({
     where: { id: parsed.data.projectId },
     select: { id: true, slug: true, title: true, ownerId: true },
@@ -57,6 +68,7 @@ export async function submitPartnershipAction(
     return { error: await tErr("pendingRequestsAlready") };
   }
 
+  await recordHit(cle);
   const request = await prisma.partnershipRequest.create({
     data: {
       projectId: project.id,

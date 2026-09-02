@@ -85,4 +85,7 @@ export const ui = {
   "translate.consentBody": "Ton appareil ne sait pas traduire tout seul. Ce texte sera envoyé à un service de traduction externe (Microsoft), qui ne le conserve pas.",
   "translate.consentAccept": "D'accord, traduire",
   "translate.consentDecline": "Non merci",
+  "error.title": "Quelque chose a cassé de notre côté.",
+  "error.body": "Rien de ce que tu as fait n'est en cause. Réessaie ; si ça persiste, écris-nous à bonjour@genigain.com.",
+  "error.retry": "Réessayer",
 } as const satisfies Dict;

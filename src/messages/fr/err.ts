@@ -51,4 +51,10 @@ export const err = {
   // Routes API côté membre
   notLoggedIn: "Non connecté",
   uploadImpossible: "Envoi impossible.",
+  tooManyRequests: "Trop de tentatives depuis ta connexion — réessaie dans une heure.",
+  totpRequired: "Ce compte demande un code de vérification.",
+  totpInvalid: "Code de vérification incorrect.",
+  totpAdminOnly: "La double authentification est réservée aux comptes administrateurs pour l'instant.",
+  totpAlreadyEnabled: "La double authentification est déjà activée.",
+  totpNotStarted: "Commence par « Activer », puis confirme avec un code de l'application.",
 } as const satisfies Dict;

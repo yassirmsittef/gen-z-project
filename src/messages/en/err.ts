@@ -33,4 +33,10 @@ export const err = {
   stripeConnectFailed: "Stripe couldn't start the setup — try again in a moment.",
   notLoggedIn: "Not signed in",
   uploadImpossible: "Upload impossible.",
+  tooManyRequests: "Too many attempts from your connection — try again in an hour.",
+  totpRequired: "This account requires a verification code.",
+  totpInvalid: "Incorrect verification code.",
+  totpAdminOnly: "Two-factor authentication is limited to administrator accounts for now.",
+  totpAlreadyEnabled: "Two-factor authentication is already enabled.",
+  totpNotStarted: "Start with “Enable”, then confirm with a code from the app.",
 } satisfies Messages["err"];

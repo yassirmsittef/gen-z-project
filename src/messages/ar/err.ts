@@ -33,4 +33,10 @@ export const err = {
   stripeConnectFailed: "لم تتمكن Stripe من بدء الإعداد — أعد المحاولة بعد لحظة.",
   notLoggedIn: "غير متصل",
   uploadImpossible: "الإرسال متعذر.",
+  tooManyRequests: "محاولات كثيرة من اتصالك — أعد المحاولة بعد ساعة.",
+  totpRequired: "يتطلب هذا الحساب رمز تحقق.",
+  totpInvalid: "رمز التحقق غير صحيح.",
+  totpAdminOnly: "المصادقة الثنائية مقتصرة حاليًا على حسابات المسؤولين.",
+  totpAlreadyEnabled: "المصادقة الثنائية مفعّلة أصلًا.",
+  totpNotStarted: "ابدأ بـ«تفعيل» ثم أكّد برمز من التطبيق.",
 } satisfies Messages["err"];

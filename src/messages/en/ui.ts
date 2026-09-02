@@ -88,4 +88,7 @@ export const ui = {
   "translate.consentBody": "Your device can't translate on its own. This text will be sent to an external translation service (Microsoft), which doesn't keep it.",
   "translate.consentAccept": "OK, translate",
   "translate.consentDecline": "No thanks",
+  "error.title": "Something broke on our side.",
+  "error.body": "Nothing you did caused this. Try again; if it keeps happening, write to us at bonjour@genigain.com.",
+  "error.retry": "Try again",
 } satisfies Messages["ui"];

@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { isSameOrigin } from "@/lib/request-origin";
 import { assertVideoStorageAvailable, claimUploadTicket } from "@/lib/call-videos";
+import { DomainError } from "@/lib/project-service";
 import { VIDEO_BLOB_PREFIX } from "@/lib/constants";
 import { MAX_VIDEO_BYTES, MAX_VIDEOS_PER_DAY, VIDEO_CONTENT_TYPES } from "@/lib/constants";
 
@@ -20,8 +22,13 @@ import { MAX_VIDEO_BYTES, MAX_VIDEOS_PER_DAY, VIDEO_CONTENT_TYPES } from "@/lib/
  * plafond quotidien — sinon on paierait le stockage d'un flood avant même de
  * pouvoir le refuser en base.
  */
+/** Un refus qui VIENT DE NOUS, et dont le message peut donc être montré. */
+class Refus extends Error {}
+
 export async function POST(request: Request): Promise<NextResponse> {
-  const body = (await request.json()) as HandleUploadBody;
+  if (!isSameOrigin(request)) return NextResponse.json({ error: "Origine refusée." }, { status: 403 });
+  const body = (await request.json().catch(() => null)) as HandleUploadBody | null;
+  if (!body) return NextResponse.json({ error: await tErr("uploadImpossible") }, { status: 400 });
 
   try {
     const json = await handleUpload({
@@ -33,11 +40,11 @@ export async function POST(request: Request): Promise<NextResponse> {
         // portée du balayage, qui ne regarde que ce dossier : un fichier
         // facturé pour toujours, que rien ne réclame et que rien ne ramasse.
         if (!pathname.startsWith(VIDEO_BLOB_PREFIX)) {
-          throw new Error("Chemin de dépôt refusé.");
+          throw new Refus("Chemin de dépôt refusé.");
         }
 
         const session = await auth();
-        if (!session?.user?.id) throw new Error("Connecte-toi pour publier un témoignage.");
+        if (!session?.user?.id) throw new Refus("Connecte-toi pour publier un témoignage.");
 
         const récentes = await prisma.callVideo.count({
           where: {
@@ -46,7 +53,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           },
         });
         if (récentes >= MAX_VIDEOS_PER_DAY) {
-          throw new Error(`${MAX_VIDEOS_PER_DAY} témoignages par jour maximum.`);
+          throw new Refus(`${MAX_VIDEOS_PER_DAY} témoignages par jour maximum.`);
         }
 
         // Le plafond GLOBAL, après le quota personnel : son message ne doit
@@ -77,9 +84,13 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     return NextResponse.json(json);
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : await tErr("uploadImpossible") },
-      { status: 400 }
-    );
+    // Nos refus s'expliquent ; tout le reste (bibliothèque, stockage, réseau)
+    // se journalise côté serveur et sort en message générique — un détail
+    // technique n'aide pas le membre, il renseigne l'attaquant.
+    if (error instanceof Refus || error instanceof DomainError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    console.error("[upload] jeton refusé :", error);
+    return NextResponse.json({ error: await tErr("uploadImpossible") }, { status: 400 });
   }
 }

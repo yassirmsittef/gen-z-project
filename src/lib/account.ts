@@ -80,6 +80,8 @@ export async function eraseAccount(userId: string) {
         name: "Membre retiré",
         email: `retire-${userId}${ERASED_EMAIL_DOMAIN}`,
         passwordHash: null,
+        // Les sessions encore ouvertes sur d'autres appareils tombent.
+        sessionVersion: { increment: 1 },
         avatarUrl: null,
         bio: null,
         city: null,

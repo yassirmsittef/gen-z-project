@@ -102,4 +102,7 @@ export const ui = {
   "translate.consentBody": "جهازك لا يترجم من تلقاء نفسه. سيُرسَل هذا النص إلى خدمة ترجمة خارجية (مايكروسوفت)، وهي لا تحتفظ به.",
   "translate.consentAccept": "حسنًا، ترجم",
   "translate.consentDecline": "لا، شكرًا",
+  "error.title": "حدث خطأ من جهتنا.",
+  "error.body": "لا علاقة لما فعلته بهذا. أعد المحاولة؛ وإن استمر الخطأ راسلنا على bonjour@genigain.com.",
+  "error.retry": "إعادة المحاولة",
 } satisfies Messages["ui"];

@@ -1,5 +1,8 @@
 "use server";
+import { headers } from "next/headers";
 import { domainErrorMessage } from "@/lib/action-errors";
+import { MAX_RESET_REQUESTS_PER_IP_PER_HOUR } from "@/lib/constants";
+import { ipFromHeaders, ipKey, recordHit, throttleHits } from "@/lib/throttle";
 
 import { emailEnabled } from "@/lib/email";
 import { requestPasswordReset, resetPassword } from "@/lib/password-reset";
@@ -24,6 +27,16 @@ export async function requestResetAction(
         "L'envoi d'email n'est pas encore configuré sur cette plateforme — contacte l'équipe.",
     };
   }
+
+  // Cadence par adresse, EN PLUS du plafond par compte : un script qui fait
+  // pleuvoir des emails sur des centaines d'adresses n'en dépasse aucun. Au
+  // plafond, on répond « succès » sans rien envoyer — la réponse ne doit
+  // jamais changer, sinon elle raconte quelque chose.
+  const cle = ipKey("reset", ipFromHeaders(await headers()));
+  if ((await throttleHits(cle, 60)) >= MAX_RESET_REQUESTS_PER_IP_PER_HOUR) {
+    return { success: true };
+  }
+  await recordHit(cle);
 
   try {
     await requestPasswordReset(parsed.data.email);

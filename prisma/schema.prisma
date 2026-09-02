@@ -31,6 +31,18 @@ model User {
   bio              String? // courte présentation affichée sur le profil public
   emailVerified    DateTime?
   passwordHash     String?
+  /// Version de session. Chaque JWT emporte la valeur lue à la connexion ;
+  /// changer ou réinitialiser son mot de passe, ou effacer le compte,
+  /// l'incrémente — et toutes les sessions ouvertes ailleurs tombent à la
+  /// prochaine revalidation (src/auth.ts). Sans ça, un jeton volé survivait
+  /// 30 jours au changement de mot de passe censé le chasser.
+  sessionVersion   Int       @default(0)
+  /// Double authentification (TOTP, src/lib/totp.ts). Le secret est posé à
+  /// l'enrôlement mais n'ACTIVE rien tant que `totpEnabledAt` est nul : le
+  /// premier code doit être vérifié avant que la porte ne se ferme — sinon
+  /// un QR mal scanné enferme dehors. Réservée aux ADMIN pour l'instant.
+  totpSecret       String?
+  totpEnabledAt    DateTime?
   // Cumul à vie des contributions converties en cents US au moment du
   // paiement (non décrémenté par les remboursements) — alimente le gate
   // « 50 $ contribués avant de poster » et les classements inter-devises.
@@ -430,6 +442,20 @@ model LoginAttempt {
 // (traduire est offert aux visiteurs : le fil des appels est public).
 // Aucun texte n'est stocké ici — seulement combien de caractères, et quand.
 // Purgé par le cron au-delà de la fenêtre mensuelle.
+// Cadence des gestes PUBLICS (inscription, demande de réinitialisation,
+// formulaire de partenariat) — src/lib/throttle.ts. Une ligne par geste,
+// comptées sur une fenêtre glissante par clé (`signup:ip:<sha256>`…). Aucune
+// donnée personnelle : l'adresse IP n'y figure que hachée et salée. Purgé par
+// le cron au-delà d'un jour.
+model ActionThrottle {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+  @@index([createdAt])
+}
+
 model TranslationUsage {
   id        String   @id @default(cuid())
   key       String

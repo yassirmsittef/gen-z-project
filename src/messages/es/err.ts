@@ -33,4 +33,10 @@ export const err = {
   stripeConnectFailed: "Stripe no pudo iniciar la configuración — reinténtalo en un momento.",
   notLoggedIn: "Sin sesión iniciada",
   uploadImpossible: "Envío imposible.",
+  tooManyRequests: "Demasiados intentos desde tu conexión — inténtalo de nuevo dentro de una hora.",
+  totpRequired: "Esta cuenta requiere un código de verificación.",
+  totpInvalid: "Código de verificación incorrecto.",
+  totpAdminOnly: "La autenticación en dos pasos está reservada por ahora a las cuentas de administrador.",
+  totpAlreadyEnabled: "La autenticación en dos pasos ya está activada.",
+  totpNotStarted: "Empieza por «Activar» y confirma luego con un código de la aplicación.",
 } satisfies Messages["err"];

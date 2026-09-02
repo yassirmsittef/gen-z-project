@@ -446,3 +446,15 @@ export const MAX_TRANSLATION_CHARS_PER_WINDOW = 60_000;
 /** Plafond mensuel de la plateforme, sous les 2 M offerts par le prestataire :
  *  la marge absorbe le décalage entre notre mois glissant et son mois à lui. */
 export const MAX_TRANSLATION_CHARS_PER_MONTH = 1_800_000;
+
+// ---------- Cadence des gestes publics (src/lib/throttle.ts) ----------
+// Ces gestes n'exigent pas de compte : seule l'adresse (hachée) peut les
+// tenir. Larges pour une famille derrière une box, étroits pour un script.
+
+/** Comptes créés depuis une même adresse en une heure. */
+export const MAX_SIGNUPS_PER_IP_PER_HOUR = 5;
+/** Demandes de réinitialisation depuis une même adresse en une heure
+ *  (s'ajoute aux 3 par compte de password-reset.ts). */
+export const MAX_RESET_REQUESTS_PER_IP_PER_HOUR = 10;
+/** Demandes de partenariat (formulaire public) depuis une même adresse. */
+export const MAX_PARTNERSHIP_REQUESTS_PER_IP_PER_HOUR = 5;

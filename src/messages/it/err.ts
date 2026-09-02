@@ -33,4 +33,10 @@ export const err = {
   stripeConnectFailed: "Stripe non è riuscito ad avviare la configurazione — riprova tra un istante.",
   notLoggedIn: "Non connesso",
   uploadImpossible: "Invio impossibile.",
+  tooManyRequests: "Troppi tentativi dalla tua connessione — riprova tra un'ora.",
+  totpRequired: "Questo account richiede un codice di verifica.",
+  totpInvalid: "Codice di verifica errato.",
+  totpAdminOnly: "L'autenticazione a due fattori è per ora riservata agli account amministratore.",
+  totpAlreadyEnabled: "L'autenticazione a due fattori è già attiva.",
+  totpNotStarted: "Prima «Attiva», poi conferma con un codice dell'app.",
 } satisfies Messages["err"];

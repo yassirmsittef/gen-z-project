@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { MAX_TRANSLATION_CHARS } from "@/lib/constants";
 import { LOCALE_CODES } from "@/lib/i18n/locales";
+import { isSameOrigin } from "@/lib/request-origin";
 import {
   serviceTranslate,
   translationServiceConfigured,
@@ -50,6 +51,8 @@ export function GET() {
 }
 
 export async function POST(request: Request) {
+  // Un site tiers ne dépense pas notre quota avec la session d'un membre.
+  if (!isSameOrigin(request)) return NextResponse.json({ statut: "echec" }, { status: 403 });
   const parse = corps.safeParse(await request.json().catch(() => null));
   if (!parse.success) return NextResponse.json({ statut: "echec" }, { status: 400 });
 

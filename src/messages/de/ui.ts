@@ -88,4 +88,7 @@ export const ui = {
   "translate.consentBody": "Dein Gerät kann nicht selbst übersetzen. Dieser Text wird an einen externen Übersetzungsdienst (Microsoft) geschickt, der ihn nicht speichert.",
   "translate.consentAccept": "Einverstanden, übersetzen",
   "translate.consentDecline": "Nein, danke",
+  "error.title": "Auf unserer Seite ist etwas kaputtgegangen.",
+  "error.body": "Du hast nichts falsch gemacht. Versuch es noch mal; wenn es bleibt, schreib uns an bonjour@genigain.com.",
+  "error.retry": "Erneut versuchen",
 } satisfies Messages["ui"];

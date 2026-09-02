@@ -12,7 +12,8 @@ import { findCity } from "@/lib/cities";
 import { prisma } from "@/lib/prisma";
 import { updateUserLocation, updateUserSkills } from "@/lib/project-service";
 import bcrypt from "bcryptjs";
-import { signOut } from "@/auth";
+import { hashPassword } from "@/lib/password";
+import { signIn, signOut } from "@/auth";
 import { eraseAccount } from "@/lib/account";
 import { DomainError } from "@/lib/project-service";
 import { parseList } from "@/lib/validation";
@@ -61,8 +62,14 @@ export async function deleteAccountAction(
 export type PasswordFormState = { error?: string; success?: boolean } | undefined;
 
 /**
- * Changement de mot de passe : l'actuel est exigé et vérifié. Les sessions
- * déjà ouvertes (JWT) restent valides — acceptable en Phase 1.
+ * Changement de mot de passe : l'actuel est exigé et vérifié. La version de
+ * session est incrémentée dans le même geste : toute session ouverte
+ * ailleurs — y compris celle qui a motivé le changement — tombe dans les
+ * 5 minutes (cf. src/auth.ts). Celle-ci est aussitôt RÉOUVERTE avec le
+ * nouveau mot de passe, qu'on a sous la main et qui vient d'être prouvé :
+ * l'appareil qui a fait le changement ne se retrouve pas à la porte.
+ * (Un compte à double authentification ne peut pas être réouvert sans code :
+ * il se reconnectera à la prochaine revalidation — c'est l'admin.)
  */
 export async function changePasswordAction(
   _prev: PasswordFormState,
@@ -81,7 +88,7 @@ export async function changePasswordAction(
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { passwordHash: true },
+    select: { passwordHash: true, email: true },
   });
   if (!user?.passwordHash) {
     return { error: await tErr("noPasswordToChange") };
@@ -96,8 +103,22 @@ export async function changePasswordAction(
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { passwordHash: await bcrypt.hash(parsed.data.newPassword, 10) },
+    data: {
+      passwordHash: await hashPassword(parsed.data.newPassword),
+      sessionVersion: { increment: 1 },
+    },
   });
+
+  try {
+    await signIn("credentials", {
+      email: user.email,
+      password: parsed.data.newPassword,
+      redirect: false,
+    });
+  } catch {
+    // Double authentification : pas de code sous la main. La session tombera
+    // à la prochaine revalidation et le membre se reconnectera — avec code.
+  }
 
   return { success: true };
 }

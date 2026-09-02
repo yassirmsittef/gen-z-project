@@ -8,6 +8,7 @@ import { purgeStaleLoginAttempts } from "@/lib/login-rate-limit";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { executeDuePayouts, executeDueRefunds } from "@/lib/payouts";
 import { failExpiredProjects, failOverdueRealizations } from "@/lib/project-service";
+import { purgeStaleThrottleHits } from "@/lib/throttle";
 import { purgeStaleTranslationUsage } from "@/lib/translate-service";
 
 /**
@@ -49,6 +50,8 @@ export async function GET(request: Request) {
   // Compteurs de traduction sortis du mois glissant : ils ne tiennent plus
   // ni la cadence d'un lecteur ni le plafond mensuel du service.
   await purgeStaleTranslationUsage();
+  // Cadences des gestes publics (inscription, réinitialisation, partenariat).
+  await purgeStaleThrottleHits();
   // Mesurer AVANT de balayer : une taille inconnue rendait la jauge aveugle
   // sur tout ce qui précédait les migrations.
   await backfillStorageSizes();

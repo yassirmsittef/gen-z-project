@@ -4,19 +4,52 @@ import type { Provider } from "next-auth/providers";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import {
   clearLoginFailures,
   isLoginLocked,
   recordLoginFailure,
 } from "@/lib/login-rate-limit";
+import { hashPassword, needsRehash, verifyPassword } from "@/lib/password";
+import {
+  needsRevalidation,
+  reconcileClaims,
+  type SessionClaims,
+} from "@/lib/session-claims";
+import { mfaRequired } from "@/lib/mfa";
+import { verifyTotp } from "@/lib/totp";
 import { loginSchema } from "@/lib/validation";
 
 /** Trop d'échecs récents : le code traverse Auth.js jusqu'à loginAction. */
 class LoginRateLimited extends CredentialsSignin {
   code = "rate-limited";
 }
+/** Mot de passe juste, mais le compte exige un code : le formulaire le demande. */
+class TotpRequired extends CredentialsSignin {
+  code = "totp-required";
+}
+class TotpInvalid extends CredentialsSignin {
+  code = "totp-invalid";
+}
+
+/**
+ * Durée de vie d'une session : 7 jours sans activité (30 par défaut chez
+ * Auth.js — long pour une plateforme qui manipule de l'argent), et un jeton
+ * ré-émis chaque jour d'usage : une session active ne tombe pas, une session
+ * abandonnée s'éteint en une semaine.
+ */
+const SESSION_MAX_AGE_S = 7 * 24 * 60 * 60;
+const SESSION_UPDATE_AGE_S = 24 * 60 * 60;
+
+/**
+ * Un JWT ne se révoque pas : une fois signé, il vaut jusqu'à son expiration.
+ * On contourne en faisant porter au jeton la VERSION de session du compte,
+ * et en la reconfrontant à la base au plus toutes les 5 minutes
+ * (src/lib/session-claims.ts). Changer son mot de passe l'incrémente : les
+ * sessions ouvertes ailleurs — dont celle d'un voleur — tombent dans les
+ * 5 minutes, au lieu de tenir 7 jours. Le coût : une lecture de base toutes
+ * les 5 minutes par session, pas une par requête.
+ */
 
 const providers: Provider[] = [
   Credentials({
@@ -39,13 +72,35 @@ const providers: Provider[] = [
         return null;
       }
 
-      const valid = await bcrypt.compare(password, user.passwordHash);
+      const valid = await verifyPassword(password, user.passwordHash);
       if (!valid) {
         await recordLoginFailure(email);
         return null;
       }
 
+      // Le code n'est demandé qu'APRÈS un mot de passe juste : qui ne l'a pas
+      // n'apprend même pas que la double authentification existe. Un code
+      // faux compte comme un échec de connexion — le même verrou (10 en
+      // 15 min) rend l'essai des 1 000 000 de codes possibles sans intérêt.
+      if (mfaRequired(user)) {
+        const code = parsed.data.code?.trim();
+        if (!code) throw new TotpRequired();
+        if (!verifyTotp(user.totpSecret!, code)) {
+          await recordLoginFailure(email);
+          throw new TotpInvalid();
+        }
+      }
+
       await clearLoginFailures(email);
+      // Le mot de passe est en clair sous la main, et vérifié : c'est le seul
+      // moment où l'on peut relever le coût d'un vieux hachage sans rien
+      // demander au membre.
+      if (needsRehash(user.passwordHash)) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { passwordHash: await hashPassword(password) },
+        });
+      }
       return { id: user.id, name: user.name, email: user.email, image: user.avatarUrl };
     },
   }),
@@ -69,13 +124,49 @@ const adapter: Adapter = {
   },
 };
 
+const production = process.env.NODE_ENV === "production";
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter,
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: SESSION_MAX_AGE_S, updateAge: SESSION_UPDATE_AGE_S },
   pages: { signIn: "/login" },
   trustHost: true,
   providers,
+  // `__Host-` : le navigateur refuse alors ce cookie s'il n'est pas Secure,
+  // limité à `/`, et SANS attribut Domain — un sous-domaine compromis ne peut
+  // plus poser un cookie de session à notre place. En développement (HTTP),
+  // ce préfixe est impossible : on garde le nom par défaut.
+  cookies: production
+    ? {
+        sessionToken: {
+          name: "__Host-authjs.session-token",
+          options: { httpOnly: true, sameSite: "lax", path: "/", secure: true },
+        },
+      }
+    : undefined,
   callbacks: {
+    async jwt({ token, user, trigger }) {
+      const claims = token as typeof token & SessionClaims;
+      const now = Date.now();
+
+      // À la connexion : le jeton emporte la version courante.
+      if (user?.id) {
+        const compte = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { sessionVersion: true },
+        });
+        return { ...claims, sv: compte?.sessionVersion ?? 0, chk: now };
+      }
+
+      if (!needsRevalidation(claims, now, trigger === "update")) return claims;
+      if (!claims.sub) return null;
+      const compte = await prisma.user.findUnique({
+        where: { id: claims.sub },
+        select: { sessionVersion: true, email: true },
+      });
+      const verdict = reconcileClaims(claims, compte, now);
+      return verdict ? { ...claims, ...verdict } : null;
+    },
     session({ session, token }) {
       if (token.sub) session.user.id = token.sub;
       return session;

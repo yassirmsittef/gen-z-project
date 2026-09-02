@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { loginAction, registerAction, signInWithGoogleAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,12 @@ function GoogleButton() {
 export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
   const t = useT("account");
   const [state, formAction, pending] = useActionState(loginAction, undefined);
+  // Champs CONTRÔLÉS, et c'est nécessaire : React remet un formulaire à zéro
+  // quand son action revient. Avec la double authentification, l'action
+  // revient une première fois pour DEMANDER le code — sans ça, l'email et le
+  // mot de passe s'effaçaient et il fallait tout retaper avant de le saisir.
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   return (
     <div>
@@ -49,6 +55,8 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
             type="email"
             autoComplete="email"
             placeholder={t("loginForm.emailPlaceholder")}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
@@ -62,8 +70,33 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
               {t("loginForm.forgotPassword")}
             </Link>
           </div>
-          <PasswordInput id="password" name="password" autoComplete="current-password" required />
+          <PasswordInput
+            id="password"
+            name="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
         </div>
+
+        {state?.needsCode && (
+          <div className="space-y-1.5">
+            <Label htmlFor="code">{t("loginForm.codeLabel")}</Label>
+            <Input
+              id="code"
+              name="code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9 ]*"
+              maxLength={7}
+              autoFocus
+              required
+              className="font-mono tracking-[0.3em]"
+            />
+            <p className="text-xs text-muted-foreground">{t("loginForm.codeHint")}</p>
+          </div>
+        )}
 
         {state?.error && <p role="alert" className="text-sm font-medium text-destructive">{state.error}</p>}
 

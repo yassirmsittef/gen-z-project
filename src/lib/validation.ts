@@ -64,6 +64,9 @@ export function makeSchemas(tv: TV) {
   const loginSchema = z.object({
     email: z.string().email(tv("emailInvalid")),
     password: z.string().min(1, tv("passwordRequired")),
+    // Code de double authentification — absent pour la plupart des comptes ;
+    // exigé par `authorize` seulement si le compte l'a activée.
+    code: z.string().trim().max(12).optional(),
   });
 
   const skillSchema = z

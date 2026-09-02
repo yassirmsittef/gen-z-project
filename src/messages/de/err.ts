@@ -33,4 +33,10 @@ export const err = {
   stripeConnectFailed: "Stripe konnte die Einrichtung nicht starten — versuch es gleich noch einmal.",
   notLoggedIn: "Nicht angemeldet",
   uploadImpossible: "Hochladen unmöglich.",
+  tooManyRequests: "Zu viele Versuche von deiner Verbindung — versuch es in einer Stunde noch mal.",
+  totpRequired: "Dieses Konto verlangt einen Bestätigungscode.",
+  totpInvalid: "Falscher Bestätigungscode.",
+  totpAdminOnly: "Die Zwei-Faktor-Authentifizierung ist vorerst Administratorkonten vorbehalten.",
+  totpAlreadyEnabled: "Die Zwei-Faktor-Authentifizierung ist bereits aktiv.",
+  totpNotStarted: "Erst „Aktivieren“, dann mit einem Code aus der App bestätigen.",
 } satisfies Messages["err"];

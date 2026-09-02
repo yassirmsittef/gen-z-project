@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import bcrypt from "bcryptjs";
+import { hashPassword } from "@/lib/password";
 import { ERASED_EMAIL_DOMAIN } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
@@ -135,9 +135,11 @@ export async function resetPassword(token: string, newPassword: string): Promise
   }
 
   await prisma.$transaction([
+    // Réinitialiser, c'est souvent reprendre un compte à quelqu'un d'autre :
+    // la version de session monte, et les sessions de l'intrus tombent.
     prisma.user.update({
       where: { id: record.userId },
-      data: { passwordHash: await bcrypt.hash(newPassword, 10) },
+      data: { passwordHash: await hashPassword(newPassword), sessionVersion: { increment: 1 } },
     }),
     prisma.passwordResetToken.update({
       where: { id: record.id },

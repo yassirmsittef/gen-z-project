@@ -1,17 +1,20 @@
 "use server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { tErr } from "@/lib/action-errors";
 import { LANG_COOKIE } from "@/lib/i18n/server";
 
 import { AuthError } from "next-auth";
-import bcrypt from "bcryptjs";
 import { signIn, signOut } from "@/auth";
 import { findCity } from "@/lib/cities";
+import { MAX_SIGNUPS_PER_IP_PER_HOUR } from "@/lib/constants";
 import { CURRENCY_CODES } from "@/lib/money";
+import { signInPayload } from "@/lib/credentials-payload";
+import { hashPassword } from "@/lib/password";
+import { assertUnderLimit, ipFromHeaders, ipKey, recordHit } from "@/lib/throttle";
 import { prisma } from "@/lib/prisma";
 import { requestSchemas } from "@/lib/validation-locale";
 
-export type AuthFormState = { error?: string } | undefined;
+export type AuthFormState = { error?: string; needsCode?: boolean } | undefined;
 
 export async function registerAction(
   _prev: AuthFormState,
@@ -49,6 +52,18 @@ export async function registerAction(
   const currencyRaw = String(formData.get("preferredCurrency") ?? "eur").toLowerCase();
   const preferredCurrency = CURRENCY_CODES.includes(currencyRaw) ? currencyRaw : "eur";
 
+  // Cadence par adresse : créer des comptes en rafale est le premier geste
+  // d'un spam de salons, et sonder « cet email existe-t-il ? » en boucle est
+  // le premier geste d'une énumération. Compté AVANT le test d'existence,
+  // pour que le sondage coûte autant que l'inscription.
+  const cle = ipKey("signup", ipFromHeaders(await headers()));
+  try {
+    await assertUnderLimit(cle, { max: MAX_SIGNUPS_PER_IP_PER_HOUR, fenetreMinutes: 60 });
+  } catch {
+    return { error: await tErr("tooManyRequests") };
+  }
+  await recordHit(cle);
+
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return { error: await tErr("emailTaken") };
 
@@ -56,7 +71,7 @@ export async function registerAction(
     data: {
       name,
       email,
-      passwordHash: await bcrypt.hash(password, 10),
+      passwordHash: await hashPassword(password),
       preferredCurrency,
       preferredLanguage,
       ...(city
@@ -80,27 +95,33 @@ export async function loginAction(
   formData: FormData
 ): Promise<AuthFormState> {
   const { loginSchema } = await requestSchemas();
+  const code = String(formData.get("code") ?? "").trim();
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    code: code || undefined,
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
   try {
-    await signIn("credentials", { ...parsed.data, redirectTo: "/" });
+    // Le code n'est transmis QUE s'il existe (cf. src/lib/credentials-payload.ts).
+    await signIn("credentials", { ...signInPayload(parsed.data), redirectTo: "/" });
     return undefined;
   } catch (error) {
     if (error instanceof AuthError) {
       // Le code posé par LoginRateLimited (src/auth.ts) arrive soit sur
       // l'erreur elle-même, soit enveloppé dans sa cause selon le chemin.
-      const code =
+      const motif =
         (error as { code?: string }).code ??
         ((error.cause as { err?: { code?: string } } | undefined)?.err?.code);
-      if (code === "rate-limited") {
+      if (motif === "rate-limited") {
         return {
           error: await tErr("tooManyAttempts"),
         };
       }
+      // Mot de passe juste : on ouvre le champ du code au lieu de dire « faux ».
+      if (motif === "totp-required") return { needsCode: true };
+      if (motif === "totp-invalid") return { needsCode: true, error: await tErr("totpInvalid") };
       return { error: await tErr("badCredentials") };
     }
     throw error; // NEXT_REDIRECT inclus
