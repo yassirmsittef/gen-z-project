@@ -13,8 +13,21 @@ import { PrismaClient } from "@/generated/prisma/client";
  */
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
+/**
+ * `sslmode=require` → `verify-full`, explicitement. Aujourd'hui `pg` traite
+ * `require` comme `verify-full` (certificat du serveur VÉRIFIÉ) et le dit
+ * dans un avertissement à chaque démarrage ; `pg` 9 adoptera la sémantique
+ * libpq, où `require` chiffre SANS vérifier — une mise à jour ordinaire
+ * aurait ouvert la porte à un homme-du-milieu sans qu'aucun test ne rougisse.
+ * On écrit ce qu'on veut, et on ne dépend plus d'un défaut qui change.
+ * Sans `sslmode` (base locale), rien ne bouge.
+ */
+export function normaliseSslMode(url: string): string {
+  return url.replace(/([?&])sslmode=(require|prefer|verify-ca)(?=&|$)/, "$1sslmode=verify-full");
+}
+
 function createClient() {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "" });
+  const adapter = new PrismaPg({ connectionString: normaliseSslMode(process.env.DATABASE_URL ?? "") });
   return new PrismaClient({ adapter });
 }
 

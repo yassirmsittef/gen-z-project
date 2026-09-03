@@ -1,6 +1,6 @@
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 import bcrypt from "bcryptjs";
-import { prisma } from "../src/lib/prisma";
+import { normaliseSslMode, prisma } from "../src/lib/prisma";
 import { eraseAccount } from "../src/lib/account";
 import { ERASED_EMAIL_DOMAIN } from "../src/lib/constants";
 import { BCRYPT_COST, hashPassword, needsRehash, verifyPassword } from "../src/lib/password";
@@ -192,5 +192,18 @@ describe("fichiers « à nous » (Vercel Blob)", () => {
       "https://abc123.public.blob.vercel-storage.com/temoignages/x.mp4"
     );
     expect(isVideoBlob("https://abc123.public.blob.vercel-storage.com/avatars/x.webp")).toBe(false);
+  });
+});
+
+describe("connexion à la base : le certificat est vérifié, explicitement", () => {
+  it("promeut sslmode=require en verify-full, et ne touche à rien d'autre", () => {
+    expect(normaliseSslMode("postgresql://u:p@h/db?sslmode=require")).toBe("postgresql://u:p@h/db?sslmode=verify-full");
+    expect(normaliseSslMode("postgresql://u:p@h/db?schema=public&sslmode=require&channel_binding=require")).toBe(
+      "postgresql://u:p@h/db?schema=public&sslmode=verify-full&channel_binding=require"
+    );
+    expect(normaliseSslMode("postgresql://u:p@h/db?sslmode=verify-full")).toBe("postgresql://u:p@h/db?sslmode=verify-full");
+    expect(normaliseSslMode("postgresql://postgres:postgres@localhost:5433/tremplin?schema=public")).toBe(
+      "postgresql://postgres:postgres@localhost:5433/tremplin?schema=public"
+    );
   });
 });
