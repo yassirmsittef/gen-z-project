@@ -40,7 +40,11 @@ describe("TOTP RFC 6238", () => {
     expect(verifyTotp(SECRET_B32, code, t)).toBe(true);
     expect(verifyTotp(SECRET_B32, code, t + 30_000)).toBe(true);
     expect(verifyTotp(SECRET_B32, code, t - 30_000)).toBe(true);
-    expect(verifyTotp(SECRET_B32, code, t + 61_000)).toBe(false);
+    // Fenêtre élargie à ±2 pas : un téléphone décalé de ~1 minute est toléré.
+    expect(verifyTotp(SECRET_B32, code, t + 60_000)).toBe(true);
+    expect(verifyTotp(SECRET_B32, code, t - 60_000)).toBe(true);
+    // Au-delà, refusé : la fenêtre reste étroite.
+    expect(verifyTotp(SECRET_B32, code, t + 120_000)).toBe(false);
     expect(verifyTotp(SECRET_B32, "000000", t)).toBe(code === "000000");
     expect(verifyTotp(SECRET_B32, "12345", t)).toBe(false);
     expect(verifyTotp(SECRET_B32, "abcdef", t)).toBe(false);

@@ -74,16 +74,19 @@ export function totpCode(secretBase32: string, nowMs = Date.now(), stepS = TOTP_
 }
 
 /**
- * Vérifie un code en tolérant un pas d'horloge de chaque côté (le téléphone
- * et le serveur ne sont jamais exactement à l'heure). Comparaison en temps
- * constant : le temps de réponse ne doit pas dire combien de chiffres sont
- * bons.
+ * Vérifie un code en tolérant DEUX pas d'horloge de chaque côté (~±75 s) : le
+ * téléphone et le serveur ne sont jamais exactement à l'heure, et ±1 seul pas
+ * (±30 s) refusait de vrais codes dès qu'un téléphone dérivait un peu — la
+ * cause n°1 des « code incorrect ». Cinq codes valides à la fois sur un
+ * million, et le verrou de connexion (10 échecs/15 min) cape les essais : la
+ * force brute reste sans intérêt. Comparaison en temps constant : le temps de
+ * réponse ne dit pas combien de chiffres sont bons.
  */
 export function verifyTotp(
   secretBase32: string,
   code: string,
   nowMs = Date.now(),
-  fenetre = 1
+  fenetre = 2
 ): boolean {
   const saisi = code.replace(/\s+/g, "");
   if (!/^\d{6}$/.test(saisi)) return false;
