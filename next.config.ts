@@ -32,11 +32,13 @@ const enTetesDeSecurite = [
     value: "DENY",
   },
   {
-    // Vers un autre site : l'origine seulement, et rien du tout en HTTP. Un
-    // chemin comme /reinitialiser/<jeton> ne doit jamais partir dans un
-    // Referer — c'est ainsi que fuitent les liens à usage unique.
+    // AUCUN référent, jamais, vers l'extérieur : un site tiers ne doit pas
+    // apprendre qu'un visiteur venait de GeniGain — une plateforme
+    // d'activisme protège d'abord l'anonymat de qui la lit. (Notre défense
+    // CSRF s'appuie sur Sec-Fetch-Site et Origin, pas sur le Referer : rien
+    // n'est cassé.) Couvre aussi les liens à usage unique (/reinitialiser/…).
     key: "Referrer-Policy",
-    value: "strict-origin-when-cross-origin",
+    value: "no-referrer",
   },
   {
     // Tout ce que la plateforme n'utilise pas est refusé d'avance. La caméra et

@@ -134,7 +134,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
                     key={link}
                     href={link}
                     target="_blank"
-                    rel="noopener nofollow"
+                    rel="noopener noreferrer nofollow ugc"
                     className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:text-primary"
                   >
                     <Icon className="h-3.5 w-3.5 text-primary/70" aria-hidden />
