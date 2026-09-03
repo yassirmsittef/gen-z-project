@@ -29,6 +29,7 @@ export const calls = {
   "callCard.nobodyYet": "Noch niemand",
   "callCard.noLongerWants": "Hat genug von",
   "callCard.instead": "Stattdessen",
+  "callCard.anonymousAuthor": "Anonyme·r Autor·in",
   "callCard.memberFallback": "Mitglied",
   "callCard.takeCall": "Diesen Aufruf annehmen",
 
@@ -82,6 +83,8 @@ export const calls = {
   "createCallForm.sourcesHint":
     "Ein Link pro Zeile, höchstens {max}, mit https. Ein belegter Aufruf hält stand; einer ohne Quellen fällt bei der ersten Meldung.",
   "createCallForm.pending": "Wird veröffentlicht…",
+  "createCallForm.anonymousStrong": "Anonym veröffentlichen",
+  "createCallForm.anonymousRest": "dein Name wird nicht angezeigt. Wir behalten eine interne Verknüpfung für Moderation und Limits, aber niemand kann den Aufruf zu dir zurückverfolgen.",
   "createCallForm.submit": "Aufruf veröffentlichen",
   "createCallForm.withdrawNote": "Du kannst ihn jederzeit selbst zurückziehen.",
 

@@ -127,6 +127,14 @@ export function CreateCallForm() {
         </p>
       </div>
 
+      <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border/60 bg-muted/20 p-3">
+        <input type="checkbox" name="anonymous" className="mt-0.5 h-4 w-4 accent-primary" />
+        <span className="text-sm text-muted-foreground">
+          <strong className="font-semibold text-foreground">{t("createCallForm.anonymousStrong")}</strong>{" "}
+          {t("createCallForm.anonymousRest")}
+        </span>
+      </label>
+
       {state?.error && (
         <p role="alert" className="text-sm font-medium text-destructive">
           {state.error}

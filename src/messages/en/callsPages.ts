@@ -56,6 +56,7 @@ export const callsPages = {
   "weight.calls": { one: "{count} call", other: "{count} calls" },
   "weight.aim": "target this brand, carrying",
   "weight.total": "voices in total.",
+  "author.anonymous": "Anonymous author",
   "author.fallback": "Member",
   "motive.title": "The reason",
   "wanted.title": "What we'd want instead",

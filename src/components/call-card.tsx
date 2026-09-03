@@ -67,17 +67,24 @@ export async function CallCard({
         </div>
 
         <div className="mt-auto flex items-center justify-between gap-3 pt-1">
-          <Link
-            href={`/u/${call.author.id}`}
-            className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground"
-          >
-            <UserAvatar
-              name={call.author.name}
-              avatarUrl={call.author.avatarUrl}
-              className="h-7 w-7"
-            />
-            <span className="truncate">{call.author.name ?? t("callCard.memberFallback")}</span>
-          </Link>
+          {call.anonymous ? (
+            <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+              <UserAvatar name={null} avatarUrl={null} className="h-7 w-7" />
+              <span className="truncate italic">{t("callCard.anonymousAuthor")}</span>
+            </span>
+          ) : (
+            <Link
+              href={`/u/${call.author.id}`}
+              className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground"
+            >
+              <UserAvatar
+                name={call.author.name}
+                avatarUrl={call.author.avatarUrl}
+                className="h-7 w-7"
+              />
+              <span className="truncate">{call.author.name ?? t("callCard.memberFallback")}</span>
+            </Link>
+          )}
 
           <CallSupportButton
             callId={call.id}

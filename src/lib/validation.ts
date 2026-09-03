@@ -341,6 +341,7 @@ export function makeSchemas(tv: TV) {
     category: z.nativeEnum(ProjectCategory, {
       errorMap: () => ({ message: tv("callSectorChoose") }),
     }),
+    anonymous: z.boolean().optional(),
     reason: z
       .string()
       .trim()

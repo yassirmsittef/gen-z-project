@@ -139,6 +139,7 @@ export async function createCall(authorId: string, input: BoycottCallInput): Pro
         reason: input.reason,
         wanted: input.wanted,
         sources: input.sources,
+        anonymous: input.anonymous ?? false,
         // L'auteur soutient son propre appel : sinon un appel naît à zéro voix
         // et paraît mort-né.
         supports: { create: { userId: authorId } },
@@ -392,6 +393,14 @@ export type CallSort = "soutenus" | "recents" | "orphelins";
  * encore — est le tri qui porte l'intention du produit : il montre la demande
  * qui attend son offre.
  */
+/**
+ * Un appel ANONYME ne laisse sortir ni le nom, ni l'avatar, ni l'`authorId`
+ * (qui mènerait à /u/<id> et démasquerait l'auteur). Masqué AU NIVEAU DES
+ * DONNÉES, jamais seulement à l'affichage. `id: ""` : un lien /u/ oublié
+ * pointe alors vers rien, jamais vers la personne.
+ */
+const AUTEUR_MASQUE = { id: "", name: null, avatarUrl: null, reputation: 0 } as const;
+
 export async function listCalls(options: {
   sort: CallSort;
   category?: ProjectCategory;
@@ -423,7 +432,7 @@ export async function listCalls(options: {
       ? [{ createdAt: "desc" }]
       : [{ supports: { _count: "desc" } }, { createdAt: "desc" }];
 
-  return prisma.boycottCall.findMany({
+  const calls = await prisma.boycottCall.findMany({
     where,
     orderBy,
     take: options.take ?? 60,
@@ -434,6 +443,8 @@ export async function listCalls(options: {
       _count: { select: { supports: true, answers: { where: liveAnswer } } },
     },
   });
+  // Le fil est public : tout appel anonyme est masqué (aucun auteur privilégié).
+  return calls.map((c) => (c.anonymous ? { ...c, authorId: "", author: { ...AUTEUR_MASQUE } } : c));
 }
 
 export type CallListItem = Awaited<ReturnType<typeof listCalls>>[number];
@@ -447,7 +458,7 @@ export type CallListItem = Awaited<ReturnType<typeof listCalls>>[number];
  * plus une ligne sur la clé unique `callId_userId`.
  */
 export async function getCall(slug: string, viewerId?: string) {
-  return prisma.boycottCall.findUnique({
+  const call = await prisma.boycottCall.findUnique({
     where: { slug },
     include: {
       author: { select: { id: true, name: true, avatarUrl: true, reputation: true } },
@@ -483,6 +494,12 @@ export async function getCall(slug: string, viewerId?: string) {
       },
     },
   });
+  // Anonyme : masqué pour tout le monde SAUF l'auteur, qui garde son authorId
+  // (donc ses droits de retrait sur sa propre page).
+  if (call && call.anonymous && call.authorId !== viewerId) {
+    return { ...call, authorId: "", author: { ...AUTEUR_MASQUE } };
+  }
+  return call;
 }
 
 /**
@@ -624,7 +641,7 @@ export async function deleteCallComment(userId: string, commentId: string, isAdm
  * un signal — et c'est ce signal qui doit décider un porteur.
  */
 export async function siblingCalls(callId: string, targetKey: string) {
-  return prisma.boycottCall.findMany({
+  const rows = await prisma.boycottCall.findMany({
     where: { targetKey, id: { not: callId }, ...visibleCall },
     orderBy: [{ supports: { _count: "desc" } }, { createdAt: "desc" }],
     take: 5,
@@ -633,10 +650,13 @@ export async function siblingCalls(callId: string, targetKey: string) {
       slug: true,
       target: true,
       reason: true,
+      anonymous: true,
       author: { select: { name: true } },
       _count: { select: { supports: true, answers: { where: liveAnswer } } },
     },
   });
+  // Un voisin anonyme n'affiche pas de nom (le rendu retombe sur « anonyme »).
+  return rows.map((r) => (r.anonymous ? { ...r, author: { name: null } } : r));
 }
 
 /**

@@ -729,6 +729,10 @@ model BoycottCall {
   wanted   String
   /** Liens à l'appui (https uniquement, MAX_CALL_SOURCES). */
   sources  String[]        @default([])
+  /** Publié sans exposer le nom de l'auteur. La ligne garde `authorId` (droits
+   *  de l'auteur, modération, plafonds), mais AUCUN chargeur public ne laisse
+   *  sortir nom/avatar/authorId d'un appel anonyme (src/lib/boycott.ts). */
+  anonymous Boolean         @default(false)
 
   // Retrait : on ne supprime pas la ligne (les soutiens et les réponses ont
   // une histoire), on la masque.

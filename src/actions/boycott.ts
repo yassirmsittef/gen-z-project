@@ -34,6 +34,7 @@ export async function createCallAction(
     reason: formData.get("reason"),
     wanted: formData.get("wanted"),
     sources: parseLines(formData.get("sources")),
+    anonymous: formData.get("anonymous") === "on",
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 

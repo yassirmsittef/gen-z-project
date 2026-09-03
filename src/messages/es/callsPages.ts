@@ -56,6 +56,7 @@ export const callsPages = {
   "weight.calls": { one: "{count} llamada", other: "{count} llamadas" },
   "weight.aim": "apuntan a esta marca, con",
   "weight.total": "voces en total.",
+  "author.anonymous": "Autor anónimo",
   "author.fallback": "Miembro",
   "motive.title": "El motivo",
   "wanted.title": "Lo que haría falta en su lugar",

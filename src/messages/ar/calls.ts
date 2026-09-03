@@ -28,6 +28,7 @@ export const calls = {
   "callCard.nobodyYet": "لا أحد بعد",
   "callCard.noLongerWants": "لم يعد يريد",
   "callCard.instead": "بدلًا منها",
+  "callCard.anonymousAuthor": "مؤلف مجهول",
   "callCard.memberFallback": "عضو",
   "callCard.takeCall": "خذ هذا النداء",
 
@@ -89,6 +90,8 @@ export const calls = {
   "createCallForm.sourcesHint":
     "رابط في كل سطر، {max} كحد أقصى، بصيغة https. النداء الموثّق يصمد؛ والنداء بلا مصادر يسقط عند أول بلاغ.",
   "createCallForm.pending": "جارٍ النشر…",
+  "createCallForm.anonymousStrong": "النشر بهوية مجهولة",
+  "createCallForm.anonymousRest": "لن يظهر اسمك. نحتفظ برابط داخلي للإشراف والحدود، لكن لا يمكن لأحد الوصول إليك انطلاقًا من النداء.",
   "createCallForm.submit": "انشر النداء",
   "createCallForm.withdrawNote": "يمكنك سحبه بنفسك في أي وقت.",
 

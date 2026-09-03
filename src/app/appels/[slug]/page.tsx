@@ -145,18 +145,30 @@ export default async function AppelPage({ params }: { params: Promise<{ slug: st
         )}
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-          <Link
-            href={`/u/${call.author.id}`}
-            className="flex items-center gap-2.5 text-sm transition-colors duration-200 hover:text-secondary"
-          >
-            <UserAvatar name={call.author.name} avatarUrl={call.author.avatarUrl} />
-            <span>
-              <span className="font-semibold">{call.author.name ?? t("author.fallback")}</span>
-              <span className="block text-xs text-muted-foreground">
-                {formatDate(call.createdAt, locale)}
+          {call.anonymous ? (
+            <span className="flex items-center gap-2.5 text-sm">
+              <UserAvatar name={null} avatarUrl={null} />
+              <span>
+                <span className="font-semibold italic">{t("author.anonymous")}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {formatDate(call.createdAt, locale)}
+                </span>
               </span>
             </span>
-          </Link>
+          ) : (
+            <Link
+              href={`/u/${call.author.id}`}
+              className="flex items-center gap-2.5 text-sm transition-colors duration-200 hover:text-secondary"
+            >
+              <UserAvatar name={call.author.name} avatarUrl={call.author.avatarUrl} />
+              <span>
+                <span className="font-semibold">{call.author.name ?? t("author.fallback")}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {formatDate(call.createdAt, locale)}
+                </span>
+              </span>
+            </Link>
+          )}
 
           <CallSupportButton
             callId={call.id}

@@ -73,6 +73,7 @@ export const callsPages = {
   },
   "weight.aim": "تستهدف هذه العلامة، تحملها",
   "weight.total": "صوتًا في المجموع.",
+  "author.anonymous": "مؤلف مجهول",
   "author.fallback": "عضو",
   "motive.title": "السبب",
   "wanted.title": "ما ينبغي أن يحلّ محلها",

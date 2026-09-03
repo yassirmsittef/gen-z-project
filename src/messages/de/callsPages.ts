@@ -59,6 +59,7 @@ export const callsPages = {
   "weight.calls": { one: "{count} Aufruf", other: "{count} Aufrufe" },
   "weight.aim": "richten sich gegen diese Marke, getragen von",
   "weight.total": "Stimmen insgesamt.",
+  "author.anonymous": "Anonyme·r Autor·in",
   "author.fallback": "Mitglied",
   "motive.title": "Der Grund",
   "wanted.title": "Was es stattdessen bräuchte",
