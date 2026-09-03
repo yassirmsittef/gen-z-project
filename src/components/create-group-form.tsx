@@ -95,6 +95,14 @@ export function CreateGroupForm({ defaultCategory }: { defaultCategory?: Project
         </div>
       </div>
 
+      <label className="mt-4 flex cursor-pointer items-start gap-2.5 rounded-lg border border-border/60 bg-muted/20 p-3">
+        <input type="checkbox" name="private" className="mt-0.5 h-4 w-4 accent-primary" />
+        <span className="text-sm text-muted-foreground">
+          <strong className="font-semibold text-foreground">{t("createGroupForm.privateStrong")}</strong>{" "}
+          {t("createGroupForm.privateRest")}
+        </span>
+      </label>
+
       {state?.error && (
         <p role="alert" className="mt-3 text-sm font-medium text-destructive">
           {state.error}

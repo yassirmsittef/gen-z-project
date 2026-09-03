@@ -559,6 +559,10 @@ model ChatGroup {
   // Salon d'accueil ouvert par la plateforme (les salons de langue) : épinglé
   // en tête de l'annuaire et hors plafond de groupes animés.
   official  Boolean         @default(false)
+  /// Groupe FERMÉ : invisible aux non-membres (listing, recherche, page), et
+  /// rejoignable UNIQUEMENT par ajout d'un gérant. Filtré au niveau des
+  /// données, même rigueur anti-fuite que les appels anonymes.
+  private   Boolean         @default(false)
   createdAt DateTime        @default(now())
 
   owner    User              @relation("GroupsOwned", fields: [ownerId], references: [id], onDelete: Cascade)

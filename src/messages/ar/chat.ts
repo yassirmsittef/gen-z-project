@@ -100,6 +100,15 @@ export const chat = {
   "createGroupForm.purposePlaceholder":
     "نتعاون على إطلاق الألعاب المستقلة: ملاحظات، تجارب لعب، معارف.",
   "createGroupForm.pending": "جارٍ الإنشاء…",
+  "addMember.title": "إضافة عضو",
+  "addMember.hint": "ابحث عن شخص بالاسم وأضِفه. هذه هي الطريقة الوحيدة للدخول إلى هذه المجموعة.",
+  "addMember.searchPlaceholder": "اسم الشخص…",
+  "addMember.search": "بحث",
+  "addMember.add": "إضافة",
+  "addMember.added": "أُضيف",
+  "addMember.member": "عضو",
+  "createGroupForm.privateStrong": "مجموعة خاصة",
+  "createGroupForm.privateRest": "لا يمكن لأحد العثور عليها أو الانضمام إليها. المدير وحده يضيف الأعضاء، واحدًا تلو الآخر. مثالية للتنسيق بعيدًا عن الأنظار.",
   "createGroupForm.submit": "أنشئ المجموعة",
   "createGroupForm.firstMember": "تصبح أول عضو فيها.",
 

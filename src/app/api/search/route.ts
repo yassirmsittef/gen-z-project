@@ -42,9 +42,14 @@ export async function GET(request: Request) {
     session?.user?.id
       ? prisma.chatGroup.findMany({
           where: {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { purpose: { contains: q, mode: "insensitive" } },
+            AND: [
+              {
+                OR: [
+                  { name: { contains: q, mode: "insensitive" } },
+                  { purpose: { contains: q, mode: "insensitive" } },
+                ],
+              },
+              { OR: [{ private: false }, { members: { some: { userId: session.user.id } } }] },
             ],
           },
           // Les salons d'accueil d'abord, puis les plus peuplés.

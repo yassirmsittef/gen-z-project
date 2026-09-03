@@ -90,6 +90,15 @@ export const chat = {
   "createGroupForm.purposePlaceholder":
     "On s'entraide sur les lancements de jeux indés : retours, playtests, contacts.",
   "createGroupForm.pending": "Création…",
+  "addMember.title": "Ajouter un membre",
+  "addMember.hint": "Cherche une personne par son nom et ajoute-la. C'est le seul moyen d'entrer dans ce groupe.",
+  "addMember.searchPlaceholder": "Nom de la personne…",
+  "addMember.search": "Chercher",
+  "addMember.add": "Ajouter",
+  "addMember.added": "Ajouté·e",
+  "addMember.member": "Membre",
+  "createGroupForm.privateStrong": "Groupe privé",
+  "createGroupForm.privateRest": "personne ne peut le trouver ni le rejoindre. Seul un gérant ajoute les membres, un par un. Idéal pour coordonner à l'abri des regards.",
   "createGroupForm.submit": "Créer le groupe",
   "createGroupForm.firstMember": "Tu en deviens le premier membre.",
 

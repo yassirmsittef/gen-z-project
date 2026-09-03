@@ -90,6 +90,15 @@ export const chat = {
   "createGroupForm.purposePlaceholder":
     "Nos ayudamos con los lanzamientos de juegos indies: feedback, playtests, contactos.",
   "createGroupForm.pending": "Creando…",
+  "addMember.title": "Añadir un miembro",
+  "addMember.hint": "Busca a una persona por su nombre y añádela. Es la única forma de entrar en este grupo.",
+  "addMember.searchPlaceholder": "Nombre de la persona…",
+  "addMember.search": "Buscar",
+  "addMember.add": "Añadir",
+  "addMember.added": "Añadido",
+  "addMember.member": "Miembro",
+  "createGroupForm.privateStrong": "Grupo privado",
+  "createGroupForm.privateRest": "nadie puede encontrarlo ni unirse. Solo un gestor añade a los miembros, uno a uno. Ideal para coordinar lejos de miradas.",
   "createGroupForm.submit": "Crear el grupo",
   "createGroupForm.firstMember": "Te conviertes en su primer miembro.",
 

@@ -55,17 +55,21 @@ export async function listGroups(params: {
   const mots = params.query?.trim();
   const groups = await prisma.chatGroup.findMany({
     where: {
-      ...(params.category ? { category: params.category } : {}),
-      // On cherche dans le nom ET l'intention : « playtest » doit trouver
-      // un salon qui s'appelle autrement mais le promet dans sa phrase.
-      ...(mots
-        ? {
-            OR: [
-              { name: { contains: mots, mode: "insensitive" } },
-              { purpose: { contains: mots, mode: "insensitive" } },
-            ],
-          }
-        : {}),
+      AND: [
+        ...(params.category ? [{ category: params.category }] : []),
+        ...(mots
+          ? [
+              {
+                OR: [
+                  { name: { contains: mots, mode: "insensitive" as const } },
+                  { purpose: { contains: mots, mode: "insensitive" as const } },
+                ],
+              },
+            ]
+          : []),
+        // Un groupe PRIVÉ n'apparaît qu'à ses membres. Jamais aux autres.
+        { OR: [{ private: false }, { members: { some: { userId: params.userId } } }] },
+      ],
     },
     // Les salons d'accueil (langues) restent en tête, quoi qu'il arrive après.
     orderBy: [{ official: "desc" }, { createdAt: "desc" }],
@@ -202,6 +206,8 @@ export async function getGroupBySlug(slug: string, userId: string) {
     groupPowers(group, userId),
   ]);
 
+  if (group.private && !membership && !(await isAdmin(userId))) return null;
+
   return {
     id: group.id,
     slug: group.slug,
@@ -209,6 +215,7 @@ export async function getGroupBySlug(slug: string, userId: string) {
     purpose: group.purpose,
     category: group.category,
     official: group.official,
+    private: group.private,
     createdAt: group.createdAt,
     owner: group.owner,
     isOwner: group.ownerId === userId,
@@ -380,6 +387,7 @@ export async function createGroup(
       purpose: input.purpose,
       category: input.category,
       official: options.official ?? false,
+      private: input.private ?? false,
       ownerId: userId,
       members: { create: { userId } },
     },
@@ -428,7 +436,7 @@ export async function missingLanguageRooms(): Promise<number> {
 export async function joinGroup(userId: string, slug: string): Promise<string> {
   const group = await prisma.chatGroup.findUnique({
     where: { slug },
-    select: { id: true, slug: true, _count: { select: { members: true } } },
+    select: { id: true, slug: true, private: true, _count: { select: { members: true } } },
   });
   if (!group) throw new DomainError("Groupe introuvable.");
 
@@ -445,6 +453,9 @@ export async function joinGroup(userId: string, slug: string): Promise<string> {
   ]);
   // Déjà là : pas de seconde ligne d'accueil (double clic, deux onglets).
   if (already) return group.id;
+  if (group.private) {
+    throw new DomainError("Ce groupe est sur invitation — demande à l'animation de t'ajouter.");
+  }
   if (exclu) {
     throw new DomainError("L'animation de ce salon t'en a retiré — tu ne peux pas y revenir.");
   }
@@ -521,6 +532,60 @@ export async function joinGroup(userId: string, slug: string): Promise<string> {
   });
 
   return group.id;
+}
+
+/**
+ * Un gérant AJOUTE une personne — le seul moyen d'entrer dans un groupe fermé.
+ * Réservé au propriétaire et aux gérants ; la cible doit exister et ne pas
+ * être exclue ; plafond recompté sous verrou.
+ */
+export async function addGroupMember(actorId: string, slug: string, targetUserId: string): Promise<void> {
+  const group = await prisma.chatGroup.findUnique({
+    where: { slug },
+    select: { id: true, slug: true, ownerId: true },
+  });
+  if (!group) throw new DomainError("Groupe introuvable.");
+  const { manager } = await groupPowers(group, actorId);
+  if (!manager) throw new DomainError("Seule l'animation du groupe peut ajouter des membres.");
+
+  const target = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    select: { id: true, name: true },
+  });
+  if (!target) throw new DomainError("Membre introuvable.");
+
+  const [already, exclu] = await Promise.all([
+    prisma.chatGroupMember.findUnique({
+      where: { groupId_userId: { groupId: group.id, userId: targetUserId } },
+      select: { userId: true },
+    }),
+    prisma.chatGroupBan.findUnique({
+      where: { groupId_userId: { groupId: group.id, userId: targetUserId } },
+      select: { userId: true },
+    }),
+  ]);
+  if (already) return;
+  if (exclu) throw new DomainError("Cette personne a été exclue de ce groupe.");
+
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${group.id}))`;
+    const membres = await tx.chatGroupMember.count({ where: { groupId: group.id } });
+    if (membres >= MAX_GROUP_MEMBERS) {
+      throw new DomainError(`Ce groupe est complet (${MAX_GROUP_MEMBERS} membres).`);
+    }
+    await tx.chatGroupMember.create({ data: { groupId: group.id, userId: targetUserId } });
+  });
+
+  await prisma.groupMessage.create({
+    data: {
+      groupId: group.id,
+      senderId: targetUserId,
+      system: true,
+      systemKey: "joined",
+      systemParams: { name: target.name ?? null },
+      body: roomTexts(group.slug).welcome.replace("{nom}", target.name ?? "Un membre"),
+    },
+  });
 }
 
 /**

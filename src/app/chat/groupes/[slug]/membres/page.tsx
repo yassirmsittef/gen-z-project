@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Crown, ShieldCheck, UserMinus } from "lucide-react";
 import { auth } from "@/auth";
 import { MemberActions, ReadmitButton } from "@/components/group-moderation";
+import { AddGroupMember } from "@/components/add-group-member";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { getGroupBySlug, getGroupMembers } from "@/lib/chat-groups";
@@ -59,6 +60,7 @@ export default async function GroupMembersPage({
       </div>
 
       <div className="mx-auto max-w-3xl space-y-8">
+        {group.canModerate && <div className="mb-4"><AddGroupMember slug={group.slug} /></div>}
         <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-se-sm">
           {members.map(({ user, manager, joinedAt }) => {
             const isOwner = user.id === group.owner.id;

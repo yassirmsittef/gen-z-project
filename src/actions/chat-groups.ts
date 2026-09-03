@@ -14,6 +14,7 @@ import {
   openLanguageRooms,
   postGroupMessage,
   readmitToGroup,
+  addGroupMember,
   setGroupManager,
   setGroupMuted,
 } from "@/lib/chat-groups";
@@ -34,6 +35,7 @@ export async function createGroupAction(
     name: formData.get("name"),
     purpose: formData.get("purpose"),
     category: formData.get("category"),
+    private: formData.get("private") === "on",
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -172,7 +174,8 @@ export async function groupModerationAction(
   const geste = String(formData.get("geste") ?? "");
 
   try {
-    if (geste === "nommer") await setGroupManager(session.user.id, slug, targetId, true);
+    if (geste === "ajouter") await addGroupMember(session.user.id, slug, targetId);
+    else if (geste === "nommer") await setGroupManager(session.user.id, slug, targetId, true);
     else if (geste === "demettre") await setGroupManager(session.user.id, slug, targetId, false);
     else if (geste === "exclure") await excludeFromGroup(session.user.id, slug, targetId);
     else if (geste === "readmettre") await readmitToGroup(session.user.id, slug, targetId);

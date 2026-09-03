@@ -235,6 +235,7 @@ export function makeSchemas(tv: TV) {
   });
 
   const createGroupSchema = z.object({
+    private: z.boolean().optional(),
     name: z
       .string()
       .trim()
