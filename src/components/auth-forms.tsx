@@ -86,13 +86,11 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
             <Input
               id="code"
               name="code"
-              inputMode="numeric"
               autoComplete="one-time-code"
-              pattern="[0-9 ]*"
-              maxLength={7}
+              maxLength={12}
               autoFocus
               required
-              className="font-mono tracking-[0.3em]"
+              className="font-mono tracking-[0.2em]"
             />
             <p className="text-xs text-muted-foreground">{t("loginForm.codeHint")}</p>
           </div>

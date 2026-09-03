@@ -16,7 +16,7 @@ import {
   reconcileClaims,
   type SessionClaims,
 } from "@/lib/session-claims";
-import { mfaRequired } from "@/lib/mfa";
+import { consumeRecoveryCode, mfaRequired } from "@/lib/mfa";
 import { checkLoginBurst } from "@/lib/security-alerts";
 import { verifyTotp } from "@/lib/totp";
 import { MAX_LOGIN_FAILURES_PER_IP, LOGIN_IP_WINDOW_MINUTES } from "@/lib/constants";
@@ -102,7 +102,11 @@ const providers: Provider[] = [
       if (mfaRequired(user)) {
         const code = parsed.data.code?.trim();
         if (!code) throw new TotpRequired();
-        if (!verifyTotp(user.totpSecret!, code)) {
+        // Le code du téléphone d'abord ; à défaut, un code de secours (usage
+        // unique) pour qui a perdu son téléphone.
+        const okTotp = verifyTotp(user.totpSecret!, code);
+        const okSecours = !okTotp && (await consumeRecoveryCode(user.id, code));
+        if (!okTotp && !okSecours) {
           await echec();
           throw new TotpInvalid();
         }

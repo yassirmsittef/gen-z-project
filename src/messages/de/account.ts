@@ -64,7 +64,7 @@ export const account = {
   "passwordForm.submitPending": "Wird geändert…",
   "passwordForm.submit": "Passwort ändern",
   "loginForm.codeLabel": "Bestätigungscode",
-  "loginForm.codeHint": "Dieses Konto ist durch Zwei-Faktor-Authentifizierung geschützt: gib den 6-stelligen Code aus deiner App ein.",
+  "loginForm.codeHint": "Dieses Konto ist durch Zwei-Faktor-Authentifizierung geschützt: gib den 6-stelligen Code aus deiner App ein, oder einen deiner Wiederherstellungscodes.",
   "mfa.title": "Zwei-Faktor-Authentifizierung",
   "mfa.body": "Bei jeder Anmeldung wird zusätzlich zum Passwort ein Einmalcode aus einer App (Aegis, Google Authenticator, 1Password…) verlangt.",
   "mfa.enable": "Aktivieren",
@@ -75,6 +75,8 @@ export const account = {
   "mfa.enabledSince": "Aktiv seit dem {date}.",
   "mfa.disable": "Deaktivieren",
   "mfa.disableHint": "Zum Deaktivieren wird dein Passwort verlangt.",
+  "mfa.recoveryTitle": "Wiederherstellungscodes — sichere sie JETZT",
+  "mfa.recoveryBody": "Jeder dieser Codes lässt dich EINMAL anmelden, falls du dein Telefon verlierst. Schreib sie auf Papier oder in deinen Passwortmanager: sie werden nie wieder angezeigt. Ohne sie und ohne dein Telefon kommst du nicht mehr rein.",
   "mfa.success": "Zwei-Faktor-Authentifizierung aktiviert.",
   "mfa.disabled": "Zwei-Faktor-Authentifizierung deaktiviert.",
 

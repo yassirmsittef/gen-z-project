@@ -97,7 +97,20 @@ export function MfaForm({
             <p role="alert" className="text-sm font-medium text-destructive">{confirmState.error}</p>
           )}
           {confirmState?.success === "enabled" && (
-            <p className="text-sm font-medium text-success">{t("mfa.success")}</p>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-success">{t("mfa.success")}</p>
+              {confirmState.recoveryCodes && confirmState.recoveryCodes.length > 0 && (
+                <div className="rounded-lg border border-amber-400/40 bg-amber-400/10 p-3">
+                  <p className="text-sm font-semibold">{t("mfa.recoveryTitle")}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t("mfa.recoveryBody")}</p>
+                  <ul dir="ltr" className="mt-2 grid grid-cols-2 gap-1.5 font-mono text-sm tracking-wider">
+                    {confirmState.recoveryCodes.map((c) => (
+                      <li key={c} className="select-all rounded bg-background/50 px-2 py-1 text-center">{c}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           )}
         </form>
       ) : (

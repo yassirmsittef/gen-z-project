@@ -64,7 +64,7 @@ export const account = {
   "passwordForm.submitPending": "Modification…",
   "passwordForm.submit": "Changer le mot de passe",
   "loginForm.codeLabel": "Code de vérification",
-  "loginForm.codeHint": "Ce compte est protégé par une double authentification : saisis le code à 6 chiffres affiché par ton application.",
+  "loginForm.codeHint": "Ce compte est protégé par une double authentification : saisis le code à 6 chiffres de ton application, ou un de tes codes de secours.",
   "mfa.title": "Double authentification",
   "mfa.body": "Un code à usage unique, généré par une application (Aegis, Google Authenticator, 1Password…), sera demandé à chaque connexion en plus du mot de passe.",
   "mfa.enable": "Activer",
@@ -75,6 +75,8 @@ export const account = {
   "mfa.enabledSince": "Activée le {date}.",
   "mfa.disable": "Désactiver",
   "mfa.disableHint": "Ton mot de passe est demandé pour désactiver.",
+  "mfa.recoveryTitle": "Codes de secours — note-les MAINTENANT",
+  "mfa.recoveryBody": "Chacun de ces codes te laisse entrer UNE fois si tu perds ton téléphone. Écris-les sur papier ou dans ton gestionnaire de mots de passe : ils ne seront plus jamais affichés. Sans eux et sans ton téléphone, tu ne pourras plus te connecter.",
   "mfa.success": "Double authentification activée.",
   "mfa.disabled": "Double authentification désactivée.",
 

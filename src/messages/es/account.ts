@@ -64,7 +64,7 @@ export const account = {
   "passwordForm.submitPending": "Modificando…",
   "passwordForm.submit": "Cambiar la contraseña",
   "loginForm.codeLabel": "Código de verificación",
-  "loginForm.codeHint": "Esta cuenta está protegida por autenticación en dos pasos: introduce el código de 6 cifras que muestra tu aplicación.",
+  "loginForm.codeHint": "Esta cuenta está protegida por autenticación en dos pasos: introduce el código de 6 cifras de tu aplicación, o uno de tus códigos de recuperación.",
   "mfa.title": "Autenticación en dos pasos",
   "mfa.body": "Se pedirá en cada inicio de sesión, además de la contraseña, un código de un solo uso generado por una aplicación (Aegis, Google Authenticator, 1Password…).",
   "mfa.enable": "Activar",
@@ -75,6 +75,8 @@ export const account = {
   "mfa.enabledSince": "Activada el {date}.",
   "mfa.disable": "Desactivar",
   "mfa.disableHint": "Se pide tu contraseña para desactivarla.",
+  "mfa.recoveryTitle": "Códigos de recuperación — guárdalos AHORA",
+  "mfa.recoveryBody": "Cada uno de estos códigos te permite entrar UNA vez si pierdes el teléfono. Anótalos en papel o en tu gestor de contraseñas: no se volverán a mostrar. Sin ellos y sin tu teléfono, no podrás iniciar sesión.",
   "mfa.success": "Autenticación en dos pasos activada.",
   "mfa.disabled": "Autenticación en dos pasos desactivada.",
 

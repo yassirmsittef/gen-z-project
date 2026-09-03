@@ -64,7 +64,7 @@ export const account = {
   "passwordForm.submitPending": "Modifica…",
   "passwordForm.submit": "Cambia la password",
   "loginForm.codeLabel": "Codice di verifica",
-  "loginForm.codeHint": "Questo account è protetto dall'autenticazione a due fattori: inserisci il codice a 6 cifre mostrato dalla tua app.",
+  "loginForm.codeHint": "Questo account è protetto dall'autenticazione a due fattori: inserisci il codice a 6 cifre dalla tua app, o uno dei tuoi codici di recupero.",
   "mfa.title": "Autenticazione a due fattori",
   "mfa.body": "A ogni accesso, oltre alla password, verrà chiesto un codice monouso generato da un'app (Aegis, Google Authenticator, 1Password…).",
   "mfa.enable": "Attiva",
@@ -75,6 +75,8 @@ export const account = {
   "mfa.enabledSince": "Attiva dal {date}.",
   "mfa.disable": "Disattiva",
   "mfa.disableHint": "Per disattivarla serve la tua password.",
+  "mfa.recoveryTitle": "Codici di recupero — salvali ORA",
+  "mfa.recoveryBody": "Ognuno di questi codici ti fa entrare UNA volta se perdi il telefono. Scrivili su carta o nel tuo gestore di password: non saranno mai più mostrati. Senza di essi e senza il telefono non potrai accedere.",
   "mfa.success": "Autenticazione a due fattori attivata.",
   "mfa.disabled": "Autenticazione a due fattori disattivata.",
 

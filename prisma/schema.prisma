@@ -44,6 +44,10 @@ model User {
   /// un QR mal scanné enferme dehors. Réservée aux ADMIN pour l'instant.
   totpSecret       String?
   totpEnabledAt    DateTime?
+  /// Codes de secours de la double authentification : SHA-256 de chaque code
+  /// à usage unique, montrés en clair UNE fois à l'activation. Permettent
+  /// d'entrer sans le téléphone (perte, vol) sans se faire enfermer dehors.
+  totpRecoveryCodes String[] @default([])
   // Cumul à vie des contributions converties en cents US au moment du
   // paiement (non décrémenté par les remboursements) — alimente le gate
   // « 50 $ contribués avant de poster » et les classements inter-devises.

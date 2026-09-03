@@ -6,7 +6,9 @@ import { domainErrorMessage } from "@/lib/action-errors";
 import { confirmMfaEnrolment, disableMfa, startMfaEnrolment } from "@/lib/mfa";
 import { DomainError } from "@/lib/project-service";
 
-export type MfaState = { error?: string; success?: "enabled" | "disabled" } | undefined;
+export type MfaState =
+  | { error?: string; success?: "enabled" | "disabled"; recoveryCodes?: string[] }
+  | undefined;
 
 async function requireUserId(): Promise<string> {
   const session = await auth();
@@ -28,14 +30,15 @@ export async function enableMfaAction(_prev: MfaState): Promise<MfaState> {
 
 export async function confirmMfaAction(_prev: MfaState, formData: FormData): Promise<MfaState> {
   const userId = await requireUserId();
+  let recoveryCodes: string[];
   try {
-    await confirmMfaEnrolment(userId, String(formData.get("code") ?? ""));
+    recoveryCodes = await confirmMfaEnrolment(userId, String(formData.get("code") ?? ""));
   } catch (error) {
     if (error instanceof DomainError) return { error: await domainErrorMessage(error) };
     throw error;
   }
   revalidatePath("/dashboard");
-  return { success: "enabled" };
+  return { success: "enabled", recoveryCodes };
 }
 
 export async function disableMfaAction(_prev: MfaState, formData: FormData): Promise<MfaState> {

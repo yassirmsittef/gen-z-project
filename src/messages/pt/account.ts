@@ -64,7 +64,7 @@ export const account = {
   "passwordForm.submitPending": "A alterar…",
   "passwordForm.submit": "Mudar a palavra-passe",
   "loginForm.codeLabel": "Código de verificação",
-  "loginForm.codeHint": "Esta conta está protegida por autenticação de dois fatores: introduz o código de 6 dígitos mostrado pela tua aplicação.",
+  "loginForm.codeHint": "Esta conta está protegida por autenticação de dois fatores: introduz o código de 6 dígitos da tua aplicação, ou um dos teus códigos de recuperação.",
   "mfa.title": "Autenticação de dois fatores",
   "mfa.body": "A cada início de sessão será pedido, além da palavra-passe, um código de utilização única gerado por uma aplicação (Aegis, Google Authenticator, 1Password…).",
   "mfa.enable": "Ativar",
@@ -75,6 +75,8 @@ export const account = {
   "mfa.enabledSince": "Ativa desde {date}.",
   "mfa.disable": "Desativar",
   "mfa.disableHint": "A tua palavra-passe é pedida para desativar.",
+  "mfa.recoveryTitle": "Códigos de recuperação — guarda-os AGORA",
+  "mfa.recoveryBody": "Cada um destes códigos deixa-te entrar UMA vez se perderes o telemóvel. Escreve-os em papel ou no teu gestor de palavras-passe: não voltarão a ser mostrados. Sem eles e sem o telemóvel, não conseguirás entrar.",
   "mfa.success": "Autenticação de dois fatores ativada.",
   "mfa.disabled": "Autenticação de dois fatores desativada.",
 
