@@ -1,0 +1,78 @@
+# Int√©gration continue ‚Äî la m√™me v√©rification que celle faite √† la main avant
+# chaque d√©ploiement, mais √† CHAQUE push : tests contre une vraie base
+# Postgres, build de production, audit des d√©pendances de production.
+#
+# Un push sur main d√©clenche aussi le d√©ploiement Vercel : cette CI ne le
+# bloque pas (Vercel ne l'attend pas), mais elle laisse une trace rouge sur le
+# commit ‚Äî et un test rouge se voit avant qu'un membre ne le voie.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verifier:
+    name: tests ¬∑ build ¬∑ audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: genigain_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/genigain_ci?schema=public
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/genigain_ci?schema=public
+      AUTH_SECRET: ci-secret-sans-valeur-hors-de-cette-machine
+      AUTH_TRUST_HOST: "true"
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      # Aucune cl√© de service : aucun email, aucun appel r√©seau tiers depuis la CI.
+      RESEND_API_KEY: ""
+      STRIPE_SECRET_KEY: ""
+      ANTHROPIC_API_KEY: ""
+      MICROSOFT_TRANSLATOR_KEY: ""
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci` lance `prisma generate` (postinstall) : le client est pr√™t.
+      - run: npm ci
+
+      - name: Migrations sur la base de la CI
+        run: npx prisma migrate deploy
+
+      - name: Tests (contre la base Postgres du job)
+        run: npm test
+
+      - name: Build de production
+        run: npm run build
+
+      # Deux audits, deux r√¥les. Le premier BLOQUE : une vuln√©rabilit√© critique
+      # (comme celles d'Auth.js ferm√©es le 2 septembre) ne doit jamais passer.
+      # Le second INFORME sans bloquer : au niveau ¬´ high ¬ª, la cha√Æne de la CLI
+      # Prisma (deepmerge-ts, mysql2 ‚Äî jamais ex√©cut√©s en production) et, tant
+      # que Next 16 n'est pas d√©ploy√©, postcss (outil de build) le rendraient
+      # rouge en permanence ‚Äî et une CI toujours rouge n'est plus lue.
+      - name: Audit bloquant (critique)
+        run: npm audit --audit-level=critical
+
+      - name: Audit informatif (high, ne bloque pas)
+        continue-on-error: true
+        run: npm audit --audit-level=high
