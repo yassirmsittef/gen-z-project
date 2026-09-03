@@ -149,3 +149,16 @@ export async function eraseAccount(userId: string) {
     { actorId: userId, reason: "Compte effacé à la demande de son titulaire (RGPD)." }
   );
 }
+
+/**
+ * « Déconnecter tous mes appareils » : incrémente la version de session, ce
+ * qui fait tomber TOUS les jetons ouverts (y compris ceux d'un attaquant)
+ * à la prochaine revalidation — au plus quelques minutes. C'est le bouton de
+ * panique de quelqu'un qui craint que son appareil soit compromis.
+ */
+export async function revokeAllSessions(userId: string): Promise<void> {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { sessionVersion: { increment: 1 } },
+  });
+}

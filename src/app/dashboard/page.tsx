@@ -18,6 +18,7 @@ import { ReputationBadge } from "@/components/reputation-badge";
 import { ReputationRing } from "@/components/reputation-ring";
 import { ConnectForm } from "@/components/connect-form";
 import { DeleteAccount } from "@/components/delete-account";
+import { RevokeSessions } from "@/components/revoke-sessions";
 import { LocationForm } from "@/components/location-form";
 import { MfaForm } from "@/components/mfa-form";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
@@ -547,6 +548,7 @@ export default async function DashboardPage({
                     </a>
                   </Button>
                 </div>
+                <RevokeSessions />
                 <DeleteAccount />
               </CardContent>
             </Card>

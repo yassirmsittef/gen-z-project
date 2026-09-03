@@ -14,7 +14,7 @@ import { updateUserLocation, updateUserSkills } from "@/lib/project-service";
 import bcrypt from "bcryptjs";
 import { hashPassword } from "@/lib/password";
 import { signIn, signOut } from "@/auth";
-import { eraseAccount } from "@/lib/account";
+import { eraseAccount, revokeAllSessions } from "@/lib/account";
 import { isOwnBlob } from "@/lib/blob";
 import { MAX_AVATAR_CHANGES_PER_HOUR } from "@/lib/constants";
 import { assertUnderLimit, recordHit } from "@/lib/throttle";
@@ -60,6 +60,18 @@ export async function deleteAccountAction(
   }
 
   await signOut({ redirectTo: "/" });
+}
+
+/**
+ * Déconnecte l'utilisateur de TOUS ses appareils (bouton de panique). Puis
+ * le déconnecte ici même : la session courante tombe aussi, il se reconnecte
+ * — avec son code de double authentification s'il l'a activé.
+ */
+export async function revokeSessionsAction(): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+  await revokeAllSessions(session.user.id);
+  await signOut({ redirectTo: "/login" });
 }
 
 export type PasswordFormState = { error?: string; success?: boolean } | undefined;
