@@ -17,6 +17,7 @@ export const err = {
   cityUnknownPick: "مدينة غير معروفة — اختر مدينة من القائمة المقترحة.",
   paymentsNotConfigured: "المدفوعات غير مهيأة في هذه البيئة.",
   stripeNoCheckout: "لم توفر Stripe صفحة دفع — أعد المحاولة.",
+  supportAmountInvalid: "مبلغ غير صالح (الحد الأدنى 1 CHF).",
   invalidMilestones: "مراحل غير صالحة.",
   projectNotFound: "المشروع غير موجود.",
   ownerOnlyUpdate: "صاحب المشروع وحده يمكنه نشر مستجدّ.",

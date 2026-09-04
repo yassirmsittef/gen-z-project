@@ -83,7 +83,7 @@ export const viewport: Viewport = { themeColor: "#0B0E14" };
 export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [locale, t] = [await getRequestLocale(), await getT("nav")];
+  const [locale, t, tCommon] = [await getRequestLocale(), await getT("nav"), await getT("common")];
   return (
     <html
       lang={locale}
@@ -123,6 +123,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   className="transition-colors duration-200 hover:text-foreground"
                 >
                   {t("legalNotice")}
+                </Link>
+                <Link href="/soutenir" className="font-medium text-primary transition-colors duration-200 hover:text-foreground">
+                  {tCommon("support.link")}
                 </Link>
               </nav>
               <p>{stripeLive ? t("footerLive") : t("footerTest")}</p>

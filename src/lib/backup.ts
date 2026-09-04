@@ -65,6 +65,7 @@ export const RESTORE_ORDER: string[] = [
   "BoycottAnswer",
   "CallVideo",
   "CallComment",
+  "PlatformSupport",
 ];
 
 /** Les modèles sauvegardés : la même liste que l'ordre de restauration — et

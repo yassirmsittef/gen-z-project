@@ -17,6 +17,7 @@ export const err = {
   cityUnknownPick: "City not recognized — pick a city suggested by the list.",
   paymentsNotConfigured: "Payments aren't configured on this environment.",
   stripeNoCheckout: "Stripe didn't provide a payment page — try again.",
+  supportAmountInvalid: "Invalid amount (1 CHF minimum).",
   invalidMilestones: "Invalid milestones.",
   projectNotFound: "Project not found.",
   ownerOnlyUpdate: "Only the project's owner can post an update.",

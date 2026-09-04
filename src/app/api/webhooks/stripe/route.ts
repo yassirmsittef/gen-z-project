@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { fulfillContribution } from "@/lib/project-service";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
 import { escrowContribution, executeDueRefunds } from "@/lib/payouts";
+import { recordPlatformSupport } from "@/lib/platform-support";
 import { alertAdmins } from "@/lib/security-alerts";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
 
@@ -39,6 +40,20 @@ export async function POST(request: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     const { kind, projectId, userId, usdCents, anonymous } = session.metadata ?? {};
+
+    // Soutien à la plateforme : un don, enregistré tel quel. Pas de projet,
+    // pas de séquestre — l'argent reste sur le compte de GeniGain.
+    if (kind === "support" && session.payment_status === "paid" && typeof session.amount_total === "number") {
+      await recordPlatformSupport({
+        stripeSessionId: session.id,
+        stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null,
+        userId: userId ?? null,
+        amountMinor: session.amount_total,
+        currency: session.currency ?? "chf",
+        usdCents: Number(usdCents) || 0,
+      });
+      return NextResponse.json({ received: true });
+    }
 
     if (
       session.payment_status === "paid" &&

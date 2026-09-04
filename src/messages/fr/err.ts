@@ -25,6 +25,7 @@ export const err = {
   // Actions — projets & contributions
   paymentsNotConfigured: "Les paiements ne sont pas configurés sur cet environnement.",
   stripeNoCheckout: "Stripe n'a pas fourni de page de paiement — réessaie.",
+  supportAmountInvalid: "Montant invalide (1 CHF minimum).",
   invalidMilestones: "Étapes invalides.",
   projectNotFound: "Projet introuvable.",
   ownerOnlyUpdate: "Seul·e le·la porteur·se du projet peut poster une actu.",

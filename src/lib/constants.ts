@@ -488,3 +488,8 @@ export const LOGIN_BURST_ALERT_THRESHOLD = 50;
 export const MAX_GROUP_JOINS_PER_DAY = 3;
 /** Appels auxquels un même projet peut se déclarer « remplaçant » par jour. */
 export const MAX_ANSWERS_PER_PROJECT_PER_DAY = 3;
+
+/** Soutien à la plateforme (/soutenir) : devise et minimum. Ici, et pas dans
+ *  platform-support.ts, pour être importable côté CLIENT sans tirer Prisma. */
+export const SUPPORT_CURRENCY = "chf";
+export const MIN_SUPPORT_MAJOR = 1;

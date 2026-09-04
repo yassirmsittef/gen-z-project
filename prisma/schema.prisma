@@ -100,6 +100,7 @@ model User {
   callComments     CallComment[]
   callVideos       CallVideo[]
   uploadTickets    UploadTicket[]
+  platformSupports PlatformSupport[]
 }
 
 model Account {
@@ -918,4 +919,20 @@ model UploadTicket {
   @@index([userId, createdAt])
   @@index([createdAt])
   @@index([consumedAt, createdAt])
+}
+
+/// Soutien à la PLATEFORME elle-même (page /soutenir) : un don, sans projet,
+/// sans étapes, sans séquestre — l'argent est celui de GeniGain, il reste sur
+/// son compte Stripe et part vers sa banque au rythme normal. Le surplus
+/// finance les projets des autres (engagement public sur la page).
+model PlatformSupport {
+  id                    String   @id @default(cuid())
+  userId                String?
+  amountMinor           Int
+  currency              String
+  stripeSessionId       String   @unique
+  stripePaymentIntentId String?
+  createdAt             DateTime @default(now())
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  @@index([createdAt])
 }
