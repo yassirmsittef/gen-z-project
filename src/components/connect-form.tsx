@@ -6,7 +6,6 @@ import { connectOnboardingAction } from "@/actions/connect";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/components/i18n-provider";
 import { formatMoney } from "@/lib/money";
-import { stripeLive } from "@/lib/stripe-mode";
 import type { ConnectStatus } from "@/lib/payouts";
 
 export type PayoutSummary = { currency: string; dueMinor: number; sentMinor: number };
@@ -55,10 +54,14 @@ export function ConnectForm({
   stripeEnabled,
   status,
   payouts,
+  live,
 }: {
   stripeEnabled: boolean;
   status: ConnectStatus | null;
   payouts: PayoutSummary[];
+  /** Mode Stripe, LU CÔTÉ SERVEUR : côté client la clé publiable n'est pas
+   *  posée en prod, et ce composant dirait « test » après le passage en live. */
+  live: boolean;
 }) {
   const t = useT("account");
   const [state, formAction, pending] = useActionState(connectOnboardingAction, undefined);
@@ -84,7 +87,7 @@ export function ConnectForm({
           {t("connectForm.activeTitle")}
         </p>
         <p className="text-xs text-muted-foreground">
-          {stripeLive ? t("connectForm.activeBodyLive") : t("connectForm.activeBodyTest")}
+          {live ? t("connectForm.activeBodyLive") : t("connectForm.activeBodyTest")}
         </p>
         <PayoutTotals payouts={payouts} active />
       </div>
@@ -96,7 +99,7 @@ export function ConnectForm({
       <p className="text-sm text-muted-foreground">
         {status
           ? t("connectForm.resumeBody")
-          : stripeLive
+          : live
             ? t("connectForm.setupBodyLive")
             : t("connectForm.setupBodyTest")}
       </p>

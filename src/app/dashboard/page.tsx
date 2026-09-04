@@ -519,6 +519,7 @@ export default async function DashboardPage({
             <Card>
               <CardContent className="pt-6">
                 <ConnectForm
+                  live={stripeLive}
                   stripeEnabled={stripeEnabled}
                   status={connectStatus}
                   payouts={payoutSummary}
