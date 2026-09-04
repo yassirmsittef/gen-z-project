@@ -39,6 +39,11 @@ export async function connectOnboardingAction(
         type: "express",
         email: user.email ?? undefined,
         capabilities: { transfers: { requested: true } },
+        // Séquestre CHEZ LE PORTEUR : l'argent des contributions arrive sur ce
+        // compte dès l'encaissement, mais ne part vers SA banque que quand la
+        // plateforme libère une étape validée (payout manuel). Sans « manual »,
+        // Stripe virerait tout automatiquement — plus de séquestre.
+        settings: { payouts: { schedule: { interval: "manual" } } },
         metadata: { userId: user.id },
       });
       accountId = account.id;

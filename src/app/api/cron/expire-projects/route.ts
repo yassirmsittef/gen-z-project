@@ -7,7 +7,7 @@ import {
 import { runDailyBackup } from "@/lib/backup";
 import { purgeStaleLoginAttempts } from "@/lib/login-rate-limit";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
-import { executeDuePayouts, executeDueRefunds } from "@/lib/payouts";
+import { executeDueEscrowTransfers, executeDuePayouts, executeDueRefunds } from "@/lib/payouts";
 import { failExpiredProjects, failOverdueRealizations } from "@/lib/project-service";
 import { purgeStaleThrottleHits } from "@/lib/throttle";
 import { purgeStaleTranslationUsage } from "@/lib/translate-service";
@@ -48,6 +48,10 @@ export async function GET(request: Request) {
   await failOverdueRealizations();
   // Rejeu des mouvements Stripe manqués (réseau, compte Connect configuré
   // après coup…) : idempotents, sans effet s'il n'y a rien de dû.
+  // Séquestre chez le porteur : d'abord rejouer les mises sous séquestre
+  // manquées (webhook tombé, compte pas prêt), puis remboursements, puis
+  // libérations.
+  await executeDueEscrowTransfers();
   await executeDueRefunds();
   await executeDuePayouts();
   // Filet des emails de notifications majeures manqués aux points chauds.

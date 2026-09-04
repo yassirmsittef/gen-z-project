@@ -202,13 +202,29 @@ export async function deleteProject(userId: string, projectId: string) {
  * Renvoie le projet si la contribution est possible.
  */
 export async function assertCanContribute(userId: string, projectId: string) {
-  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    include: { owner: { select: { stripeAccountId: true } } },
+  });
   if (!project) throw new DomainError("Projet introuvable.");
   if (project.ownerId === userId) {
     throw new DomainError("Tu ne peux pas contribuer à ton propre projet.");
   }
   if (project.status !== "ACTIVE" || project.deadline < new Date()) {
     throw new DomainError("Ce projet n'est plus en campagne.");
+  }
+  // Séquestre CHEZ LE PORTEUR : l'argent part sur son compte Connect dès
+  // l'encaissement. Un porteur qui n'a pas fini d'activer ses versements ne
+  // peut donc rien recevoir — sinon les fonds resteraient chez la plateforme,
+  // l'exact contraire du modèle (docs/sequestre-ue.md).
+  // (Sans Stripe configuré — dev, tests des règles — aucun argent ne circule :
+  // contributeAction s'arrête déjà avant ; la règle porte sur où va l'argent.)
+  const { stripeEnabled } = await import("@/lib/stripe");
+  const { ownerAccountReady } = await import("@/lib/payouts");
+  if (stripeEnabled && !(await ownerAccountReady(project.owner.stripeAccountId))) {
+    throw new DomainError(
+      "Ce porteur n'a pas encore activé la réception des fonds — reviens quand ce sera fait."
+    );
   }
   return project;
 }
@@ -229,16 +245,17 @@ export async function fulfillContribution(input: {
   anonymous?: boolean;
   stripeSessionId: string;
   stripePaymentIntentId: string | null;
-}): Promise<{ refundNeeded: boolean }> {
+}): Promise<{ refundNeeded: boolean; contributionId: string | null }> {
   const { userId, projectId, amountMinor: amount } = input;
 
   const existing = await prisma.contribution.findUnique({
     where: { stripeSessionId: input.stripeSessionId },
     select: { id: true },
   });
-  if (existing) return { refundNeeded: false }; // webhook rejoué
+  if (existing) return { refundNeeded: false, contributionId: existing.id }; // webhook rejoué
 
   let refundNeeded = false;
+  let contributionId: string | null = null;
   await prisma.$transaction(async (tx) => {
     // Deux paiements simultanés lisaient le même `raised` et l'un écrasait
     // l'autre : le second contributeur payait sans que le projet le compte.
@@ -254,7 +271,8 @@ export async function fulfillContribution(input: {
     }
 
     const closed = project.status !== "ACTIVE" || project.deadline < new Date();
-    await tx.contribution.create({
+    const created = await tx.contribution.create({
+      select: { id: true },
       data: {
         userId,
         projectId,
@@ -266,6 +284,7 @@ export async function fulfillContribution(input: {
         ...(closed ? { refunded: true, refundDueMinor: amount } : {}),
       },
     });
+    contributionId = created.id;
 
     if (closed) {
       refundNeeded = true;
@@ -385,7 +404,7 @@ export async function fulfillContribution(input: {
     }
   });
 
-  return { refundNeeded };
+  return { refundNeeded, contributionId };
 }
 
 // ---------- Preuves d'avancement ----------

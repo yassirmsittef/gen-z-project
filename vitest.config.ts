@@ -15,7 +15,9 @@ export default defineConfig({
     // Aucun réseau tiers depuis la suite : sans clé, l'envoi d'email et les
     // services externes se taisent. Une alerte de sécurité déclenchée par un
     // test ne doit jamais partir pour de vrai vers l'admin de la base de dev.
-    env: { RESEND_API_KEY: "", ANTHROPIC_API_KEY: "", MICROSOFT_TRANSLATOR_KEY: "" },
+    // Aucun service externe pendant les tests : les suites qui ont besoin de
+    // Stripe le SIMULENT (vi.mock("@/lib/stripe")), jamais la vraie API.
+    env: { RESEND_API_KEY: "", ANTHROPIC_API_KEY: "", MICROSOFT_TRANSLATOR_KEY: "", STRIPE_SECRET_KEY: "" },
     fileParallelism: false,
     testTimeout: 30_000,
     hookTimeout: 30_000,

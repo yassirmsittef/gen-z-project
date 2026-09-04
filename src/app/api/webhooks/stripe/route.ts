@@ -3,7 +3,7 @@ import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { fulfillContribution } from "@/lib/project-service";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
-import { executeDueRefunds } from "@/lib/payouts";
+import { escrowContribution, executeDueRefunds } from "@/lib/payouts";
 import { alertAdmins } from "@/lib/security-alerts";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
 
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       userId &&
       typeof session.amount_total === "number"
     ) {
-      const { refundNeeded } = await fulfillContribution({
+      const { refundNeeded, contributionId } = await fulfillContribution({
         userId,
         projectId,
         amountMinor: session.amount_total,
@@ -59,6 +59,10 @@ export async function POST(request: Request) {
       });
       // Paiement arrivé après la clôture : le remboursement part tout de suite.
       if (refundNeeded) await executeDueRefunds();
+      // Sinon : séquestre CHEZ LE PORTEUR, tout de suite — le net de la charge
+      // part sur son compte Connect, le solde plateforme revient à zéro.
+      // Un échec ici n'est pas grave : le cron rejoue (executeDueEscrowTransfers).
+      else if (contributionId) await escrowContribution(contributionId);
       // « Projet financé », « contribution remboursée »… : emails majeurs.
       await sendPendingNotificationEmails();
     }

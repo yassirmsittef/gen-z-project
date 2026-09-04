@@ -284,7 +284,11 @@ model MilestonePayout {
   contributionId   String
   // Montant en unités mineures de la devise du projet.
   amountMinor      Int
+  /// Ancien chemin (séquestre chez la plateforme) : transfer à la libération.
   stripeTransferId String?
+  /// Nouveau chemin (séquestre chez le porteur) : payout depuis SON compte
+  /// Connect vers SA banque, agrégé par étape.
+  stripePayoutId   String?
   createdAt        DateTime @default(now())
 
   milestone    Milestone    @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
@@ -348,6 +352,13 @@ model Contribution {
   stripeSessionId       String? @unique
   stripePaymentIntentId String?
   stripeChargeId        String?
+  /// Séquestre CHEZ LE PORTEUR : dès l'encaissement, le net de la charge part
+  /// sur le compte Connect du porteur (transfer adossé). Le solde plateforme
+  /// revient à zéro en quelques secondes — rien à voler, rien à geler.
+  stripeEscrowTransferId String?
+  /// Projet échoué : la part non libérée est d'abord rapatriée depuis le compte
+  /// du porteur (reversal), puis remboursée au contributeur.
+  stripeEscrowReversalId String?
   // Contribution anonyme (choix au paiement) : l'identité n'apparaît sur
   // AUCUNE surface publique ni chez le porteur — anonymat d'affichage
   // seulement, le poids de vote et le remboursement restent inchangés.

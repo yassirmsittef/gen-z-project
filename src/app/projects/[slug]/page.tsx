@@ -66,7 +66,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       // Select explicite : seuls ces quatre champs sont rendus. Charger la
       // ligne User entière ferait transiter passwordHash et email par l'arbre
       // de rendu d'une page publique.
-      owner: { select: { id: true, name: true, avatarUrl: true, reputation: true, role: true } },
+      owner: {
+        select: { id: true, name: true, avatarUrl: true, reputation: true, role: true, stripeAccountId: true },
+      },
       milestones: {
         orderBy: { order: "asc" },
         include: { proofs: { include: { votes: true } } },
@@ -112,6 +114,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   // invariant écrit à deux endroits finit toujours par diverger.
   const replaces = await callsAnsweredBy(project.id);
   const isOwner = viewerId === project.ownerId;
+  // Séquestre chez le porteur : tant qu'il n'a pas activé ses versements,
+  // personne ne peut contribuer (l'argent n'aurait nulle part où aller).
+  const { ownerAccountReady } = await import("@/lib/payouts");
+  const ownerReady =
+    project.status === "ACTIVE" ? await ownerAccountReady(project.owner.stripeAccountId) : true;
   const isContributor = project.contributions.some((c) => c.userId === viewerId);
 
   // Total par contributeur (une personne peut contribuer plusieurs fois).
@@ -244,6 +251,23 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                 {t("detail.brandPartnership")}
               </Link>
             </Button>
+          )}
+          {!ownerReady && (
+            <p
+              role="status"
+              className="basis-full rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm"
+            >
+              {isOwner ? (
+                <>
+                  {t("detail.ownerNotReadyOwner")}{" "}
+                  <Link href="/dashboard" className="font-semibold underline underline-offset-4">
+                    {t("detail.ownerNotReadyCta")}
+                  </Link>
+                </>
+              ) : (
+                t("detail.ownerNotReadyVisitor")
+              )}
+            </p>
           )}
           {isOwner && (
             <Button variant="outline" size="sm" asChild>

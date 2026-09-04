@@ -21,7 +21,8 @@ règlent PAS dans le code.
 
 ## 1. Stripe en argent réel — LE déclencheur (toi, ~15 min)
 Dans le tableau de bord Stripe, **mode Live** (interrupteur en haut à droite) :
-1. Développeurs → Clés API → copier la **clé secrète live** (`sk_live_…`).
+1. Développeurs → Clés API → la **clé restreinte live** (voir 2 bis) — pas
+   la clé secrète complète.
 2. Développeurs → Webhooks → **Ajouter un endpoint** :
    - URL : `https://genigain.com/api/webhooks/stripe`
    - Événements à cocher, exactement ces trois :
@@ -42,6 +43,25 @@ Les porteurs reçoivent leurs fonds via des comptes **Connect Express**
 **Express**. Sans ça, un porteur qui clique « Activer les versements »
 verra une erreur. (En test, ça marchait sur le sandbox — le live doit être
 activé à part.)
+
+**Depuis le 5 septembre, le séquestre est CHEZ LE PORTEUR** : l'argent d'une
+contribution part sur son compte Connect dès l'encaissement, en payouts
+manuels, et n'atteint sa banque qu'à chaque étape validée. Ton solde reste à
+zéro — rien à voler, rien à geler. Un porteur doit donc avoir **fini son
+activation avant** de recevoir le premier centime (le site le lui dit).
+
+## 2 bis. Une clé API RESTREINTE pour le site + une clé physique pour toi
+Le site n'a besoin que de ces droits — rien d'autre. Développeurs → Clés API
+→ **Créer une clé restreinte**, et coche exactement :
+- Checkout Sessions : **écriture** · PaymentIntents : **lecture** ·
+  Charges : **lecture** · Refunds : **écriture** · Transfers : **écriture**
+  (couvre les reversals) · Payouts : **écriture** · Connect — Accounts et
+  Account Links : **écriture**.
+La clé commence par `rk_live_` (le site la reconnaît comme live). Avec elle,
+un serveur compromis ne peut ni changer ton compte bancaire, ni virer vers un
+inconnu. Et pour TON accès au tableau de bord Stripe : **clé de sécurité
+physique** (YubiKey) dans Paramètres → Sécurité, et alertes sur tout
+changement de compte bancaire.
 
 ## 3. La boîte bonjour@genigain.com (toi, ~20 min)
 Le domaine n'a **aucun enregistrement MX** (vérifié le 05/09) : tout email

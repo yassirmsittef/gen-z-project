@@ -3,6 +3,23 @@
 *Étude de décision — 11 juillet 2026. Basée sur des sources publiques ; les points
 marqués ⚖️ sont à valider par un avocat en droit financier avant tout lancement réel.*
 
+> **✅ DÉCISION (5 septembre 2026) — SÉQUESTRE CHEZ LE PORTEUR.** Le montage
+> « l'argent attend sur le solde de la plateforme » est abandonné avant
+> l'ouverture officielle : trop de concentration (un accès volé vide tout, un
+> gel bloque tout, et c'est de l'encaissement pour compte de tiers). Nouveau
+> flux, implémenté dans `src/lib/payouts.ts` : dès l'encaissement, le NET de la
+> charge part sur le compte Connect Express du **porteur** (transfer adossé
+> `source_transaction`) — le solde plateforme revient à zéro en secondes. Le
+> compte du porteur est en **payouts manuels** : l'argent y attend, sans
+> partir vers sa banque, jusqu'à ce que la plateforme libère une étape validée
+> (un payout agrégé par étape). Projet échoué : la part non libérée est
+> rapatriée (reversal) puis remboursée. Conséquence produit : un porteur doit
+> avoir **activé ses versements avant** de pouvoir recevoir la première
+> contribution. ⚖️ La plateforme redevient orchestrateur, les fonds sont
+> détenus par Stripe sur le compte du porteur — à faire valider par un avocat
+> en droit financier ; le plafond de 90 jours reste en place. L'option A
+> (Mangopay/Lemonway) demeure la référence si ce cadre coince.
+
 > **✅ DÉCISION (11 juillet 2026)** : plafonner la rétention à **90 jours** — une
 > **échéance de réalisation** de `REALIZATION_DAYS = 90` jours court à partir du
 > financement. À l'échéance : **un vote encore ouvert est tranché à la balance des
