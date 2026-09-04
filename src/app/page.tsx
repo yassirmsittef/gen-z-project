@@ -11,6 +11,7 @@ import {
   Sparkles,
   Swords,
   UserPlus,
+  HeartHandshake,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,8 @@ import { prisma } from "@/lib/prisma";
 import { stripeLive } from "@/lib/stripe-mode";
 import { formatRelative } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
+import { SUPPORT_CURRENCY } from "@/lib/constants";
+import { platformSupportTotal } from "@/lib/platform-support";
 import { localeTag } from "@/lib/i18n/locales";
 import { getRequestLocale, getT } from "@/lib/i18n/server";
 
@@ -37,6 +40,8 @@ type PulseItem = {
 
 export default async function HomePage() {
   const t = await getT("home");
+  const tCommon = await getT("common");
+  const soutien = await platformSupportTotal();
   const locale = await getRequestLocale();
 
   const steps = [
@@ -243,6 +248,11 @@ export default async function HomePage() {
                 {t("hero.launchMine")}
               </LaunchLink>
             </span>
+            <span data-magnetic className="inline-flex">
+              <LaunchLink href="/soutenir" variant="outline">
+                {tCommon("support.link")}
+              </LaunchLink>
+            </span>
           </div>
           {/* Projets et membres côte à côte ; le montant investi en dessous
               sur toute la largeur — il peut grandir (10 M+) sans rien casser. */}
@@ -263,6 +273,45 @@ export default async function HomePage() {
               <dt className="data-label mt-1">{t("hero.invested")}</dt>
             </div>
           </dl>
+        </div>
+      </section>
+
+      {/* En tête d'affiche : soutenir la plateforme elle-même. Un don direct,
+          sans étapes ni séquestre, qui débloque le droit de lancer son projet.
+          Le surplus est reversé aux projets des autres — écrit noir sur blanc. */}
+      <section className="border-b border-white/[0.08] bg-primary/[0.04]">
+        <div className="container py-14">
+          <Card data-reveal className="overflow-hidden border-primary/25 shadow-glow-cyan">
+            <CardContent className="grid gap-8 p-8 md:grid-cols-[1fr_auto] md:items-center md:p-10">
+              <div className="space-y-4">
+                <p className="data-label flex items-center gap-2 text-primary">
+                  <HeartHandshake aria-hidden className="h-4 w-4" />
+                  {tCommon("support.title")}
+                </p>
+                <h2 className="font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+                  {tCommon("support.lead")}
+                </h2>
+                <p className="text-muted-foreground">{tCommon("support.what")}</p>
+                <p className="rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 text-sm font-medium">
+                  {tCommon("support.surplus")}
+                </p>
+                <p className="text-sm text-muted-foreground">{tCommon("support.unlock")}</p>
+              </div>
+              <div className="flex flex-col items-stretch gap-3 md:min-w-64">
+                <div className="glass rounded-2xl p-5 text-center">
+                  <p className="font-display bg-accent-gradient bg-clip-text text-3xl font-semibold text-transparent">
+                    {formatMoney(soutien, SUPPORT_CURRENCY, locale)}
+                  </p>
+                  <p className="data-label mt-1">{tCommon("support.total", { amount: "" }).replace(/[:：]\s*$/, "")}</p>
+                </div>
+                <span data-magnetic className="inline-flex">
+                  <LaunchLink href="/soutenir" variant="default">
+                    {tCommon("support.button")}
+                  </LaunchLink>
+                </span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
