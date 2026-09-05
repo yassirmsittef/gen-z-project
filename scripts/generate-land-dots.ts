@@ -78,13 +78,14 @@ function onLand(lng: number, lat: number): boolean {
   return false;
 }
 
-// Pas angulaire : densité du maillage. On coupe sous −60° (Antarctique) pour
-// un globe centré sur les zones habitées, comme les visualisations classiques.
+// Pas angulaire : densité du maillage. La Terre ENTIÈRE, pôle à pôle : la
+// version d'origine coupait sous -60° (Antarctique) « comme les visualisations
+// classiques » ; le fondateur veut voir toute la planète (décision 06/09/2026).
 const STEP = 1.1;
 const DEG = Math.PI / 180;
 const dots: number[] = [];
 
-for (let lat = -60; lat <= 84; lat += STEP) {
+for (let lat = -89; lat <= 89; lat += STEP) {
   const cols = Math.max(1, Math.round((360 / STEP) * Math.cos(lat * DEG)));
   // Décalage d'une demi-colonne une ligne sur deux : casse l'alignement vertical.
   const offset = (Math.round(lat / STEP) % 2) * 0.5;
@@ -99,3 +100,10 @@ for (let lat = -60; lat <= 84; lat += STEP) {
 const outPath = path.join(process.cwd(), "src/lib/land-dots.json");
 writeFileSync(outPath, JSON.stringify(dots));
 console.log(`✅ ${dots.length / 2} points de terre → ${outPath}`);
+
+// La Terre miniature de la barre (navbar-globe) : 1 point sur 10, même jeu.
+const mini: number[] = [];
+for (let i = 0; i < dots.length; i += 20) mini.push(dots[i], dots[i + 1]);
+const miniPath = path.join(process.cwd(), "src/lib/land-dots-mini.json");
+writeFileSync(miniPath, JSON.stringify(mini));
+console.log(`✅ ${mini.length / 2} points (mini) → ${miniPath}`);
