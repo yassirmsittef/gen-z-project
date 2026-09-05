@@ -34,6 +34,17 @@ describe("villes du monde", () => {
     expect(findCity("Paris — United States")).toMatchObject({ country: "US" });
   });
 
+  it("rattache les localités des territoires occupés (règle de la plateforme)", () => {
+    expect(findCity("Ariel")).toMatchObject({ country: "PS" }); // colonie de Cisjordanie, codée IL par GeoNames
+    expect(findCity("Katzrin")).toMatchObject({ country: "SY" }); // Golan occupé → Syrie, pas Palestine
+    expect(findCity("East Jerusalem")).toMatchObject({ name: "East Jerusalem", country: "PS" }); // déjà PS chez GeoNames
+    expect(findCity("Jerusalem")).toMatchObject({ name: "Jerusalem", country: "PS" }); // décision fondateur
+    expect(findCity("Jérusalem")).toMatchObject({ country: "PS" });
+    expect(findCity("West Jerusalem")).toMatchObject({ country: "PS" }); // toute Jérusalem, décision fondateur
+    expect(findCity("Gaza")).toMatchObject({ country: "PS" });
+    expect(findCity("Tel Aviv")).toMatchObject({ country: "IL" }); // rien d'autre ne bouge
+  });
+
   it("propose des suggestions par préfixe, les plus grandes d'abord", () => {
     const s = searchCities("dak");
     expect(s.length).toBeGreaterThan(0);

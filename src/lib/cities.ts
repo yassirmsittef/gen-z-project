@@ -42,11 +42,42 @@ export function normalizeCityName(raw: string): string {
     .trim();
 }
 
-const toCity = (r: Row): City => ({ name: r[0], country: r[2], lat: r[3], lng: r[4], population: r[5] });
+/**
+ * Corrections de rattachement décidées par la plateforme (fondateur, 06/09/2026),
+ * quand GeoNames code « IL » une localité située en territoire occupé depuis 1967 :
+ * - Ariel : colonie de Cisjordanie — GeoNames la place lui-même dans la région
+ *   « WE » (West Bank) tout en la codant IL → Palestine (résolution 2334 du
+ *   Conseil de sécurité : les colonies n'ont aucune validité juridique).
+ * - Katzrin : plateau du Golan, territoire syrien occupé → Syrie (résolution 497).
+ * - Jérusalem, entrée globale ET Jérusalem-Ouest → Palestine, décision éditoriale du fondateur.
+ * GeoNames code déjà Jérusalem-Est, Gaza et la quasi-totalité des colonies en PS.
+ * Clé : nom GeoNames + code d'origine, pour ne toucher que la bonne ligne.
+ */
+const COUNTRY_REASSIGNMENTS: Record<string, string> = {
+  "Ariel|IL": "PS",
+  "Katzrin|IL": "SY",
+  // Jérusalem : décision fondateur (06/09/2026) — la ville est rattachée à la
+  // Palestine. GeniGain écrit ce que sa communauté défend ; le droit
+  // international, lui, ne reconnaît la souveraineté d'aucun État sur la ville.
+  // Toute Jérusalem, Ouest comprise (décision fondateur, 06/09/2026).
+  "Jerusalem|IL": "PS",
+  "West Jerusalem|IL": "PS",
+};
+
+const toCity = (r: Row): City => ({
+  name: r[0],
+  country: COUNTRY_REASSIGNMENTS[`${r[0]}|${r[2]}`] ?? r[2],
+  lat: r[3],
+  lng: r[4],
+  population: r[5],
+});
 
 // Index exact : nom normalisé (et nom ASCII) → villes, les plus peuplées d'abord
 // (les lignes sont triées par population à la génération).
-const EXACT = new Map<string, City[]>();
+// Chaque entrée sait si la clé est un nom OFFICIEL ou un alias : à égalité de
+// clé, le nom officiel l'emporte (« East Jerusalem » est la ville qui porte ce
+// nom, pas un alias de l'entrée globale « Jerusalem »).
+const EXACT = new Map<string, { city: City; alt: boolean }[]>();
 // Index de recherche : [clé normalisée, ville, alternatif ?] pour les suggestions
 // par préfixe. Les noms officiels passent avant les alternatifs : « dak » doit
 // proposer Dakar, pas une mégapole dont un alias exotique commence pareil.
@@ -60,10 +91,11 @@ for (const r of ROWS) {
   const alts = (r[6] ?? []).map(normalizeCityName);
   const officiels = new Set([k1, k2].filter(Boolean));
   for (const k of new Set([...officiels, ...alts].filter(Boolean))) {
+    const alt = !officiels.has(k);
     const list = EXACT.get(k);
-    if (list) list.push(city);
-    else EXACT.set(k, [city]);
-    KEYS.push({ key: k, city, alt: !officiels.has(k) });
+    if (list) list.push({ city, alt });
+    else EXACT.set(k, [{ city, alt }]);
+    KEYS.push({ key: k, city, alt });
   }
 }
 
@@ -123,8 +155,14 @@ export function findCity(raw: string): City | undefined {
   const m = raw.trim().match(/^(.+?)\s*(?:—|–|,|\()\s*([^)]+?)\)?\s*$/);
   const nom = normalizeCityName(m ? m[1] : raw);
   const pays = m ? m[2] : null;
-  const candidats = EXACT.get(nom);
-  if (!candidats) return undefined;
+  const entrees = EXACT.get(nom);
+  if (!entrees) return undefined;
+  // Un nom officiel compte plein, un alias au quart : « East Jerusalem » est la
+  // ville qui porte ce nom (pas l'alias de l'entrée globale), mais « Roma » reste
+  // Rome (2,8 M, alias) et non Roma au Lesotho (nom officiel, minuscule).
+  const candidats = [...entrees]
+    .sort((x, y) => y.city.population * (y.alt ? 0.25 : 1) - x.city.population * (x.alt ? 0.25 : 1))
+    .map((e) => e.city);
   if (!pays) return candidats[0];
   return candidats.find((c) => countryMatches(pays, c.country)) ?? undefined;
 }
