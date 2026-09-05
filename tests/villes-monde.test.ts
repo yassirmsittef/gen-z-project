@@ -46,6 +46,11 @@ describe("villes du monde", () => {
     expect(countryLabel("SN", "en")).toBe("Senegal");
     expect(countryLabel("DE", "ar")).toBe("ألمانيا");
     expect(countryLabel("France", "en")).toBe("France"); // valeur d'avant la bascule
+    // Choix éditorial de la plateforme : « Palestine », pas « Territoires palestiniens ».
+    expect(countryLabel("PS", "fr")).toBe("Palestine");
+    expect(countryLabel("PS", "ar")).toBe("فلسطين");
+    expect(cityLabel(findCity("Gaza")!, "fr")).toBe("Gaza — Palestine");
+    expect(findCity("Ramallah — Palestine")).toMatchObject({ country: "PS" }); // le pays saisi avec notre libellé est relu
     expect(cityLabel(findCity("Dakar")!, "es")).toBe("Dakar — Senegal");
   });
 });

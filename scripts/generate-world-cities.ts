@@ -8,7 +8,7 @@
  *   npx tsx scripts/generate-world-cities.ts /tmp/cities5000.txt
  *
  * Sortie compacte, tableau de tableaux : [nom, nomAscii, codePays, lat, lng, population, alternatifs?]
- * (nomAscii omis = "" quand identique au nom ; alternatifs seulement ≥ 100 000 hab.). Le pays est un code ISO 3166-1 :
+ * (nomAscii omis = "" quand identique au nom ; alternatifs seulement ≥ 15 000 hab.). Le pays est un code ISO 3166-1 :
  * son nom s'affiche dans la langue du lecteur via Intl.DisplayNames.
  * Ce JSON ne doit JAMAIS être importé côté client (~3 Mo) : recherche serveur.
  */
@@ -29,11 +29,11 @@ for (const line of rows) {
   if (!name || !cc || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
   const row: Row = [name, ascii === name ? "" : ascii, cc, Math.round(lat * 100) / 100, Math.round(lng * 100) / 100, pop];
   // GeoNames nomme les grandes villes en anglais (« Geneva », « Brussels »,
-  // « Rome ») : pour les villes ≥ 100 000 hab., on garde les noms alternatifs
+  // « Rome ») : pour les villes ≥ 15 000 hab., on garde les noms alternatifs
   // en écriture latine ou arabe (« Genève », « Bruxelles », « Roma », « لندن »)
   // pour que chacun trouve sa ville dans sa langue. Les petites villes se
   // tapent comme les locaux les écrivent.
-  if (pop >= 100_000 && c[3]) {
+  if (pop >= 15_000 && c[3]) {
     const vus = new Set([norm(name), norm(ascii)]);
     const alts: string[] = [];
     for (const alt of c[3].split(",")) {

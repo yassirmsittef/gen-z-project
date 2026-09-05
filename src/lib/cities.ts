@@ -77,10 +77,21 @@ function regionNames(locale: Locale): Intl.DisplayNames {
   return d;
 }
 
+/**
+ * Libellés que GeniGain choisit d'écrire autrement que le standard CLDR.
+ * Décision fondateur (06/09/2026) : « Palestine », pas « Territoires
+ * palestiniens ». Un choix éditorial de la plateforme, assumé, dans les 7 langues.
+ */
+const COUNTRY_OVERRIDES: Record<string, Partial<Record<Locale, string>>> = {
+  PS: { fr: "Palestine", en: "Palestine", es: "Palestina", de: "Palästina", it: "Palestina", pt: "Palestina", ar: "فلسطين" },
+};
+
 /** Nom du pays dans la langue du lecteur ; une valeur héritée (« France ») est rendue telle quelle. */
 export function countryLabel(codeOrName: string | null | undefined, locale: Locale = DEFAULT_LOCALE): string {
   if (!codeOrName) return "";
   if (!/^[A-Z]{2}$/.test(codeOrName)) return codeOrName;
+  const surcharge = COUNTRY_OVERRIDES[codeOrName]?.[locale];
+  if (surcharge) return surcharge;
   try {
     return regionNames(locale).of(codeOrName) ?? codeOrName;
   } catch {
