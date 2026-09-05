@@ -3,6 +3,10 @@ import type { Messages } from "../types";
 export const notif = {
   "contribution.received.title": "{actor} دعم «{projectTitle}» ({money})",
 
+  "support.thanks.title": "شكرًا! وصل دعمك بقيمة {money} إلى GeniGain",
+  "support.thanks.body": "إنها هبة للمنصة، بلا مراحل ولا عهدة: تموّل تطويرها وأماكن المرافقة، وكل فائض يُوجَّه إلى مشاريع الأعضاء. وتُحتسب أيضًا كمساهمة: يمكنك الآن إطلاق مشروعك.",
+  "support.received.title": "{actor} دعم GeniGain ({money})",
+
   "contribution.confirmed.title": "تأكدت مساهمتك بمبلغ {money} في «{projectTitle}»",
   "contribution.confirmed.body":
     "تنضم الأموال إلى وديعة المشروع: ستُفرج مرحلة بمرحلة، تحت رقابة تصويت المساهمين — ومنهم أنت. وإن لم يكتمل المشروع، يعود الجزء غير المُفرج عنه تلقائيًا إلى بطاقتك.",

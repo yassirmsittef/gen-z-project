@@ -10,6 +10,7 @@ import { platformSupportTotal, recordPlatformSupport } from "../src/lib/platform
 const R = `soutien-${Date.now().toString(36)}`;
 afterAll(async () => {
   await prisma.platformSupport.deleteMany({ where: { stripeSessionId: { startsWith: R } } });
+  await prisma.notification.deleteMany({ where: { key: { in: ["support.thanks", "support.received"] }, createdAt: { gte: new Date(Date.now() - 600000) } } });
   await prisma.user.deleteMany({ where: { email: { startsWith: R } } });
   await prisma.$disconnect();
 });
@@ -28,6 +29,11 @@ describe("soutien à la plateforme", () => {
     expect(await platformSupportTotal()).toBe(avant + 2000);
     const apres = await prisma.user.findUniqueOrThrow({ where: { id: u.id } });
     expect(apres.contributedUsdCents).toBe(2300); // ≥ 2000 : le seuil « lancer mon projet » est franchi
+
+    // Un don mérite un reçu : notification (relayée par email) au donateur.
+    const recu = await prisma.notification.findFirst({ where: { userId: u.id, key: "support.thanks" } });
+    expect(recu?.type).toBe("CONTRIBUTION_CONFIRMED");
+    expect((recu?.params as { amountMinor: number }).amountMinor).toBe(2000);
 
     // Un soutien anonyme (sans compte) compte dans le total, sans casser.
     expect(await recordPlatformSupport({ stripeSessionId: `${R}-2`, stripePaymentIntentId: null, userId: null, amountMinor: 500, currency: "chf", usdCents: 0 })).toBe(true);

@@ -52,6 +52,8 @@ export async function POST(request: Request) {
         currency: session.currency ?? "chf",
         usdCents: Number(usdCents) || 0,
       });
+      // Le reçu du donateur part par email tout de suite.
+      await sendPendingNotificationEmails();
       return NextResponse.json({ received: true });
     }
 

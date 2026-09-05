@@ -1,3 +1,4 @@
+import { notify, notifyMany } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -42,6 +43,26 @@ export async function recordPlatformSupport(input: {
         data: { contributedUsdCents: { increment: input.usdCents } },
       });
     }
+    // Un don mérite un reçu : cloche + email (CONTRIBUTION_CONFIRMED est un
+    // type relayé par email), dans la langue du lecteur.
+    const money = { amountMinor: input.amountMinor, currency: input.currency };
+    let actorName: string | null = null;
+    if (input.userId) {
+      const donateur = await tx.user.findUnique({ where: { id: input.userId }, select: { name: true } });
+      actorName = donateur?.name ?? null;
+      await notify(
+        { userId: input.userId, type: "CONTRIBUTION_CONFIRMED", key: "support.thanks", params: money, href: "/soutenir" },
+        tx
+      );
+    }
+    // L'équipe est prévenue : qui a soutenu, combien.
+    const admins = await tx.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+    await notifyMany(
+      admins
+        .filter((a) => a.id !== input.userId)
+        .map((a) => ({ userId: a.id, type: "CONTRIBUTION" as const, key: "support.received", params: { ...money, actorName }, href: "/soutenir" })),
+      tx
+    );
   });
   return true;
 }

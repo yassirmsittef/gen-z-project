@@ -13,6 +13,10 @@ import type { NotificationType } from "@/generated/prisma/client";
 export const NOTIFICATION_KEYS = {
   "contribution.received": { type: "CONTRIBUTION", body: false, excerpt: false },
   "contribution.confirmed": { type: "CONTRIBUTION_CONFIRMED", body: true, excerpt: false },
+  // Soutien à la plateforme (/soutenir) : reçu au donateur (relayé par email
+  // comme un reçu de contribution) et information de l'équipe.
+  "support.thanks": { type: "CONTRIBUTION_CONFIRMED", body: true, excerpt: false },
+  "support.received": { type: "CONTRIBUTION", body: false, excerpt: false },
   "refund.lateClose": { type: "REFUND", body: true, excerpt: false },
   "refund.projectFailed": { type: "REFUND", body: true, excerpt: false },
   "projectFunded.owner": { type: "PROJECT_FUNDED", body: true, excerpt: false },

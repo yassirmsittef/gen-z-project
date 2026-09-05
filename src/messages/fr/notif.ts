@@ -10,6 +10,10 @@ import type { Dict } from "@/lib/i18n/t";
 export const notif = {
   "contribution.received.title": "{actor} a soutenu « {projectTitle} » ({money})",
 
+  "support.thanks.title": "Merci ! Ton soutien de {money} à GeniGain est bien arrivé",
+  "support.thanks.body": "C'est un don à la plateforme, sans étapes ni séquestre : il finance son développement et les lieux d'accompagnement, et tout surplus est reversé aux projets des membres. Il compte aussi comme une contribution : tu peux maintenant lancer ton propre projet.",
+  "support.received.title": "{actor} a soutenu GeniGain ({money})",
+
   "contribution.confirmed.title": "Ta contribution de {money} à « {projectTitle} » est confirmée",
   "contribution.confirmed.body":
     "Les fonds rejoignent le séquestre du projet : ils seront débloqués étape par étape, sous le contrôle du vote des contributeurs — dont le tien. Si le projet n'aboutit pas, la part non débloquée revient automatiquement sur ta carte.",

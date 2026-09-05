@@ -3,6 +3,10 @@ import type { Messages } from "../types";
 export const notif = {
   "contribution.received.title": "{actor} hat „{projectTitle}“ unterstützt ({money})",
 
+  "support.thanks.title": "Danke! Deine Unterstützung von {money} für GeniGain ist angekommen",
+  "support.thanks.body": "Es ist eine Spende an die Plattform, ohne Etappen oder Treuhand: sie finanziert die Entwicklung und die Begleitungsorte, jeder Überschuss fließt in die Projekte der Mitglieder. Sie zählt auch als Beitrag: du kannst jetzt dein eigenes Projekt starten.",
+  "support.received.title": "{actor} hat GeniGain unterstützt ({money})",
+
   "contribution.confirmed.title": "Dein Beitrag von {money} zu „{projectTitle}“ ist bestätigt",
   "contribution.confirmed.body":
     "Die Gelder wandern ins Treuhandkonto des Projekts: Sie werden Etappe für Etappe freigegeben, unter Kontrolle der Abstimmung der Unterstützer — deiner eingeschlossen. Scheitert das Projekt, geht der nicht freigegebene Anteil automatisch zurück auf deine Karte.",
