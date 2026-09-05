@@ -66,6 +66,15 @@ export async function connectOnboardingAction(
     // Cas fréquent en phase de mise en place : le produit Connect n'est pas
     // encore activé sur le compte Stripe de la plateforme (action une seule
     // fois, côté dashboard Stripe).
+    // Compte Stripe qui n'a jamais créé de compte Connect : Stripe impose sa
+    // nouvelle API (Accounts v2) sauf si « Accounts v1 support » est activé
+    // dans le tableau de bord — un interrupteur, une fois, par l'équipe.
+    if (error instanceof Error && /Accounts v1/i.test(error.message)) {
+      return {
+        error:
+          "Les versements ne sont pas encore ouverts : l'équipe doit activer « Accounts v1 support » dans Stripe (Paramètres → Fonctionnalités). Reviens bientôt !",
+      };
+    }
     if (error instanceof Error && error.message.includes("signed up for Connect")) {
       return {
         error:
