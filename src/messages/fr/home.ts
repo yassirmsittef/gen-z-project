@@ -47,5 +47,6 @@ export const home = {
   "pulse.supported": "a soutenu « {title} »",
   "pulse.launched": "a lancé « {title} »",
   "pulse.update": "Actu de « {title} » :",
+  "pulse.supportedPlatform": "a soutenu GeniGain",
   "pulse.joined": "a rejoint GeniGain",
 } as const satisfies Dict;

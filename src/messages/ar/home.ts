@@ -50,5 +50,6 @@ export const home = {
   "pulse.supported": "دعم «{title}»",
   "pulse.launched": "أطلق «{title}»",
   "pulse.update": "مستجدّ من «{title}»:",
+  "pulse.supportedPlatform": "دعم GeniGain",
   "pulse.joined": "انضم إلى GeniGain",
 } satisfies Messages["home"];

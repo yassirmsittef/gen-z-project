@@ -81,6 +81,7 @@ export default async function HomePage() {
     recentProjects,
     recentUpdates,
     recentMembers,
+    recentSupports,
   ] = await Promise.all([
     featuredCalls(3),
     // Vivier large : le tri « répond à un appel d'abord » se fait ensuite en
@@ -121,6 +122,13 @@ export default async function HomePage() {
       orderBy: { createdAt: "desc" },
       take: 4,
       select: { id: true, name: true, createdAt: true },
+    }),
+    // Les soutiens à la plateforme entrent dans le pouls comme n'importe quel
+    // événement : un don est un geste public, il mérite sa ligne.
+    prisma.platformSupport.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 4,
+      select: { id: true, amountMinor: true, currency: true, createdAt: true, user: { select: { name: true } } },
     }),
   ]);
 
@@ -189,6 +197,20 @@ export default async function HomePage() {
       text: (
         <>
           <span className="font-semibold">{m.name}</span> {t("pulse.joined")}
+        </>
+      ),
+    })),
+
+    ...recentSupports.map((sp) => ({
+      at: sp.createdAt,
+      Icon: HeartHandshake,
+      tone: "text-primary",
+      href: "/soutenir",
+      text: (
+        <>
+          <span className="font-semibold">{sp.user?.name ?? t("pulse.anonymous")}</span>{" "}
+          {t("pulse.supportedPlatform")}{" "}
+          <span className="font-mono text-primary">{formatMoney(sp.amountMinor, sp.currency, locale)}</span>
         </>
       ),
     })),

@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
@@ -54,6 +55,9 @@ export async function POST(request: Request) {
       });
       // Le reçu du donateur part par email tout de suite.
       await sendPendingNotificationEmails();
+      // L'accueil (pouls, total) et la page soutenir montrent le don sans attendre.
+      revalidatePath("/");
+      revalidatePath("/soutenir");
       return NextResponse.json({ received: true });
     }
 

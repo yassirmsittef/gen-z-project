@@ -47,5 +47,6 @@ export const home = {
   "pulse.supported": "ha sostenuto «{title}»",
   "pulse.launched": "ha lanciato «{title}»",
   "pulse.update": "Novità da «{title}»:",
+  "pulse.supportedPlatform": "ha sostenuto GeniGain",
   "pulse.joined": "è entrato·a in GeniGain",
 } satisfies Messages["home"];
