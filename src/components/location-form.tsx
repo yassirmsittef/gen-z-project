@@ -4,15 +4,14 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { updateLocationAction } from "@/actions/users";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/components/i18n-provider";
-import { CITIES } from "@/lib/cities";
+import { CityPicker } from "@/components/city-picker";
 
 /**
- * Ville du profil : saisie assistée par datalist sur la liste officielle
- * (src/lib/cities.ts). Vide = on disparaît du globe — la localisation reste
- * un choix, jamais une capture.
+ * Ville du profil : suggestions parmi toutes les villes du monde (> 5 000
+ * hab., recherche serveur). Vide = on disparaît du globe — la localisation
+ * reste un choix, jamais une capture.
  */
 export function LocationForm({ initialCity }: { initialCity: string | null }) {
   const t = useT("account");
@@ -22,21 +21,7 @@ export function LocationForm({ initialCity }: { initialCity: string | null }) {
     <form action={formAction} className="space-y-3">
       <div className="space-y-1.5">
         <Label htmlFor="city">{t("locationForm.cityLabel")}</Label>
-        <Input
-          id="city"
-          name="city"
-          list="cities-suggestions"
-          defaultValue={initialCity ?? ""}
-          placeholder={t("locationForm.cityPlaceholder")}
-          autoComplete="off"
-        />
-        <datalist id="cities-suggestions">
-          {CITIES.map((city) => (
-            <option key={city.name} value={city.name}>
-              {`${city.name} — ${city.country}`}
-            </option>
-          ))}
-        </datalist>
+        <CityPicker id="city" defaultValue={initialCity ?? ""} placeholder={t("locationForm.cityPlaceholder")} />
         <p className="text-xs text-muted-foreground">
           {t("locationForm.hintBefore")}{" "}
           <Link href="/communaute" className="font-medium text-primary hover:underline">

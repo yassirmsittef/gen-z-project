@@ -1,3 +1,4 @@
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
@@ -8,7 +9,8 @@ import { defineConfig } from "vitest/config";
  */
 export default defineConfig({
   resolve: {
-    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+    alias: {
+      "server-only": path.resolve(__dirname, "tests/mocks/server-only.ts"), "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
   test: {
     include: ["tests/**/*.test.ts"],

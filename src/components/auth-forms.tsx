@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { useT } from "@/components/i18n-provider";
-import { CITIES } from "@/lib/cities";
+import { CityPicker } from "@/components/city-picker";
 import { LOCALES, type Locale } from "@/lib/i18n/locales";
 import { CURRENCIES } from "@/lib/money";
 
@@ -164,20 +164,7 @@ export function RegisterForm({
             {t("registerForm.cityLabel")}{" "}
             <span className="font-normal text-muted-foreground">{t("registerForm.cityOptional")}</span>
           </Label>
-          <Input
-            id="city"
-            name="city"
-            list="register-cities"
-            autoComplete="off"
-            placeholder={t("registerForm.cityPlaceholder")}
-          />
-          <datalist id="register-cities">
-            {CITIES.map((city) => (
-              <option key={city.name} value={city.name}>
-                {`${city.name} — ${city.country}`}
-              </option>
-            ))}
-          </datalist>
+          <CityPicker id="city" placeholder={t("registerForm.cityPlaceholder")} />
           <p className="text-xs text-muted-foreground">{t("registerForm.cityHint")}</p>
         </div>
         <div className="space-y-1.5">

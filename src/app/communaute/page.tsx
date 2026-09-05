@@ -12,7 +12,7 @@ import type { CityMarker } from "@/components/earth-scene";
 import { ReputationBadge } from "@/components/reputation-badge";
 import { SkillTag } from "@/components/skill-tag";
 import { UserAvatar } from "@/components/user-avatar";
-import { CITIES } from "@/lib/cities";
+import { countryLabel } from "@/lib/cities";
 import { getRequestLocale, getT } from "@/lib/i18n/server";
 import { formatMoney } from "@/lib/money";
 
@@ -87,7 +87,7 @@ export default async function CommunityPage({
     } else {
       markerMap.set(user.city, {
         city: user.city,
-        country: user.country ?? "",
+        country: countryLabel(user.country, locale),
         lat: user.latitude,
         lng: user.longitude,
         count: 1,
@@ -199,10 +199,12 @@ export default async function CommunityPage({
                 className="ps-9"
                 aria-label={t("search.cityLabel")}
               />
+              {/* Filtrer par ville n'a de sens que parmi les villes où il y a
+                  des membres : la liste vient du globe, pas du monde entier. */}
               <datalist id="cities-filter">
-                {CITIES.map((city) => (
-                  <option key={city.name} value={city.name}>
-                    {`${city.name} — ${city.country}`}
+                {markers.map((m) => (
+                  <option key={m.city} value={m.city}>
+                    {`${m.city} — ${m.country}`}
                   </option>
                 ))}
               </datalist>
@@ -255,7 +257,7 @@ export default async function CommunityPage({
                                 <MapPin className="h-3 w-3 shrink-0 text-primary/70" aria-hidden />
                                 <span className="truncate">
                                   {member.city}
-                                  {member.country ? ` · ${member.country}` : ""}
+                                  {member.country ? ` · ${countryLabel(member.country, locale)}` : ""}
                                 </span>
                               </p>
                             ) : (

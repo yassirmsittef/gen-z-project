@@ -12,6 +12,7 @@ import {
   Youtube,
 } from "lucide-react";
 import { auth } from "@/auth";
+import { countryLabel } from "@/lib/cities";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -113,7 +114,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
               >
                 <MapPin className="h-3.5 w-3.5 text-primary/70" aria-hidden />
                 {user.city}
-                {user.country ? ` · ${user.country}` : ""}
+                {user.country ? ` · ${countryLabel(user.country, locale)}` : ""}
               </Link>
             )}
             <span>{t("profile.memberSince", { date: formatDate(user.createdAt, locale) })}</span>
