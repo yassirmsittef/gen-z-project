@@ -56,13 +56,93 @@ export function normalizeCityName(raw: string): string {
 const COUNTRY_REASSIGNMENTS: Record<string, string> = {
   "Ariel|IL": "PS",
   "Katzrin|IL": "SY",
-  // Jérusalem : décision fondateur (06/09/2026) — la ville est rattachée à la
-  // Palestine. GeniGain écrit ce que sa communauté défend ; le droit
-  // international, lui, ne reconnaît la souveraineté d'aucun État sur la ville.
-  // Toute Jérusalem, Ouest comprise (décision fondateur, 06/09/2026).
+  // Toute Jérusalem, Ouest comprise (décision fondateur, 06/09/2026) — le droit
+  // international ne reconnaît la souveraineté d'aucun État sur la ville ;
+  // GeniGain écrit ce que sa communauté défend.
   "Jerusalem|IL": "PS",
   "West Jerusalem|IL": "PS",
+  // Les localités palestiniennes de 1948 — villes et villages arabes d'Israël
+  // (classification du Bureau central des statistiques israélien, liste
+  // « Arab localities in Israel », Wikipédia) croisée avec GeoNames : Nazareth,
+  // Umm al-Fahm, Rahat, Tamra, Sakhnin, Shefa-'Amr, Tira, les villages
+  // bédouins du Néguev, les villages druzes… Les villes MIXTES à majorité juive
+  // (Lod, Ramla, Haïfa, Acre, Tel-Aviv-Yafo) n'en font pas partie. Décision
+  // fondateur (06/09/2026) : « ces villes-là, mets-les palestiniennes ».
+  "Abū Ghaush|IL": "PS",
+  "Abū Sinān|IL": "PS",
+  "Al-Bi‘na|IL": "PS",
+  "Basma|IL": "PS",
+  "Basmat Ṭab‘ūn|IL": "PS",
+  "Beit Jann|IL": "PS",
+  "Bir Hadaj|IL": "PS",
+  "Bu'ayna-Nujaydat|IL": "PS",
+  "Buqei‘a|IL": "PS",
+  "Bāqa el Gharbīya|IL": "PS",
+  "Bīr el Maksūr|IL": "PS",
+  "Dabbūrīya|IL": "PS",
+  "Daliyat al Karmel|IL": "PS",
+  "Deir el Asad|IL": "PS",
+  "Deir Ḥannā|IL": "PS",
+  "Eṭ Ṭaiyiba|IL": "PS",
+  "Eṭ Ṭīra|IL": "PS",
+  "Furaydis|IL": "PS",
+  "H̱ura|IL": "PS",
+  "Iksāl|IL": "PS",
+  "I‘billīn|IL": "PS",
+  "Jaljūlya|IL": "PS",
+  "Jatt|IL": "PS",
+  "Jisr ez Zarqā|IL": "PS",
+  "Judeida Makr|IL": "PS",
+  "Jūlis|IL": "PS",
+  "Kafr Kannā|IL": "PS",
+  "Kafr Mandā|IL": "PS",
+  "Kafr Qari‘|IL": "PS",
+  "Kafr Qāsim|IL": "PS",
+  "Ka‘abiyya-Tabbash-H̱ajajra|IL": "PS",
+  "Kfar Yasif|IL": "PS",
+  "Kisra - Sume'a|IL": "PS",
+  "Kuseifa|IL": "PS",
+  "Kābūl|IL": "PS",
+  "Laqiyya|IL": "PS",
+  "Maale Iron|IL": "PS",
+  "Maghār|IL": "PS",
+  "Majd el Kurūm|IL": "PS",
+  "Nazareth|IL": "PS",
+  "Naḥf|IL": "PS",
+  "Qalansuwa|IL": "PS",
+  "Rahat|IL": "PS",
+  "Sakhnīn|IL": "PS",
+  "Segev Shalom|IL": "PS",
+  "Sha‘ab|IL": "PS",
+  "Shefar‘am|IL": "PS",
+  "Shibli–Umm al-Ghanam|IL": "PS",
+  "Tamra|IL": "PS",
+  "Tel Sheva‘|IL": "PS",
+  "Tūbā Zangarīya|IL": "PS",
+  "Umm el Faḥm|IL": "PS",
+  "Yanuh-Jat|IL": "PS",
+  "Yirkā|IL": "PS",
+  "Yāfā|IL": "PS",
+  "Zarzir|IL": "PS",
+  "Zemer|IL": "PS",
+  "Ḥurfeish|IL": "PS",
+  "‘Ara-‘Ar‘ara|IL": "PS",
+  "‘Ar‘ara BaNegev|IL": "PS",
+  "‘Eilabun|IL": "PS",
+  "‘Ein Māhil|IL": "PS",
+  "‘Ilūṭ|IL": "PS",
+  "‘Isfiyā|IL": "PS",
 };
+
+/**
+ * Pays retirés du sélecteur (décision fondateur, 06/09/2026 : « Israël sort de
+ * la carte »). Appliqué APRÈS les rattachements ci-dessus : les localités
+ * palestiniennes de 1948, Jérusalem et le Golan restent — sous Palestine ou
+ * Syrie — et tout ce qui demeure codé IL n'est ni cherchable ni sélectionnable.
+ * Un membre vivant dans une de ces villes peut s'inscrire et tout utiliser ;
+ * il ne peut simplement pas se placer sur le globe. Choix éditorial assumé.
+ */
+const HIDDEN_COUNTRIES = new Set(["IL"]);
 
 const toCity = (r: Row): City => ({
   name: r[0],
@@ -84,6 +164,7 @@ const EXACT = new Map<string, { city: City; alt: boolean }[]>();
 const KEYS: { key: string; city: City; alt: boolean }[] = [];
 for (const r of ROWS) {
   const city = toCity(r);
+  if (HIDDEN_COUNTRIES.has(city.country)) continue;
   const k1 = normalizeCityName(r[0]);
   const k2 = r[1] ? normalizeCityName(r[1]) : "";
   // Noms alternatifs (grandes villes) : « Genève », « Bruxelles », « Roma »,
@@ -157,11 +238,12 @@ export function findCity(raw: string): City | undefined {
   const pays = m ? m[2] : null;
   const entrees = EXACT.get(nom);
   if (!entrees) return undefined;
-  // Un nom officiel compte plein, un alias au quart : « East Jerusalem » est la
-  // ville qui porte ce nom (pas l'alias de l'entrée globale), mais « Roma » reste
-  // Rome (2,8 M, alias) et non Roma au Lesotho (nom officiel, minuscule).
+  // Un nom officiel compte plein, un alias au dixième : « East Jerusalem » est la
+  // ville qui porte ce nom (pas l'alias de l'entrée globale), « Nazareth » est
+  // Nazareth (77 k, officiel) et non Nazrēt en Éthiopie (324 k, alias) — mais
+  // « Roma » reste Rome (2,8 M, alias) et non Roma au Lesotho (officiel, minuscule).
   const candidats = [...entrees]
-    .sort((x, y) => y.city.population * (y.alt ? 0.25 : 1) - x.city.population * (x.alt ? 0.25 : 1))
+    .sort((x, y) => y.city.population * (y.alt ? 0.1 : 1) - x.city.population * (x.alt ? 0.1 : 1))
     .map((e) => e.city);
   if (!pays) return candidats[0];
   return candidats.find((c) => countryMatches(pays, c.country)) ?? undefined;
@@ -187,4 +269,4 @@ export function searchCities(query: string, limit = 8): City[] {
   return [...officiels, ...alternatifs].slice(0, limit);
 }
 
-export const WORLD_CITY_COUNT = ROWS.length;
+export const WORLD_CITY_COUNT = ROWS.filter((r) => !HIDDEN_COUNTRIES.has(toCity(r).country)).length;

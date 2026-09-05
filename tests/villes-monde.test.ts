@@ -42,7 +42,21 @@ describe("villes du monde", () => {
     expect(findCity("Jérusalem")).toMatchObject({ country: "PS" });
     expect(findCity("West Jerusalem")).toMatchObject({ country: "PS" }); // toute Jérusalem, décision fondateur
     expect(findCity("Gaza")).toMatchObject({ country: "PS" });
-    expect(findCity("Tel Aviv")).toMatchObject({ country: "IL" }); // rien d'autre ne bouge
+  });
+
+  it("les localités palestiniennes de 1948 sont en Palestine, et Israël est retiré du sélecteur (décision fondateur)", () => {
+    for (const v of ["Nazareth", "Umm al-Fahm", "Rahat", "Tamra", "Sakhnin", "Kafr Qasim", "Et Tira", "Daliyat al-Karmel", "Shefar‘am"]) {
+      expect(findCity(v), v).toMatchObject({ country: "PS" });
+    }
+    // Israël retiré : quoi qu'on tape, on ne tombe JAMAIS sur une ville codée IL
+    // (un homonyme ailleurs — Lodi en Italie pour « Lod » — reste possible).
+    for (const v of ["Tel Aviv", "Haifa", "Lod", "Ramla", "Tirat Karmel", "Beersheba", "Rishon LeTsiyyon"]) {
+      expect(findCity(v)?.country, v).not.toBe("IL");
+    }
+    expect(findCity("Tirat Karmel")).toBeUndefined();
+    expect(findCity("Rishon LeTsiyyon")).toBeUndefined();
+    expect(searchCities("tel av").filter((c) => c.country === "IL")).toEqual([]);
+    expect(searchCities("haif").filter((c) => c.country === "IL")).toEqual([]);
   });
 
   it("propose des suggestions par préfixe, les plus grandes d'abord", () => {
