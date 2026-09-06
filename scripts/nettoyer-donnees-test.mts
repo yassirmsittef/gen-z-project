@@ -14,13 +14,18 @@
  *  4. les notifications de reçu de soutien (support.*) orphelines.
  * Ne touche JAMAIS au compte du fondateur ni aux autres membres.
  */
-import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 
 const confirmer = process.argv.includes("--confirmer");
 const emailSecond = process.argv.find((a) => a.includes("@") && !a.startsWith("--"));
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "" }) });
+const url = process.env.DATABASE_URL ?? "";
+// Garde-fou : ce script vise la PROD. Sans adresse, ou sur une base locale, on s'arrête net.
+if (!url || /localhost|127\.0\.0\.1/.test(url)) {
+  console.error("❌ DATABASE_URL de PROD manquante ou locale. Lance d'abord :\n   npx vercel env pull .env.prod.local --environment=production --yes\n   puis relance avec DATABASE_URL=$(grep \"^DATABASE_URL=\" .env.prod.local | cut -d= -f2- | tr -d '\"') …");
+  process.exit(1);
+}
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 
 const projets = await prisma.project.findMany({
   where: { title: { startsWith: "Test de bout en bout" } },
