@@ -3,7 +3,7 @@
  *
  * À lancer PAR LE FONDATEUR contre la base de PROD (la clé prod ne passe pas par
  * l'assistant) :
- *   DATABASE_URL="<url prod>" npx tsx scripts/nettoyer-donnees-test.ts --confirmer [email-du-second-compte]
+ *   DATABASE_URL="<url prod>" npx tsx scripts/nettoyer-donnees-test.mts --confirmer [email-du-second-compte]
  *
  * Sans --confirmer : n'affiche que ce qui SERAIT supprimé (mode aperçu).
  * Supprime :
