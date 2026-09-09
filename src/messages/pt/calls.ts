@@ -83,7 +83,7 @@ export const calls = {
     "Um link por linha, {max} no máximo, em https. Um apelo com fontes resiste; um apelo sem fontes cai à primeira denúncia.",
   "createCallForm.pending": "A publicar…",
   "createCallForm.anonymousStrong": "Publicar anonimamente",
-  "createCallForm.anonymousRest": "o teu nome não será mostrado. Guardamos uma ligação interna para moderação e limites, mas ninguém consegue chegar a ti a partir do apelo.",
+  "createCallForm.anonymousRest": "o teu nome não será mostrado e nada na página leva até ti. A GeniGain guarda a ligação à tua conta (moderação, limites) e pode ter de comunicar a tua identidade a uma autoridade ou tribunal que o ordene. Anónimo ou não, continuas responsável pelo teu apelo.",
   "createCallForm.submit": "Publicar o apelo",
   "createCallForm.withdrawNote": "Podes retirá-lo a qualquer momento.",
 

@@ -49,10 +49,10 @@ export const howItWorks = {
     "Processing fees are set by Stripe (the payment provider) and vary with your card and your country — usually in the range of 1.5 to 3%. GeniGain doesn't set them, doesn't see them and adds none. Concretely: when you contribute, you pay exactly your amount; the fees are taken by Stripe and deducted from what the owner receives. If the project fails and you're refunded, Stripe doesn't return the fee it took upfront — so your refund is net of those fees, and here again GeniGain keeps none. That's the only “cost” of a contribution, and it never lands in the platform's pocket.",
   "faq.whoQ": "Who can take part?",
   "faq.whoA":
-    "Sign-up is open from age 15. To contribute by card or launch a campaign, you must be of legal age or have your legal guardian's consent.",
+    "Sign-up is open from age 16. To contribute by card or launch a campaign, you must be of legal age or have your legal guardian's consent.",
   "faq.vanishQ": "And if the owner vanishes into thin air?",
   "faq.vanishA":
-    "That's exactly what escrow prevents: the funds that haven't been released are never in their hands. Without an approved proof, nothing moves — and after {days} days, everything a vote hasn't released automatically goes back to the contributors (net of the card fees the bank doesn't return).",
+    "That's exactly what escrow prevents: the money waits at Stripe on their payout account, locked: no transfer to their bank without a milestone approved by the vote. Without an approved proof, nothing moves — and after {days} days, everything a vote hasn't released automatically goes back to the contributors (net of the card fees the bank doesn't return).",
   "faq.payoutQ": "How do I receive my funds as an owner?",
   "faq.payoutA":
     "Through Stripe Connect: you create your payout account from your dashboard and pass Stripe's identity check. Every approved milestone is then transferred automatically, in your project's currency. An approved milestone stays owed to you until your account is ready.",

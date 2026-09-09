@@ -91,7 +91,7 @@ export const calls = {
     "رابط في كل سطر، {max} كحد أقصى، بصيغة https. النداء الموثّق يصمد؛ والنداء بلا مصادر يسقط عند أول بلاغ.",
   "createCallForm.pending": "جارٍ النشر…",
   "createCallForm.anonymousStrong": "النشر بهوية مجهولة",
-  "createCallForm.anonymousRest": "لن يظهر اسمك. نحتفظ برابط داخلي للإشراف والحدود، لكن لا يمكن لأحد الوصول إليك انطلاقًا من النداء.",
+  "createCallForm.anonymousRest": "لن يظهر اسمك ولا شيء في الصفحة يقود إليك. لكن GeniGain تحتفظ بالرابط مع حسابك (الإشراف، الحدود) وقد تضطر إلى الكشف عن هويتك لسلطة أو محكمة تأمر بذلك. مجهولًا أو لا، تبقى مسؤولًا عن ندائك.",
   "createCallForm.submit": "انشر النداء",
   "createCallForm.withdrawNote": "يمكنك سحبه بنفسك في أي وقت.",
 

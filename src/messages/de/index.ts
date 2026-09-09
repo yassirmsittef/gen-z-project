@@ -45,7 +45,7 @@ export const de = {
     "support.title": "GeniGain unterstützen",
     "support.lead": "GeniGain ist eine Plattform mit 0 % Provision: sie nimmt den Projekten nichts. Um zu leben und zu wachsen, zählt sie auf die, die an die Idee glauben.",
     "support.what": "Was deine Unterstützung finanziert: die Entwicklung und Sicherheit der Plattform, dann Orte in den Städten, um die zu begleiten, die anfangen — ein Ort zum Arbeiten, Lernen und um seine Unterstützer·innen zu treffen.",
-    "support.surplus": "Verpflichtung: alles, was über den Bedarf der Plattform hinausgeht, fließt in die Finanzierung der Projekte anderer Mitglieder.",
+    "support.surplus": "Unsere Leitlinie: Was über den Bedarf der Plattform hinausgeht, fließt in die Projekte anderer Mitglieder — wir berichten hier darüber, mit Zahlen. Es ist keine bezifferte Verpflichtung.",
     "support.direct": "Anders als Projekte hat diese Unterstützung weder Etappen noch Treuhand: sie ist eine Spende an die Plattform, direkt auf ihrem Konto.",
     "support.total": "Bisher erhalten: {amount}",
     "support.amountLabel": "Betrag (CHF)",

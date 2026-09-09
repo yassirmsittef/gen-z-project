@@ -39,7 +39,7 @@ export const account = {
   "registerForm.currencyLabel": "Tu divisa",
   "registerForm.currencyHint":
     "Tus importes se mostrarán en esta divisa. El derecho a publicar un proyecto se sigue contando en dólares (20 $ contribuidos): tus contribuciones se convierten automáticamente al tipo de cambio del día.",
-  "registerForm.acceptPrefix": "Acepto las",
+  "registerForm.acceptPrefix": "Tengo 16 años o más y acepto las",
   "registerForm.termsLink": "condiciones de uso",
   "registerForm.acceptMiddle": "y la",
   "registerForm.privacyLink": "política de privacidad",

@@ -49,10 +49,10 @@ export const howItWorks = {
     "Le commissioni di elaborazione sono fissate da Stripe (il fornitore di pagamento) e variano in base alla tua carta e al tuo paese — di solito intorno all'1,5–3%. GeniGain non le fissa, non le vede e non ne aggiunge nessuna. In concreto: quando contribuisci paghi esattamente il tuo importo; le commissioni le trattiene Stripe e vengono detratte da ciò che riceve chi porta avanti il progetto. Se il progetto fallisce e vieni rimborsato, Stripe non restituisce la commissione trattenuta all'inizio — il tuo rimborso è quindi al netto di queste spese, e anche qui GeniGain non ne trattiene alcuna. È l'unico «costo» di un contributo, e non finisce mai nelle tasche della piattaforma.",
   "faq.whoQ": "Chi può partecipare?",
   "faq.whoA":
-    "L'iscrizione è aperta dai 15 anni. Per contribuire con carta o lanciare una campagna bisogna essere maggiorenni o avere il consenso di chi esercita la responsabilità genitoriale.",
+    "L'iscrizione è aperta dai 16 anni. Per contribuire con carta o lanciare una campagna bisogna essere maggiorenni o avere il consenso di chi esercita la responsabilità genitoriale.",
   "faq.vanishQ": "E se chi porta il progetto sparisce nel nulla?",
   "faq.vanishA":
-    "È esattamente ciò che il deposito impedisce: i fondi non sbloccati non sono mai nelle sue mani. Senza una prova convalidata non si muove niente — e dopo {days} giorni tutto quello che non è stato sbloccato da un voto torna automaticamente ai contributori (al netto delle commissioni carta, che la banca non restituisce).",
+    "È esattamente ciò che il deposito impedisce: il denaro attende presso Stripe sul suo conto di versamento, bloccato: nessun bonifico alla sua banca senza una tappa convalidata dal voto. Senza una prova convalidata non si muove niente — e dopo {days} giorni tutto quello che non è stato sbloccato da un voto torna automaticamente ai contributori (al netto delle commissioni carta, che la banca non restituisce).",
   "faq.payoutQ": "Come ricevo i fondi se porto avanti un progetto?",
   "faq.payoutA":
     "Tramite Stripe Connect: crei il tuo conto di versamento dalla dashboard e superi la verifica d'identità di Stripe. Ogni tappa convalidata viene poi bonificata automaticamente, nella valuta del tuo progetto. Una tappa convalidata resta dovuta finché il tuo conto non è pronto.",

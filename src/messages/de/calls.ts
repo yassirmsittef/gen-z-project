@@ -84,7 +84,7 @@ export const calls = {
     "Ein Link pro Zeile, höchstens {max}, mit https. Ein belegter Aufruf hält stand; einer ohne Quellen fällt bei der ersten Meldung.",
   "createCallForm.pending": "Wird veröffentlicht…",
   "createCallForm.anonymousStrong": "Anonym veröffentlichen",
-  "createCallForm.anonymousRest": "dein Name wird nicht angezeigt. Wir behalten eine interne Verknüpfung für Moderation und Limits, aber niemand kann den Aufruf zu dir zurückverfolgen.",
+  "createCallForm.anonymousRest": "dein Name wird nicht angezeigt, und nichts auf der Seite führt zu dir. GeniGain selbst behält die Verknüpfung zu deinem Konto (Moderation, Limits) und muss deine Identität womöglich einer Behörde oder einem Gericht offenlegen, das dies anordnet. Anonym oder nicht: Du bleibst für deinen Aufruf verantwortlich.",
   "createCallForm.submit": "Aufruf veröffentlichen",
   "createCallForm.withdrawNote": "Du kannst ihn jederzeit selbst zurückziehen.",
 

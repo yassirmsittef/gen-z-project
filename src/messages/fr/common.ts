@@ -11,7 +11,7 @@ export const common = {
   "support.title": "Soutenir GeniGain",
   "support.lead": "GeniGain est une plateforme à 0 % de commission : elle ne prend rien sur les projets. Pour vivre et grandir, elle compte sur celles et ceux qui croient à l'idée.",
   "support.what": "Ce que ton soutien finance : le développement et la sécurité de la plateforme, puis des lieux dans les villes pour accompagner celles et ceux qui se lancent — un endroit pour travailler, se former, rencontrer ses contributeurs.",
-  "support.surplus": "Engagement : tout ce qui dépasse les besoins de la plateforme est reversé pour financer les projets des autres membres.",
+  "support.surplus": "Notre ligne de conduite : ce qui dépasse les besoins de la plateforme va soutenir les projets des autres membres — on le dira ici, chiffres à l'appui. Ce n'est pas un engagement chiffré.",
   "support.direct": "Contrairement aux projets, ce soutien n'a ni étapes ni séquestre : c'est un don à la plateforme, encaissé directement sur son compte.",
   "support.total": "Déjà reçu : {amount}",
   "support.amountLabel": "Montant (CHF)",

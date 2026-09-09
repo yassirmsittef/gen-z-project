@@ -84,7 +84,7 @@ export const calls = {
     "Un enlace por línea, {max} como máximo, en https. Una llamada con fuentes resiste; una llamada sin fuentes cae a la primera denuncia.",
   "createCallForm.pending": "Publicando…",
   "createCallForm.anonymousStrong": "Publicar de forma anónima",
-  "createCallForm.anonymousRest": "tu nombre no se mostrará. Guardamos un vínculo interno para la moderación y los límites, pero nadie puede rastrear la llamada hasta ti.",
+  "createCallForm.anonymousRest": "tu nombre no se mostrará y nada en la página lleva hasta ti. GeniGain sí conserva el vínculo con tu cuenta (moderación, límites) y puede tener que comunicar tu identidad a una autoridad o a un tribunal que lo ordene. Anónimo o no, sigues siendo responsable de tu llamada.",
   "createCallForm.submit": "Publicar la llamada",
   "createCallForm.withdrawNote": "Podrás retirarla por tu cuenta en cualquier momento.",
 

@@ -39,7 +39,7 @@ export const account = {
   "registerForm.currencyLabel": "Your currency",
   "registerForm.currencyHint":
     "Your amounts will display in this currency. The right to post a project stays counted in dollars ($20 contributed): your contributions convert automatically at the day's rate.",
-  "registerForm.acceptPrefix": "I accept the",
+  "registerForm.acceptPrefix": "I am 16 or older and I accept the",
   "registerForm.termsLink": "terms of service",
   "registerForm.acceptMiddle": "and the",
   "registerForm.privacyLink": "privacy policy",

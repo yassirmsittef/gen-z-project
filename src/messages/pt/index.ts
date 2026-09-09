@@ -45,7 +45,7 @@ export const pt = {
     "support.title": "Apoiar a GeniGain",
     "support.lead": "A GeniGain é uma plataforma com 0 % de comissão: não fica com nada dos projetos. Para viver e crescer, conta com quem acredita na ideia.",
     "support.what": "O que o teu apoio financia: o desenvolvimento e a segurança da plataforma, e depois espaços nas cidades para acompanhar quem está a começar — um lugar para trabalhar, aprender e conhecer os seus contribuidores.",
-    "support.surplus": "Compromisso: tudo o que exceder as necessidades da plataforma vai financiar os projetos dos outros membros.",
+    "support.surplus": "A nossa linha de conduta: o que exceder as necessidades da plataforma vai apoiar os projetos dos outros membros — diremos aqui, com números. Não é um compromisso quantificado.",
     "support.direct": "Ao contrário dos projetos, este apoio não tem etapas nem depósito: é um donativo à plataforma, recebido diretamente na sua conta.",
     "support.total": "Recebido até agora: {amount}",
     "support.amountLabel": "Montante (CHF)",

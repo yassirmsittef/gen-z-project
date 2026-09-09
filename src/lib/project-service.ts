@@ -308,9 +308,14 @@ export async function fulfillContribution(input: {
         reputation: { increment: REP.CONTRIBUTION },
       },
     });
-    await tx.reputationEvent.create({
-      data: { userId, delta: REP.CONTRIBUTION, reason: `Contribution à « ${project.title} »` },
-    });
+    // Une contribution anonyme ne laisse AUCUNE trace publique : cet événement
+    // (titre du projet, date) s'affiche sur le profil /u/<id> et suffisait,
+    // recoupé avec le pouls, à lever l'anonymat promis au paiement.
+    if (!input.anonymous) {
+      await tx.reputationEvent.create({
+        data: { userId, delta: REP.CONTRIBUTION, reason: `Contribution à « ${project.title} »` },
+      });
+    }
 
     const newRaised = project.raised + amount;
     const funded = newRaised >= project.goal;

@@ -49,10 +49,10 @@ export const howItWorks = {
     "Die Bearbeitungsgebühren werden von Stripe (dem Zahlungsdienstleister) festgelegt und hängen von deiner Karte und deinem Land ab — meist in der Größenordnung von 1,5 bis 3 %. GeniGain legt sie nicht fest, sieht sie nicht und schlägt nichts drauf. Konkret: Wenn du beiträgst, zahlst du genau deinen Betrag; die Gebühren zieht Stripe ein und rechnet sie von dem ab, was der Projektträger bekommt. Scheitert das Projekt und wirst du zurückerstattet, gibt Stripe die anfangs einbehaltene Gebühr nicht zurück — deine Rückerstattung ist also netto nach diesen Gebühren, und auch davon behält GeniGain nichts. Das ist der einzige „Preis“ eines Beitrags, und er landet nie in der Tasche der Plattform.",
   "faq.whoQ": "Wer kann mitmachen?",
   "faq.whoA":
-    "Die Registrierung ist ab 15 Jahren offen. Um per Karte beizutragen oder eine Kampagne zu starten, musst du volljährig sein oder die Zustimmung deiner Erziehungsberechtigten haben.",
+    "Die Registrierung ist ab 16 Jahren offen. Um per Karte beizutragen oder eine Kampagne zu starten, musst du volljährig sein oder die Zustimmung deiner Erziehungsberechtigten haben.",
   "faq.vanishQ": "Und wenn der Projektträger einfach abtaucht?",
   "faq.vanishA":
-    "Genau das verhindert das Treuhandkonto: Nicht freigegebene Gelder sind nie in seinen Händen. Ohne bestätigten Nachweis bewegt sich nichts — und nach {days} Tagen geht alles, was keine Abstimmung freigegeben hat, automatisch zurück an die Unterstützer (abzüglich der Kartengebühren, die die Bank nicht erstattet).",
+    "Genau das verhindert das Treuhandkonto: Das Geld wartet bei Stripe auf seinem Auszahlungskonto, gesperrt: keine Überweisung an seine Bank ohne eine per Abstimmung freigegebene Etappe. Ohne bestätigten Nachweis bewegt sich nichts — und nach {days} Tagen geht alles, was keine Abstimmung freigegeben hat, automatisch zurück an die Unterstützer (abzüglich der Kartengebühren, die die Bank nicht erstattet).",
   "faq.payoutQ": "Wie bekomme ich als Projektträger meine Gelder?",
   "faq.payoutA":
     "Über Stripe Connect: Du legst dein Auszahlungskonto in deinem Dashboard an und durchläufst die Identitätsprüfung von Stripe. Jede bestätigte Etappe wird danach automatisch überwiesen, in der Währung deines Projekts. Eine bestätigte Etappe bleibt dir geschuldet, solange dein Konto noch nicht bereit ist.",

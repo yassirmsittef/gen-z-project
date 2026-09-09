@@ -83,7 +83,7 @@ export const calls = {
     "One link per line, {max} max, https only. A sourced call holds up; an unsourced one falls at the first report.",
   "createCallForm.pending": "Publishing…",
   "createCallForm.anonymousStrong": "Post anonymously",
-  "createCallForm.anonymousRest": "your name won't be shown. We keep an internal link for moderation and limits, but no one can trace the call back to you.",
+  "createCallForm.anonymousRest": "your name won't be shown and nothing on the page leads to you. GeniGain itself keeps the link to your account (moderation, limits) and may have to disclose your identity to an authority or a court that orders it. Anonymous or not, you remain responsible for your call.",
   "createCallForm.submit": "Publish the call",
   "createCallForm.withdrawNote": "You can withdraw it yourself at any time.",
 

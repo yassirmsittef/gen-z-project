@@ -10,7 +10,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 type Appel = { m: string; args: unknown[] };
 const appels: Appel[] = [];
 const compte = { payoutsEnabled: true, interval: "manual" as string };
-const charge = { amount: 1000, net: 960, currency: "chf" };
+const charge = { amount: 1000, net: 960, currency: "chf", settledAmount: 0 };
 
 vi.mock("@/lib/stripe", () => {
   const rec = (m: string, ret: unknown) => async (...args: unknown[]) => {
@@ -30,7 +30,7 @@ vi.mock("@/lib/stripe", () => {
     charges: {
       retrieve: rec("charges.retrieve", () => ({
         amount: charge.amount,
-        balance_transaction: { amount: charge.amount, net: charge.net, currency: charge.currency },
+        balance_transaction: { amount: charge.settledAmount || charge.amount, net: charge.net, currency: charge.currency },
       })),
     },
     transfers: {
@@ -51,6 +51,7 @@ import {
   executeDuePayouts,
   executeDueRefunds,
   ensureManualPayouts,
+  reverseEscrowForDispute,
 } from "../src/lib/payouts";
 import { assertCanContribute } from "../src/lib/project-service";
 
@@ -64,6 +65,8 @@ afterAll(async () => {
 });
 beforeEach(() => {
   appels.length = 0;
+  charge.settledAmount = 0;
+  charge.net = 960;
   compte.payoutsEnabled = true;
   compte.interval = "manual";
 });
@@ -167,6 +170,37 @@ describe("séquestre chez le porteur", () => {
     appels.length = 0;
     await executeDueRefunds();
     expect(des("transfers.createReversal")).toHaveLength(0);
+  });
+
+  it("projet hors CHF : le reversal se libelle dans la devise du transfer, le remboursement dans celle du projet", async () => {
+    const { c1 } = await scene();
+    // 10 € encaissés = 9,40 CHF réglés, 9,00 CHF nets après frais Stripe.
+    charge.settledAmount = 940;
+    charge.net = 900;
+    await escrowContribution(c1.id);
+    await prisma.contribution.update({ where: { id: c1.id }, data: { refunded: true, refundDueMinor: 1000 } });
+    appels.length = 0;
+    await executeDueRefunds();
+    // Avant : reversal de 957 « CHF » > transfer de 900 → refus Stripe, jamais remboursé.
+    expect((des("transfers.createReversal")[0].args[1] as { amount: number }).amount).toBe(900);
+    expect((des("refunds.create")[0].args[0] as { amount: number }).amount).toBe(957); // 1000 × 900/940, en €
+  });
+
+  it("litige carte : le séquestre est rapatrié intégralement du compte du porteur, une seule fois", async () => {
+    const { c1 } = await scene();
+    await escrowContribution(c1.id);
+    // Un PaymentIntent propre à ce test : scene() réutilise « pi_1 » et les
+    // contributions des tests précédents (mêmes PI, séquestre posé) traînent
+    // jusqu au afterAll.
+    const pi = `pi_litige_${R}`;
+    await prisma.contribution.update({ where: { id: c1.id }, data: { stripePaymentIntentId: pi } });
+    appels.length = 0;
+    expect(await reverseEscrowForDispute(pi)).toEqual({ reversed: 1, failed: 0 });
+    const rev = des("transfers.createReversal")[0];
+    expect(rev.args[0]).toBe(`tr_${c1.id}`);
+    expect((rev.args[1] as { amount?: number }).amount).toBeUndefined(); // intégral
+    expect(await reverseEscrowForDispute(pi)).toEqual({ reversed: 0, failed: 0 });
+    expect(des("transfers.createReversal")).toHaveLength(1);
   });
 
   it("l'ancien chemin survit : une contribution d'avant est encore versée par transfer à la libération", async () => {

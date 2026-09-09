@@ -113,6 +113,48 @@ async function settledCharge(contribution: {
 }
 
 /**
+ * Litige carte (chargeback) : Stripe reprend le montant contesté sur le solde
+ * de la plateforme — tenu à zéro par construction —, alors que l'argent est
+ * sur le compte du porteur. On le rapatrie (reversal INTÉGRAL du transfer de
+ * séquestre) pour que le litige ne soit pas payé de la poche de GeniGain.
+ * Idempotent (clé Stripe + colonne). Une part déjà versée au porteur ne peut
+ * plus être reprise ici : l'échec est journalisé, le webhook alerte les
+ * admins, et la CGU §7 permet de la déduire des prochains versements.
+ */
+export async function reverseEscrowForDispute(
+  paymentIntentId: string
+): Promise<{ reversed: number; failed: number }> {
+  const rows = await prisma.contribution.findMany({
+    where: {
+      stripePaymentIntentId: paymentIntentId,
+      stripeEscrowTransferId: { not: null },
+      stripeEscrowReversalId: null,
+    },
+    select: { id: true, stripeEscrowTransferId: true },
+  });
+  let reversed = 0;
+  let failed = 0;
+  for (const c of rows) {
+    try {
+      const reversal = await getStripe().transfers.createReversal(
+        c.stripeEscrowTransferId!,
+        { metadata: { contributionId: c.id, kind: "escrow-dispute-reversal" } },
+        { idempotencyKey: `escrow-dispute-reversal-v1-${c.id}` }
+      );
+      await prisma.contribution.update({
+        where: { id: c.id },
+        data: { stripeEscrowReversalId: reversal.id },
+      });
+      reversed++;
+    } catch (error) {
+      failed++;
+      console.error(`[litige] rapatriement impossible pour ${c.id} :`, error);
+    }
+  }
+  return { reversed, failed };
+}
+
+/**
  * Date de bascule du modèle : une contribution plus ancienne sans séquestre
  * chez le porteur suit l'ancien chemin (transfer à la libération) — elle a été
  * encaissée sous l'ancien régime et son argent est sur le solde plateforme.
@@ -237,6 +279,13 @@ export async function executeDueRefunds() {
       // n'est pas encore connu, le cron rejouera.
       const netRefund = Math.floor((c.refundDueMinor * s.settled.net) / s.settled.amount);
       if (netRefund <= 0) continue;
+      // Le reversal se libelle dans la devise du TRANSFER (devise de règlement
+      // de la plateforme, CHF), pas dans celle du projet : même part du net
+      // réglé, côté règlement. En CHF les deux nombres coïncident ; pour un
+      // projet en EUR/USD, un reversal de « netRefund » CHF dépassait le
+      // transfer, Stripe le refusait, et aucun contributeur d'un projet hors
+      // CHF n'aurait jamais été remboursé (revue juridique du 09/09/2026).
+      const reversalMinor = Math.floor((c.refundDueMinor * s.settled.net) / s.charge.amount);
 
       // Séquestre chez le porteur : l'argent est sur SON compte. On le
       // rapatrie d'abord (reversal du transfer adossé — ses payouts sont
@@ -245,7 +294,7 @@ export async function executeDueRefunds() {
       if (c.stripeEscrowTransferId && !c.stripeEscrowReversalId) {
         const reversal = await stripe.transfers.createReversal(
           c.stripeEscrowTransferId,
-          { amount: netRefund, metadata: { contributionId: c.id, kind: "escrow-reversal" } },
+          { amount: reversalMinor, metadata: { contributionId: c.id, kind: "escrow-reversal" } },
           { idempotencyKey: `escrow-reversal-v1-${c.id}` }
         );
         await prisma.contribution.update({

@@ -49,10 +49,10 @@ export const howItWorks = {
     "As taxas de processamento são fixadas pela Stripe (o prestador de pagamentos) e variam consoante o teu cartão e o teu país — em geral, na ordem de 1,5 a 3 %. A GeniGain não as fixa, não as vê e não acrescenta nenhuma. Na prática: quando contribuis, pagas exatamente o teu montante; as taxas são cobradas pela Stripe e deduzidas do que recebe quem leva o projeto. Se o projeto falhar e fores reembolsado, a Stripe não devolve a comissão que cobrou à partida — o teu reembolso é, portanto, líquido dessas taxas, e também aqui a GeniGain não fica com nenhuma. É o único «custo» de uma contribuição, e nunca vai para o bolso da plataforma.",
   "faq.whoQ": "Quem pode participar?",
   "faq.whoA":
-    "O registo está aberto a partir dos 15 anos. Para contribuir por cartão ou lançar uma campanha, é preciso ser maior de idade ou ter o acordo do teu representante legal.",
+    "O registo está aberto a partir dos 16 anos. Para contribuir por cartão ou lançar uma campanha, é preciso ser maior de idade ou ter o acordo do teu representante legal.",
   "faq.vanishQ": "E se quem leva o projeto desaparecer sem deixar rasto?",
   "faq.vanishA":
-    "É exatamente isso que a custódia impede: os fundos por desbloquear nunca estão nas mãos dessa pessoa. Sem prova validada, nada se mexe — e ao fim de {days} dias, tudo o que não foi desbloqueado por um voto volta automaticamente para os contribuidores (líquido das taxas de cartão, que o banco não devolve).",
+    "É exatamente isso que a custódia impede: o dinheiro espera na Stripe na conta de pagamentos dessa pessoa, bloqueada: nenhuma transferência para o banco sem uma etapa validada pelo voto. Sem prova validada, nada se mexe — e ao fim de {days} dias, tudo o que não foi desbloqueado por um voto volta automaticamente para os contribuidores (líquido das taxas de cartão, que o banco não devolve).",
   "faq.payoutQ": "Como recebo os meus fundos se sou eu a levar o projeto?",
   "faq.payoutA":
     "Através da Stripe Connect: crias a tua conta de transferências a partir do teu painel e passas a verificação de identidade da Stripe. Cada etapa validada é depois transferida automaticamente, na moeda do teu projeto. Uma etapa validada continua em dívida enquanto a tua conta não estiver pronta.",

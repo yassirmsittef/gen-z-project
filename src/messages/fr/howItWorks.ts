@@ -49,10 +49,10 @@ export const howItWorks = {
     "Les frais de traitement sont fixés par Stripe (le prestataire de paiement) et varient selon ta carte et ton pays — en général de l'ordre de 1,5 à 3 %. GeniGain ne les fixe pas, ne les voit pas et n'en ajoute aucun. Concrètement : quand tu contribues, tu paies exactement ton montant ; les frais sont prélevés par Stripe et déduits de ce que le porteur reçoit. Si le projet échoue et que tu es remboursé, Stripe ne rend pas la commission qu'il a prélevée au départ — ton remboursement est donc net de ces frais, et là encore GeniGain n'en garde aucun. C'est le seul « coût » d'une contribution, et il ne va jamais dans la poche de la plateforme.",
   "faq.whoQ": "Qui peut participer ?",
   "faq.whoA":
-    "L'inscription est ouverte dès 15 ans. Pour contribuer par carte ou lancer une campagne, il faut être majeur·e ou avoir l'accord de ton représentant légal.",
+    "L'inscription est ouverte dès 16 ans. Pour contribuer par carte ou lancer une campagne, il faut être majeur·e ou avoir l'accord de ton représentant légal.",
   "faq.vanishQ": "Et si le porteur disparaît dans la nature ?",
   "faq.vanishA":
-    "C'est exactement ce que le séquestre empêche : les fonds non débloqués ne sont jamais entre ses mains. Sans preuve validée, rien ne bouge — et au bout de {days} jours, tout ce qui n'a pas été débloqué par un vote repart automatiquement vers les contributeurs (net des frais de carte, non restitués par la banque).",
+    "C'est exactement ce que le séquestre empêche : l'argent attend chez Stripe sur son compte de versement, verrouillé : aucun virement vers sa banque sans étape validée par le vote. Sans preuve validée, rien ne bouge — et au bout de {days} jours, tout ce qui n'a pas été débloqué par un vote repart automatiquement vers les contributeurs (net des frais de carte, non restitués par la banque).",
   "faq.payoutQ": "Comment je reçois mes fonds en tant que porteur ?",
   "faq.payoutA":
     "Via Stripe Connect : tu crées ton compte de versement depuis ton dashboard et tu passes la vérification d'identité de Stripe. Chaque étape validée est ensuite virée automatiquement, dans la devise de ton projet. Une étape validée reste due tant que ton compte n'est pas prêt.",

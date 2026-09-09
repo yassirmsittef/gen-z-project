@@ -39,7 +39,7 @@ export const account = {
   "registerForm.currencyLabel": "Ta devise",
   "registerForm.currencyHint":
     "Tes montants s'afficheront dans cette devise. Le droit de poster un projet reste compté en dollars (20 $ contribués) : tes contributions y sont converties automatiquement au taux du jour.",
-  "registerForm.acceptPrefix": "J'accepte les",
+  "registerForm.acceptPrefix": "J'ai 16 ans ou plus et j'accepte les",
   "registerForm.termsLink": "conditions d'utilisation",
   "registerForm.acceptMiddle": "et la",
   "registerForm.privacyLink": "politique de confidentialité",

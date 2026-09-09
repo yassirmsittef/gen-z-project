@@ -370,6 +370,8 @@ export const CALL_CHARTER = [
   "Écris ce que tu sais, pas ce que tu supposes : les faits que tu avances, tu dois pouvoir les sourcer.",
   "Distingue le fait de l'opinion. « Ils font X » engage ta responsabilité ; « je ne veux plus leur donner mon argent » est ton droit.",
   "Aucun appel à la violence, au harcèlement, ni aucun propos discriminatoire.",
+  "Critique ce qu'une entreprise fait, jamais ce qu'elle est : ni la nationalité, ni l'origine, ni la religion, ni les opinions de ceux qui la possèdent ou y travaillent.",
+  "Pas de nom de salarié, pas d'adresse de magasin, pas d'appel à bloquer, entrer ou perturber : ton seul levier, c'est ton argent.",
   "Termine par ce que tu veux à la place : cet appel sert à faire naître un remplaçant, pas à défouler.",
 ] as const;
 

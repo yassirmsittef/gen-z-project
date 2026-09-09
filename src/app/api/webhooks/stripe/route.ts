@@ -4,7 +4,7 @@ import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { fulfillContribution } from "@/lib/project-service";
 import { sendPendingNotificationEmails } from "@/lib/notification-emails";
-import { escrowContribution, executeDueRefunds } from "@/lib/payouts";
+import { escrowContribution, executeDueRefunds, reverseEscrowForDispute } from "@/lib/payouts";
 import { recordPlatformSupport } from "@/lib/platform-support";
 import { alertAdmins } from "@/lib/security-alerts";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
@@ -113,7 +113,10 @@ export async function POST(request: Request) {
         data: { refunded: true, refundDueMinor: 0, stripeChargeId: (charge ?? dispute)?.id ?? null },
       });
       if (dispute) {
-        console.error(`[stripe] litige ${dispute.id} (${dispute.reason}) sur ${paymentIntent} — ${count} contribution(s) gelée(s)`);
+        // L'argent contesté est sur le compte du porteur : on le rapatrie,
+        // sinon Stripe le reprend sur le solde (à zéro) de la plateforme.
+        const rapatriement = await reverseEscrowForDispute(paymentIntent);
+        console.error(`[stripe] litige ${dispute.id} (${dispute.reason}) sur ${paymentIntent} — ${count} contribution(s) gelée(s), séquestre rapatrié : ${rapatriement.reversed}, échec(s) : ${rapatriement.failed}`);
         await alertAdmins("securityAlert.dispute", { reason: dispute.reason ?? "?", count });
       }
     }

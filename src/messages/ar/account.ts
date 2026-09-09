@@ -34,7 +34,7 @@ export const account = {
   "registerForm.currencyLabel": "عملتك",
   "registerForm.currencyHint":
     "ستُعرض مبالغك بهذه العملة. يبقى حق نشر مشروع محسوبًا بالدولار (20 $ من المساهمات): تُحوَّل مساهماتك إليه تلقائيًا بسعر اليوم.",
-  "registerForm.acceptPrefix": "أوافق على",
+  "registerForm.acceptPrefix": "عمري 16 سنة أو أكثر وأوافق على",
   "registerForm.termsLink": "شروط الاستخدام",
   "registerForm.acceptMiddle": "و",
   "registerForm.privacyLink": "سياسة الخصوصية",
