@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import landDotsRaw from "@/lib/land-dots.json";
 import { useT } from "@/components/i18n-provider";
@@ -29,6 +29,8 @@ export type CityMarker = {
 };
 
 type Props = {
+  /** Aides et messages qui n'ont de sens que si le globe existe (rendus par la page serveur). */
+  children?: ReactNode;
   markers: CityMarker[];
   selectedCity: string | null;
   onSelectCity: (city: string | null) => void;
@@ -121,7 +123,7 @@ type MarkerObject = {
   pulsePhase: number;
 };
 
-export default function EarthScene({ markers, selectedCity, onSelectCity }: Props) {
+export default function EarthScene({ markers, selectedCity, onSelectCity, children }: Props) {
   const t = useT("ui");
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -681,6 +683,7 @@ export default function EarthScene({ markers, selectedCity, onSelectCity }: Prop
 
   return (
     <div ref={containerRef} className="relative h-full w-full overflow-hidden">
+      {children}
       <div
         ref={tooltipRef}
         aria-hidden

@@ -68,6 +68,10 @@
   .hero-reveal {
     animation: hero-reveal 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
+  /* Sans 3D (mode Isolement d'iOS…) : pas de naissance du sigil à attendre. */
+  [data-no3d] .hero-reveal {
+    animation-delay: 0s !important;
+  }
   /* Transition « lancement d'un rêve » : la lumière du sigil envahit
      l'écran pendant que la caméra plonge dans le masque (launch-button) */
   .launch-overlay {

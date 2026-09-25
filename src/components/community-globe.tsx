@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, type ReactNode } from "react";
 import type { CityMarker } from "@/components/earth-scene";
 import { useT } from "@/components/i18n-provider";
 
@@ -32,9 +32,11 @@ type Props = {
   selectedCity: string | null;
   /** Recherche texte en cours (préservée dans l'URL quand on change de ville). */
   query: string;
+  /** Aides « glisse, clique » et message « globe vide » : masqués quand la 3D est absente. */
+  children?: ReactNode;
 };
 
-export function CommunityGlobe({ markers, selectedCity, query }: Props) {
+export function CommunityGlobe({ markers, selectedCity, query, children }: Props) {
   const router = useRouter();
 
   const onSelectCity = useCallback(
@@ -48,5 +50,9 @@ export function CommunityGlobe({ markers, selectedCity, query }: Props) {
     [router, query]
   );
 
-  return <EarthScene markers={markers} selectedCity={selectedCity} onSelectCity={onSelectCity} />;
+  return (
+    <EarthScene markers={markers} selectedCity={selectedCity} onSelectCity={onSelectCity}>
+      {children}
+    </EarthScene>
+  );
 }

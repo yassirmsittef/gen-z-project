@@ -165,7 +165,12 @@ export default function HeroScene() {
     const renderer = createWebGLRenderer({ antialias: true, alpha: true });
     if (!renderer) {
       setUnavailable(true);
-      return;
+      // Les textes du hero attendent la naissance du sigil (délais CSS) :
+      // sans 3D, le document le dit et la révélation part tout de suite.
+      document.documentElement.dataset.no3d = "";
+      return () => {
+        delete document.documentElement.dataset.no3d;
+      };
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(container.clientWidth, container.clientHeight);

@@ -123,7 +123,23 @@ export default async function CommunityPage({
           data-reveal
           className="glass relative h-[400px] overflow-hidden rounded-2xl rounded-se-sm sm:h-[540px]"
         >
-          <CommunityGlobe markers={markers} selectedCity={selectedCity} query={query} />
+          <CommunityGlobe markers={markers} selectedCity={selectedCity} query={query}>
+            {/* Aides et message « vide » : n'existent que si le globe existe (pas de WebGL → rien) */}
+            {markers.length === 0 ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-6 text-center">
+                <p className="data-label">{t("globe.empty")}</p>
+              </div>
+            ) : (
+              <>
+                <p className="pointer-events-none absolute bottom-4 start-4 hidden font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:block">
+                  {t("globe.hintDesktop")}
+                </p>
+                <p className="pointer-events-none absolute bottom-4 start-4 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:hidden">
+                  {t("globe.hintMobile")}
+                </p>
+              </>
+            )}
+          </CommunityGlobe>
 
           {selectedMarker && (
             <div className="absolute start-4 top-4 flex items-center gap-2 rounded-full border border-primary/40 bg-card/80 py-1 pe-1 ps-4 backdrop-blur-md">
@@ -139,20 +155,6 @@ export default async function CommunityPage({
             </div>
           )}
 
-          {markers.length === 0 ? (
-            <div className="pointer-events-none absolute inset-x-0 bottom-6 text-center">
-              <p className="data-label">{t("globe.empty")}</p>
-            </div>
-          ) : (
-            <>
-              <p className="pointer-events-none absolute bottom-4 start-4 hidden font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:block">
-                {t("globe.hintDesktop")}
-              </p>
-              <p className="pointer-events-none absolute bottom-4 start-4 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:hidden">
-                {t("globe.hintMobile")}
-              </p>
-            </>
-          )}
         </section>
 
         {session?.user?.id && me && !me.city && (
