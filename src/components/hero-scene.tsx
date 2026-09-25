@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { buildSigilEnvironment, createMaskSigil } from "@/lib/mask-sigil";
+import { createWebGLRenderer } from "@/lib/webgl-renderer";
 
 /**
  * Scène 3D du hero — l'« audace unique » de la page d'accueil (DA néo-futurisme).
@@ -140,6 +141,8 @@ function buildGlowSprite(): THREE.Sprite {
 
 export default function HeroScene() {
   const containerRef = useRef<HTMLDivElement>(null);
+  // Sans WebGL, le hero garde son fond CSS : rien à montrer, rien à casser.
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -159,7 +162,11 @@ export default function HeroScene() {
     );
     camera.position.set(0, 0.5, 7);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = createWebGLRenderer({ antialias: true, alpha: true });
+    if (!renderer) {
+      setUnavailable(true);
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -411,6 +418,8 @@ export default function HeroScene() {
       container.removeChild(renderer.domElement);
     };
   }, []);
+
+  if (unavailable) return null;
 
   return (
     <div

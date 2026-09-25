@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { buildSigilEnvironment, createMaskSigil } from "@/lib/mask-sigil";
+import { createWebGLRenderer } from "@/lib/webgl-renderer";
 
 /**
  * Le logo 3D permanent de la navbar : le masque canonique en miniature,
@@ -20,6 +21,9 @@ export default function NavbarSigil() {
   const containerRef = useRef<HTMLDivElement>(null);
   // Incrémenté à chaque perte de contexte WebGL → reconstruction complète.
   const [generation, setGeneration] = useState(0);
+  // Navigateur sans WebGL (mode Isolement d'iOS, GPU bloqué...) : le SVG de
+  // marque prend la place du masque 3D au lieu de faire tomber la page.
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -31,7 +35,11 @@ export default function NavbarSigil() {
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 50);
     camera.position.set(0, 0, 6.2);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = createWebGLRenderer({ antialias: true, alpha: true });
+    if (!renderer) {
+      setUnavailable(true);
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(container.clientWidth || 40, container.clientHeight || 40);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -98,5 +106,9 @@ export default function NavbarSigil() {
     };
   }, [generation]);
 
+  if (unavailable) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src="/brand/mask-sigil.svg" alt="" className="h-5 w-5 opacity-90" />;
+  }
   return <div ref={containerRef} className="h-full w-full" aria-hidden />;
 }

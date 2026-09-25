@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import landDotsRaw from "@/lib/land-dots.json";
+import { useT } from "@/components/i18n-provider";
+import { createWebGLRenderer } from "@/lib/webgl-renderer";
 
 /**
  * Le globe de la page Communauté — l'« audace unique » de l'écran.
@@ -120,8 +122,12 @@ type MarkerObject = {
 };
 
 export default function EarthScene({ markers, selectedCity, onSelectCity }: Props) {
+  const t = useT("ui");
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  // Sans WebGL (mode Isolement d'iOS...), un mot à la place du globe : le
+  // reste de la page Communauté continue de fonctionner.
+  const [unavailable, setUnavailable] = useState(false);
   // Les données ne changent pas pendant la vie de la page ; les callbacks et la
   // sélection passent par des refs pour ne jamais reconstruire la scène.
   const markersRef = useRef(markers);
@@ -156,7 +162,11 @@ export default function EarthScene({ markers, selectedCity, onSelectCity }: Prop
     const mobile = container.clientWidth < 640;
     camera.position.set(0, 0, mobile ? 7.4 : 6.3);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = createWebGLRenderer({ antialias: true, alpha: true });
+    if (!renderer) {
+      setUnavailable(true);
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(container.clientWidth, container.clientHeight);
     // Rotation horizontale au doigt, défilement vertical préservé sur mobile.
@@ -660,6 +670,14 @@ export default function EarthScene({ markers, selectedCity, onSelectCity }: Prop
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (unavailable) {
+    return (
+      <div className="flex h-full w-full items-center justify-center px-6 text-center">
+        <p className="data-label">{t("communityGlobe.unavailable")}</p>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="relative h-full w-full overflow-hidden">

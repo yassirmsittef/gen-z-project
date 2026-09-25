@@ -65,6 +65,7 @@ export const ui = {
 
   // Globe de la communauté
   "communityGlobe.loading": "Inizializzazione del globo…",
+  "communityGlobe.unavailable": "Il 3D non è disponibile in questo browser.",
 
   // Navigation du cadre légal
   "legalNav.ariaLabel": "Pagine legali",

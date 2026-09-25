@@ -62,6 +62,7 @@ export const ui = {
 
   // Community-Globus
   "communityGlobe.loading": "Globus wird initialisiert…",
+  "communityGlobe.unavailable": "3D ist in diesem Browser nicht verfügbar.",
 
   // Navigation des rechtlichen Rahmens
   "legalNav.ariaLabel": "Rechtliche Seiten",

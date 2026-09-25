@@ -62,6 +62,7 @@ export const ui = {
 
   // Community globe
   "communityGlobe.loading": "Spinning up the globe…",
+  "communityGlobe.unavailable": "3D isn't available in this browser.",
 
   // Legal framework navigation
   "legalNav.ariaLabel": "Legal pages",

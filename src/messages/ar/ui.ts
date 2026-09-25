@@ -76,6 +76,7 @@ export const ui = {
 
   // Globe de la communauté
   "communityGlobe.loading": "جارٍ تهيئة الكرة الأرضية…",
+  "communityGlobe.unavailable": "العرض ثلاثي الأبعاد غير متاح في هذا المتصفح.",
 
   // Navigation du cadre légal
   "legalNav.ariaLabel": "الصفحات القانونية",
