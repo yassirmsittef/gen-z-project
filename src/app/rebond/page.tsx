@@ -1,3 +1,5 @@
+import { FEATURES_FROZEN } from "@/lib/launch";
+import { LockedButton } from "@/components/locked-button";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Sparkles } from "lucide-react";
@@ -71,9 +73,13 @@ export default async function ReboundPage({
           <Button asChild>
             <Link href="/projects">{t("hero.support")}</Link>
           </Button>
-          <Button variant="outline" asChild>
-            <Link href="/projects/new">{t("hero.relaunch")}</Link>
-          </Button>
+          {FEATURES_FROZEN ? (
+            <LockedButton variant="outline">{t("hero.relaunch")}</LockedButton>
+          ) : (
+            <Button variant="outline" asChild>
+              <Link href="/projects/new">{t("hero.relaunch")}</Link>
+            </Button>
+          )}
         </div>
       </div>
 

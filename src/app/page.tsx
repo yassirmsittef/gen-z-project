@@ -1,3 +1,5 @@
+import { FEATURES_FROZEN } from "@/lib/launch";
+import { LockedButton } from "@/components/locked-button";
 import Link from "next/link";
 import {
   Activity,
@@ -266,9 +268,13 @@ export default async function HomePage() {
               </LaunchLink>
             </span>
             <span data-magnetic className="inline-flex">
-              <LaunchLink href="/projects/new" variant="outline">
-                {t("hero.launchMine")}
-              </LaunchLink>
+              {FEATURES_FROZEN ? (
+                <LockedButton variant="outline" size="lg">{t("hero.launchMine")}</LockedButton>
+              ) : (
+                <LaunchLink href="/projects/new" variant="outline">
+                  {t("hero.launchMine")}
+                </LaunchLink>
+              )}
             </span>
             <span data-magnetic className="inline-flex">
               <LaunchLink href="/soutenir" variant="outline">
@@ -392,18 +398,27 @@ export default async function HomePage() {
             </ul>
 
             <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <Button asChild>
-                <Link href="/projects/new">
-                  <Rocket aria-hidden />
-                  {t("calls.launchReplacement")}
-                </Link>
-              </Button>
-              <Button variant="outline" asChild>
-                <Link href="/appels/nouveau">
-                  <Megaphone aria-hidden />
-                  {t("calls.publishCall")}
-                </Link>
-              </Button>
+              {FEATURES_FROZEN ? (
+                <>
+                  <LockedButton>{t("calls.launchReplacement")}</LockedButton>
+                  <LockedButton variant="outline">{t("calls.publishCall")}</LockedButton>
+                </>
+              ) : (
+                <>
+                  <Button asChild>
+                    <Link href="/projects/new">
+                      <Rocket aria-hidden />
+                      {t("calls.launchReplacement")}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/appels/nouveau">
+                      <Megaphone aria-hidden />
+                      {t("calls.publishCall")}
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </section>

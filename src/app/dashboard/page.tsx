@@ -1,3 +1,5 @@
+import { FEATURES_FROZEN } from "@/lib/launch";
+import { LockedButton } from "@/components/locked-button";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -354,9 +356,13 @@ export default async function DashboardPage({
                     : t("dashboard.partnershipsLink")}
                 </Link>
               </Button>
-              <Button size="sm" asChild>
-                <Link href="/projects/new">{t("dashboard.launchProject")}</Link>
-              </Button>
+              {FEATURES_FROZEN ? (
+                <LockedButton size="sm">{t("dashboard.launchProject")}</LockedButton>
+              ) : (
+                <Button size="sm" asChild>
+                  <Link href="/projects/new">{t("dashboard.launchProject")}</Link>
+                </Button>
+              )}
             </div>
           </div>
           {myProjects.length === 0 ? (
@@ -383,9 +389,13 @@ export default async function DashboardPage({
                 <Swords className="h-6 w-6 text-secondary" aria-hidden />
                 {t("dashboard.myCalls")}
               </h2>
-              <Button size="sm" variant="ghost" asChild>
-                <Link href="/appels/nouveau">{t("dashboard.publishCall")}</Link>
-              </Button>
+              {FEATURES_FROZEN ? (
+                <LockedButton size="sm" variant="ghost">{t("dashboard.publishCall")}</LockedButton>
+              ) : (
+                <Button size="sm" variant="ghost" asChild>
+                  <Link href="/appels/nouveau">{t("dashboard.publishCall")}</Link>
+                </Button>
+              )}
             </div>
             <ul className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl rounded-se-sm">
               {myCalls.map((call) => (

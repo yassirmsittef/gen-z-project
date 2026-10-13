@@ -63,6 +63,8 @@ export const es = {
     "frozen.now": "Mientras tanto, puedes registrarte, completar tu perfil y conversar en las salas.",
     "frozen.chat": "Ir a las salas",
     "frozen.banner": "Beta abierta: regístrate y únete a las salas desde ya. Proyectos, llamadas y contribuciones abren tras la validación jurídica.",
+    "frozen.close": "Entendido",
+    "frozen.locked": "Cerrado hasta la validación jurídica",
   },
   labels,
   meta,

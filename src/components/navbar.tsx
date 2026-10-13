@@ -1,3 +1,5 @@
+import { FEATURES_FROZEN } from "@/lib/launch";
+import { LockedButton } from "@/components/locked-button";
 import Link from "next/link";
 import {
   Clapperboard,
@@ -85,9 +87,13 @@ export async function Navbar() {
           <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex">
             <Link href="/classements">{t("rankings")}</Link>
           </Button>
-          <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex">
-            <Link href="/projects/new">{t("launchProject")}</Link>
-          </Button>
+          {FEATURES_FROZEN ? (
+            <LockedButton variant="ghost" size="sm" className="hidden lg:inline-flex">{t("launchProject")}</LockedButton>
+          ) : (
+            <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex">
+              <Link href="/projects/new">{t("launchProject")}</Link>
+            </Button>
+          )}
 
           {user ? (
             <>

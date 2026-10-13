@@ -63,6 +63,8 @@ export const it = {
     "frozen.now": "Nel frattempo puoi iscriverti, completare il tuo profilo e chiacchierare nelle stanze.",
     "frozen.chat": "Vai alle stanze",
     "frozen.banner": "Beta aperta: iscriviti ed entra nelle stanze da subito. Progetti, appelli e contributi aprono dopo la convalida giuridica.",
+    "frozen.close": "Ho capito",
+    "frozen.locked": "Chiuso fino alla convalida giuridica",
   },
   labels,
   meta,

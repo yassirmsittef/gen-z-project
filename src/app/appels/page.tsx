@@ -1,3 +1,5 @@
+import { FEATURES_FROZEN } from "@/lib/launch";
+import { LockedButton } from "@/components/locked-button";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ProjectCategory } from "@/generated/prisma/enums";
@@ -80,12 +82,16 @@ export default async function AppelsPage({
         <h1 className="font-display text-4xl font-semibold tracking-tight">{t("hero.title")}</h1>
         <p className="text-muted-foreground">{t("hero.body")}</p>
         <div className="flex flex-wrap items-center gap-3 pt-1">
-          <Button asChild>
-            <Link href="/appels/nouveau">
-              <Megaphone aria-hidden />
-              {t("cta.publish")}
-            </Link>
-          </Button>
+          {FEATURES_FROZEN ? (
+            <LockedButton>{t("cta.publish")}</LockedButton>
+          ) : (
+            <Button asChild>
+              <Link href="/appels/nouveau">
+                <Megaphone aria-hidden />
+                {t("cta.publish")}
+              </Link>
+            </Button>
+          )}
           <p className="text-xs text-muted-foreground">{t("hero.disclaimer")}</p>
         </div>
       </header>
@@ -164,9 +170,13 @@ export default async function AppelsPage({
                 ? t("empty.allAnsweredBody")
                 : t("empty.noMatchBody")}
           </p>
-          <Button asChild variant="outline" className="mt-5">
-            <Link href="/appels/nouveau">{t("cta.publish")}</Link>
-          </Button>
+          {FEATURES_FROZEN ? (
+            <LockedButton variant="outline" className="mt-5">{t("cta.publish")}</LockedButton>
+          ) : (
+            <Button asChild variant="outline" className="mt-5">
+              <Link href="/appels/nouveau">{t("cta.publish")}</Link>
+            </Button>
+          )}
         </div>
       ) : (
         <section aria-labelledby="titre-resultats">

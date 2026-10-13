@@ -29,4 +29,6 @@ export const common = {
   "frozen.now": "En attendant, tu peux t'inscrire, compléter ton profil et discuter dans les salons.",
   "frozen.chat": "Aller dans les salons",
   "frozen.banner": "Bêta ouverte : inscris-toi et rejoins les salons dès maintenant. Projets, appels et contributions ouvrent après validation juridique.",
+  "frozen.close": "Compris",
+  "frozen.locked": "Fermé jusqu'à la validation juridique",
 } as const satisfies Dict;

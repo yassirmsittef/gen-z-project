@@ -63,6 +63,8 @@ export const de = {
     "frozen.now": "Bis dahin kannst du dich registrieren, dein Profil ausfüllen und in den Räumen chatten.",
     "frozen.chat": "Zu den Räumen",
     "frozen.banner": "Offene Beta: Registriere dich und komm jetzt in die Räume. Projekte, Aufrufe und Beiträge öffnen nach der rechtlichen Prüfung.",
+    "frozen.close": "Verstanden",
+    "frozen.locked": "Geschlossen bis zur rechtlichen Prüfung",
   },
   labels,
   meta,

@@ -63,6 +63,8 @@ export const en = {
     "frozen.now": "In the meantime, you can sign up, complete your profile and chat in the rooms.",
     "frozen.chat": "Go to the rooms",
     "frozen.banner": "Open beta: sign up and join the rooms now. Projects, calls and contributions open after legal validation.",
+    "frozen.close": "Got it",
+    "frozen.locked": "Closed until legal validation",
   },
   labels,
   meta,
