@@ -1,5 +1,8 @@
 "use client";
 
+import type { ComponentProps } from "react";
+import { FrozenNotice } from "@/components/frozen-notice";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 import { Video } from "lucide-react";
@@ -80,7 +83,7 @@ function mesurer(file: File, messageIllisible: string): Promise<Mesures> {
  * sur le stockage avec un jeton signé, puis l'action n'enregistre que l'URL
  * et les mesures.
  */
-export function VideoUploadForm({ callId, target }: { callId: string; target: string }) {
+function VideoUploadFormOpen({ callId, target }: { callId: string; target: string }) {
   const t = useT("calls");
   const [state, formAction, pending] = useActionState(postVideoAction, undefined);
   const [fichier, setFichier] = useState<File | null>(null);
@@ -267,4 +270,9 @@ export function VideoUploadForm({ callId, target }: { callId: string; target: st
       </Button>
     </form>
   );
+}
+
+/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+export function VideoUploadForm(props: ComponentProps<typeof VideoUploadFormOpen>) {
+  return FEATURES_FROZEN ? <FrozenNotice /> : <VideoUploadFormOpen {...props} />;
 }

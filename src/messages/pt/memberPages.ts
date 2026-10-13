@@ -179,7 +179,7 @@ export const memberPages = {
   "profile.reportProfile": "Denunciar este perfil",
   "profile.projectsLaunched": "Projetos lançados",
   "profile.contributions": "Contribuições",
-  "profile.investedInCommunity": "Investido na comunidade",
+  "profile.investedInCommunity": "Contribuições para a comunidade",
   "profile.votesOnProofs": "Votos em provas",
   "profile.theirProjects": "Os projetos desta pessoa",
   "profile.recentActivity": "Atividade recente",

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { IBM_Plex_Sans_Arabic, Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
+import { FrozenBanner } from "@/components/frozen-banner";
 import { stripeLive } from "@/lib/stripe-mode";
 import { Atmosphere } from "@/components/atmosphere";
 import { I18nProvider } from "@/components/i18n-provider";
@@ -100,6 +101,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </a>
           <Atmosphere />
           <Navbar />
+          <FrozenBanner />
           <main id="main" tabIndex={-1} className="flex-1 outline-none">
             <PageTransition>{children}</PageTransition>
           </main>

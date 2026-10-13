@@ -11,7 +11,7 @@ export const home = {
   "hero.launchMine": "أطلق مشروعي",
   "hero.projects": "مشاريع",
   "hero.members": "أعضاء",
-  "hero.invested": "مستثمَر (تقريبًا)",
+  "hero.invested": "مساهمات (تقريبًا)",
   "calls.heading": "للاستبدال",
   "calls.introBefore": "علامات لم يعد بعض الأعضاء يريدونها، بينما",
   "calls.introHighlight": "لم يطلق أحد بعد",

@@ -1,5 +1,8 @@
 "use client";
 
+import type { ComponentProps } from "react";
+import { FrozenNotice } from "@/components/frozen-notice";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState } from "react";
 import { Send } from "lucide-react";
 import { submitPartnershipAction } from "@/actions/partnerships";
@@ -14,7 +17,7 @@ import { PARTNERSHIP_COMPENSATION_LABELS } from "@/lib/constants";
  * Formulaire public de demande de partenariat (côté marque, sans compte).
  * En cas de succès, l'action redirige vers le lien de suivi privé.
  */
-export function PartnershipForm({ projectId }: { projectId: string }) {
+function PartnershipFormOpen({ projectId }: { projectId: string }) {
   const t = useT("calls");
   const [state, formAction, pending] = useActionState(submitPartnershipAction, undefined);
 
@@ -137,4 +140,9 @@ export function PartnershipForm({ projectId }: { projectId: string }) {
       <p className="text-xs text-muted-foreground">{t("partnershipForm.afterSend")}</p>
     </form>
   );
+}
+
+/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+export function PartnershipForm(props: ComponentProps<typeof PartnershipFormOpen>) {
+  return FEATURES_FROZEN ? <FrozenNotice /> : <PartnershipFormOpen {...props} />;
 }

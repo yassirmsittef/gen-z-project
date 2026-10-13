@@ -1,5 +1,8 @@
 "use client";
 
+import type { ComponentProps } from "react";
+import { FrozenNotice } from "@/components/frozen-notice";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState } from "react";
 import { Paperclip } from "lucide-react";
 import { submitProofAction } from "@/actions/milestones";
@@ -8,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-export function ProofForm({ milestoneId, lastAttempt }: { milestoneId: string; lastAttempt: boolean }) {
+function ProofFormOpen({ milestoneId, lastAttempt }: { milestoneId: string; lastAttempt: boolean }) {
   const t = useT("project");
   const [state, formAction, pending] = useActionState(submitProofAction, undefined);
 
@@ -66,4 +69,9 @@ export function ProofForm({ milestoneId, lastAttempt }: { milestoneId: string; l
       </Button>
     </form>
   );
+}
+
+/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+export function ProofForm(props: ComponentProps<typeof ProofFormOpen>) {
+  return FEATURES_FROZEN ? <FrozenNotice /> : <ProofFormOpen {...props} />;
 }

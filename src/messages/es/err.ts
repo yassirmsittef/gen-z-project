@@ -15,6 +15,7 @@ export const err = {
   photoTooHeavy: "Foto demasiado pesada — inténtalo con una imagen más pequeña.",
   photoStorageNotConfigured: "El almacenamiento de fotos no está configurado en este entorno.",
   cityUnknownPick: "Ciudad no reconocida — elige una ciudad propuesta por la lista.",
+  featureFrozen: "Esta función aún no está abierta: espera la validación jurídica de GeniGain.",
   paymentsNotConfigured: "Los pagos no están configurados en este entorno.",
   stripeNoCheckout: "Stripe no proporcionó una página de pago — reinténtalo.",
   supportAmountInvalid: "Importe no válido (mínimo 1 CHF).",

@@ -1,3 +1,4 @@
+import { FEATURES_FROZEN } from "@/lib/launch";
 import type { Prisma, Project } from "@/generated/prisma/client";
 import { Check, ExternalLink, Hourglass, Lock, Scale, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { voteProofAction } from "@/actions/milestones";
@@ -220,7 +221,7 @@ export async function MilestoneTimeline({
                       )}
                     </div>
 
-                    {canVote && (
+                    {canVote && !FEATURES_FROZEN && (
                       <div className="flex gap-2 pt-1">
                         <form action={voteProofAction.bind(null, proof.id, "APPROVE")}>
                           <Button type="submit" size="sm" variant="success">

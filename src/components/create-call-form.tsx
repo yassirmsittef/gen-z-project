@@ -1,5 +1,7 @@
 "use client";
 
+import { FrozenNotice } from "@/components/frozen-notice";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState } from "react";
 import { ShieldAlert } from "lucide-react";
 import { createCallAction } from "@/actions/boycott";
@@ -26,7 +28,7 @@ const selectClass =
  * un membre qui écrit son appel doit avoir lu ce qui l'engage avant la
  * première touche, pas après l'avoir envoyé.
  */
-export function CreateCallForm() {
+function CreateCallFormOpen() {
   const t = useT("calls");
   const [state, formAction, pending] = useActionState(createCallAction, undefined);
 
@@ -149,4 +151,9 @@ export function CreateCallForm() {
       </div>
     </form>
   );
+}
+
+/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+export function CreateCallForm() {
+  return FEATURES_FROZEN ? <FrozenNotice /> : <CreateCallFormOpen />;
 }

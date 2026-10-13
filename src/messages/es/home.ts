@@ -12,7 +12,7 @@ export const home = {
   "hero.launchMine": "Lanzar el mío",
   "hero.projects": "Proyectos",
   "hero.members": "Miembros",
-  "hero.invested": "Invertido (equiv.)",
+  "hero.invested": "Aportado (equiv.)",
   "calls.heading": "Por reemplazar",
   "calls.introBefore": "Marcas que algunos miembros ya no quieren, y para las que",
   "calls.introHighlight": "nadie ha lanzado todavía",

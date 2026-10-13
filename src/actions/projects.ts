@@ -1,4 +1,5 @@
 "use server";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { domainErrorMessage, tErr } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
@@ -22,6 +23,7 @@ export async function createProjectAction(
   _prev: CreateProjectState,
   formData: FormData
 ): Promise<CreateProjectState> {
+  if (FEATURES_FROZEN) return { error: await tErr("featureFrozen") };
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 

@@ -1,3 +1,4 @@
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { tErr } from "@/lib/action-errors";
 import { NextResponse } from "next/server";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
@@ -27,6 +28,7 @@ class Refus extends Error {}
 
 export async function POST(request: Request): Promise<NextResponse> {
   if (!isSameOrigin(request)) return NextResponse.json({ error: "Origine refusée." }, { status: 403 });
+  if (FEATURES_FROZEN) return NextResponse.json({ error: await tErr("featureFrozen") }, { status: 403 });
   const body = (await request.json().catch(() => null)) as HandleUploadBody | null;
   if (!body) return NextResponse.json({ error: await tErr("uploadImpossible") }, { status: 400 });
 

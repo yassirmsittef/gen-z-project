@@ -58,7 +58,7 @@ export const communityPages = {
   "results.resetCta": "إعادة تعيين المرشّحات ←",
   "member.offRadar": "خارج الرادار",
   "member.contact": "مراسلة {name}",
-  "member.invested": "{amount} مستثمَرة",
+  "member.invested": "{amount} من المساهمات",
 
   // ---------- /classements ----------
   "meta.rankingsTitle": "التصنيفات",

@@ -1,5 +1,8 @@
 "use client";
 
+import type { ComponentProps } from "react";
+import { FrozenNotice } from "@/components/frozen-notice";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState } from "react";
 import Link from "next/link";
 import { Rocket } from "lucide-react";
@@ -17,7 +20,7 @@ const selectClass =
  * aucun projet éligible, on ne cache pas le bloc : on l'envoie en créer un,
  * l'appel en main.
  */
-export function CallAnswerForm({
+function CallAnswerFormOpen({
   callId,
   slug,
   target,
@@ -85,4 +88,9 @@ export function CallAnswerForm({
       </Button>
     </form>
   );
+}
+
+/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+export function CallAnswerForm(props: ComponentProps<typeof CallAnswerFormOpen>) {
+  return FEATURES_FROZEN ? <FrozenNotice /> : <CallAnswerFormOpen {...props} />;
 }

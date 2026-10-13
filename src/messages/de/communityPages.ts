@@ -37,7 +37,7 @@ export const communityPages = {
   "results.resetCta": "Filter zurücksetzen →",
   "member.offRadar": "Außerhalb des Radars",
   "member.contact": "{name} kontaktieren",
-  "member.invested": "{amount} investiert",
+  "member.invested": "{amount} beigetragen",
 
   // ---------- /classements ----------
   "meta.rankingsTitle": "Ranglisten",

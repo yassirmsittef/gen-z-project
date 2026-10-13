@@ -1,4 +1,6 @@
 "use server";
+import { tErr } from "@/lib/action-errors";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { domainErrorMessage } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
@@ -20,6 +22,7 @@ export async function postVideoAction(
   _prev: VideoFormState,
   formData: FormData
 ): Promise<VideoFormState> {
+  if (FEATURES_FROZEN) return { error: await tErr("featureFrozen") };
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 

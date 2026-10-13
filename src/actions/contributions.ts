@@ -1,4 +1,5 @@
 "use server";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { domainErrorMessage, tErr } from "@/lib/action-errors";
 
 import { redirect } from "next/navigation";
@@ -21,6 +22,7 @@ export async function contributeAction(
   _prev: ContributeState,
   formData: FormData
 ): Promise<ContributeState> {
+  if (FEATURES_FROZEN) return { error: await tErr("featureFrozen") };
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 

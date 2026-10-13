@@ -222,7 +222,7 @@ export default async function HomePage() {
     { label: t("hero.projects"), value: projectCount.toLocaleString(localeTag(locale)) },
     { label: t("hero.members"), value: userCount.toLocaleString(localeTag(locale)) },
   ];
-  const invested = formatMoney(contributed._sum.usdCents ?? 0, "usd", locale);
+  const contributedTotal = formatMoney(contributed._sum.usdCents ?? 0, "usd", locale);
 
   return (
     <div>
@@ -276,7 +276,7 @@ export default async function HomePage() {
               </LaunchLink>
             </span>
           </div>
-          {/* Projets et membres côte à côte ; le montant investi en dessous
+          {/* Projets et membres côte à côte ; le total des contributions en dessous
               sur toute la largeur — il peut grandir (10 M+) sans rien casser. */}
           <dl
             className="hero-reveal mt-4 grid w-full max-w-2xl grid-cols-2 gap-4"
@@ -290,7 +290,7 @@ export default async function HomePage() {
             ))}
             <div className="glass col-span-2 rounded-2xl rounded-se-sm px-5 py-4">
               <dd className="font-display bg-accent-gradient bg-clip-text text-3xl font-semibold text-transparent [overflow-wrap:anywhere]">
-                {invested}
+                {contributedTotal}
               </dd>
               <dt className="data-label mt-1">{t("hero.invested")}</dt>
             </div>

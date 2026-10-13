@@ -1,5 +1,8 @@
 "use client";
 
+import type { ComponentProps } from "react";
+import { FrozenNotice } from "@/components/frozen-notice";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState, useEffect } from "react";
 import { Landmark } from "lucide-react";
 import { connectOnboardingAction } from "@/actions/connect";
@@ -50,7 +53,7 @@ function PayoutTotals({ payouts, active }: { payouts: PayoutSummary[]; active: b
  *  - onboarding incomplet → « Reprendre la configuration »
  *  - versements actifs → confirmation, plus d'action.
  */
-export function ConnectForm({
+function ConnectFormOpen({
   stripeEnabled,
   status,
   payouts,
@@ -122,4 +125,9 @@ export function ConnectForm({
       <PayoutTotals payouts={payouts} active={false} />
     </form>
   );
+}
+
+/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+export function ConnectForm(props: ComponentProps<typeof ConnectFormOpen>) {
+  return FEATURES_FROZEN ? <FrozenNotice /> : <ConnectFormOpen {...props} />;
 }

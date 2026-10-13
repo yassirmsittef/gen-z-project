@@ -1,3 +1,4 @@
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { NextResponse } from "next/server";
 import {
   backfillStorageSizes,
@@ -51,9 +52,11 @@ export async function GET(request: Request) {
   // Séquestre chez le porteur : d'abord rejouer les mises sous séquestre
   // manquées (webhook tombé, compte pas prêt), puis remboursements, puis
   // libérations.
-  await executeDueEscrowTransfers();
+  // Avant-lancement : aucun argent ne part vers un porteur ; les
+  // remboursements, eux, continuent toujours (rendre l'argent n'attend pas).
+  if (!FEATURES_FROZEN) await executeDueEscrowTransfers();
   await executeDueRefunds();
-  await executeDuePayouts();
+  if (!FEATURES_FROZEN) await executeDuePayouts();
   // Filet des emails de notifications majeures manqués aux points chauds.
   await sendPendingNotificationEmails();
   // Ménage anti brute-force : les échecs sortis de la fenêtre ne servent plus.

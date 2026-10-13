@@ -160,7 +160,7 @@ export default function ConfidentialitePage() {
         <strong>Ce que tout le monde voit, même sans compte</strong> : ton pseudo, ta photo, ta
         bio, tes liens, tes compétences, ta ville, ta réputation et ses derniers événements, ta
         date d’inscription, tes projets, le nombre de tes contributions et de tes votes, le total
-        que tu as investi dans la communauté (en dollars), et ta présence parmi les contributeurs
+        de tes contributions dans la communauté (en dollars), et ta présence parmi les contributeurs
         d’un projet — sauf si tu as coché « anonyme » au paiement. « Le pouls » de l’accueil
         montre ton arrivée, tes contributions non anonymes avec leur montant, tes projets lancés
         et tes dons à GeniGain avec leur montant. Ton email n’est jamais public.

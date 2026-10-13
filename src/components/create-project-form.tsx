@@ -1,5 +1,8 @@
 "use client";
 
+import type { ComponentProps } from "react";
+import { FrozenNotice } from "@/components/frozen-notice";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState, useState } from "react";
 import { Plus, Rocket, Swords, Trash2 } from "lucide-react";
 import { createProjectAction } from "@/actions/projects";
@@ -32,7 +35,7 @@ const EMPTY_MILESTONE: MilestoneDraft = { title: "", description: "", amount: 0 
  * cahier des charges sous les yeux pendant la rédaction et on transporte le
  * slug jusqu'à l'action, qui déclare le projet remplaçant à la création.
  */
-export function CreateProjectForm({
+function CreateProjectFormOpen({
   answersCall,
 }: {
   answersCall?: { slug: string; target: string; wanted: string; category: string };
@@ -312,4 +315,9 @@ export function CreateProjectForm({
       </Button>
     </form>
   );
+}
+
+/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+export function CreateProjectForm(props: ComponentProps<typeof CreateProjectFormOpen>) {
+  return FEATURES_FROZEN ? <FrozenNotice /> : <CreateProjectFormOpen {...props} />;
 }

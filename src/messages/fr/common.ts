@@ -23,4 +23,10 @@ export const common = {
   "support.login": "Connecte-toi pour soutenir GeniGain.",
   someone: "Quelqu'un",
   justNow: "à l'instant",
+  "frozen.badge": "Bientôt",
+  "frozen.title": "Cette fonction ouvre bientôt",
+  "frozen.body": "GeniGain ouvre d'abord sa communauté. Les projets, les appels, les contributions et les versements ouvriront dès qu'un avocat aura validé notre cadre juridique : on préfère prendre ce temps pour protéger ton argent et tes droits.",
+  "frozen.now": "En attendant, tu peux t'inscrire, compléter ton profil et discuter dans les salons.",
+  "frozen.chat": "Aller dans les salons",
+  "frozen.banner": "Bêta ouverte : inscris-toi et rejoins les salons dès maintenant. Projets, appels et contributions ouvrent après validation juridique.",
 } as const satisfies Dict;

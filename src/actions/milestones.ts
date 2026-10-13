@@ -1,4 +1,6 @@
 "use server";
+import { tErr } from "@/lib/action-errors";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { domainErrorMessage } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
@@ -16,6 +18,7 @@ export async function submitProofAction(
   _prev: ProofFormState,
   formData: FormData
 ): Promise<ProofFormState> {
+  if (FEATURES_FROZEN) return { error: await tErr("featureFrozen") };
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
@@ -48,6 +51,7 @@ export async function submitProofAction(
  * DomainError résiduelle (double-clic, course) est ignorée sans casser la page.
  */
 export async function voteProofAction(proofId: string, decision: VoteDecision) {
+  if (FEATURES_FROZEN) return; // un vote validé libère un versement
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 

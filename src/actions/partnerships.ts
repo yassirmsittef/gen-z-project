@@ -1,4 +1,5 @@
 "use server";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { headers } from "next/headers";
 import { MAX_PARTNERSHIP_REQUESTS_PER_IP_PER_HOUR } from "@/lib/constants";
 import { assertUnderLimit, ipFromHeaders, ipKey, recordHit } from "@/lib/throttle";
@@ -23,6 +24,7 @@ export async function submitPartnershipAction(
   _prev: PartnershipFormState,
   formData: FormData
 ): Promise<PartnershipFormState> {
+  if (FEATURES_FROZEN) return { error: await tErr("featureFrozen") };
   // Pot-de-miel : les humains ne voient pas ce champ, les bots le remplissent.
   if (String(formData.get("companySize") ?? "").length > 0) {
     return { error: await tErr("sendBlocked") };
@@ -124,6 +126,7 @@ export async function respondPartnershipAction(
   _prev: PartnershipResponseState,
   formData: FormData
 ): Promise<PartnershipResponseState> {
+  if (FEATURES_FROZEN) return { error: await tErr("featureFrozen") };
   const { partnershipResponseSchema } = await requestSchemas();
   const parsed = partnershipResponseSchema.safeParse({
     requestId: formData.get("requestId"),
@@ -162,6 +165,7 @@ export async function deepAnalyzeAction(
   _prev: DeepAnalysisState,
   formData: FormData
 ): Promise<DeepAnalysisState> {
+  if (FEATURES_FROZEN) return { error: await tErr("featureFrozen") };
   const requestId = String(formData.get("requestId") ?? "");
   const request = await requireOwnedRequest(requestId);
   if (!request) return { error: await tErr("requestNotFound") };

@@ -1,5 +1,8 @@
 "use client";
 
+import type { ComponentProps } from "react";
+import { FrozenNotice } from "@/components/frozen-notice";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState, useEffect, useState } from "react";
 import { BadgePercent, EyeOff, ShieldCheck } from "lucide-react";
 import { contributeAction } from "@/actions/contributions";
@@ -19,7 +22,7 @@ const QUICK_AMOUNTS = [5, 10, 25, 50];
  * externe est naviguée côté client — un redirect serveur ne sort pas de
  * l'app.
  */
-export function ContributeForm({
+function ContributeFormOpen({
   projectId,
   currency,
 }: {
@@ -119,4 +122,9 @@ export function ContributeForm({
       </p>
     </form>
   );
+}
+
+/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+export function ContributeForm(props: ComponentProps<typeof ContributeFormOpen>) {
+  return FEATURES_FROZEN ? <FrozenNotice /> : <ContributeFormOpen {...props} />;
 }

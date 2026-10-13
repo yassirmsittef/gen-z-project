@@ -1,4 +1,5 @@
 "use server";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { tErr } from "@/lib/action-errors";
 
 import { redirect } from "next/navigation";
@@ -17,6 +18,7 @@ export async function connectOnboardingAction(
   _prev: ConnectFormState,
   _formData: FormData
 ): Promise<ConnectFormState> {
+  if (FEATURES_FROZEN) return { error: await tErr("featureFrozen") };
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 

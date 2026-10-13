@@ -23,6 +23,7 @@ export const err = {
   cityUnknownPick: "Ville non reconnue — choisis une ville proposée par la liste.",
 
   // Actions — projets & contributions
+  featureFrozen: "Cette fonction n'est pas encore ouverte : elle attend la validation juridique de GeniGain.",
   paymentsNotConfigured: "Les paiements ne sont pas configurés sur cet environnement.",
   stripeNoCheckout: "Stripe n'a pas fourni de page de paiement — réessaie.",
   supportAmountInvalid: "Montant invalide (1 CHF minimum).",

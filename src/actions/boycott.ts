@@ -1,4 +1,5 @@
 "use server";
+import { FEATURES_FROZEN } from "@/lib/launch";
 import { domainErrorMessage, tErr } from "@/lib/action-errors";
 
 import { revalidatePath } from "next/cache";
@@ -24,6 +25,7 @@ export async function createCallAction(
   _prev: CallFormState,
   formData: FormData
 ): Promise<CallFormState> {
+  if (FEATURES_FROZEN) return { error: await tErr("featureFrozen") };
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
@@ -126,6 +128,7 @@ export async function answerCallAction(
   _prev: AnswerState,
   formData: FormData
 ): Promise<AnswerState> {
+  if (FEATURES_FROZEN) return { error: await tErr("featureFrozen") };
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 

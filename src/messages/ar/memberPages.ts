@@ -216,7 +216,7 @@ export const memberPages = {
   "profile.reportProfile": "الإبلاغ عن هذا الملف",
   "profile.projectsLaunched": "مشاريع أُطلقت",
   "profile.contributions": "مساهمات",
-  "profile.investedInCommunity": "مستثمَر في المجتمع",
+  "profile.investedInCommunity": "مساهمات في المجتمع",
   "profile.votesOnProofs": "أصوات على الإثباتات",
   "profile.theirProjects": "مشاريعه",
   "profile.recentActivity": "النشاط الأخير",

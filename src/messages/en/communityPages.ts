@@ -33,7 +33,7 @@ export const communityPages = {
   "results.resetCta": "Reset the filters →",
   "member.offRadar": "Off radar",
   "member.contact": "Contact {name}",
-  "member.invested": "{amount} invested",
+  "member.invested": "{amount} contributed",
 
   // ---------- /classements ----------
   "meta.rankingsTitle": "Rankings",

@@ -12,7 +12,7 @@ export const home = {
   "hero.launchMine": "Launch mine",
   "hero.projects": "Projects",
   "hero.members": "Members",
-  "hero.invested": "Invested (equiv.)",
+  "hero.invested": "Contributed (equiv.)",
   "calls.heading": "Up for replacement",
   "calls.introBefore": "Brands members no longer want, and for which",
   "calls.introHighlight": "nobody has launched",

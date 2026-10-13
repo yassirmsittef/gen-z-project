@@ -179,7 +179,7 @@ export const memberPages = {
   "profile.reportProfile": "Signaler ce profil",
   "profile.projectsLaunched": "Projets lancés",
   "profile.contributions": "Contributions",
-  "profile.investedInCommunity": "Investis dans la communauté",
+  "profile.investedInCommunity": "En contributions à la communauté",
   "profile.votesOnProofs": "Votes sur des preuves",
   "profile.theirProjects": "Ses projets",
   "profile.recentActivity": "Activité récente",
