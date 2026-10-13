@@ -2,7 +2,7 @@ import type { Messages } from "../types";
 
 export const home = {
   "hero.badgeLive": "عمولة 0٪ · مدفوعات مؤمَّنة عبر Stripe",
-  "hero.badgeTest": "نسخة تجريبية · عمولة 0٪ · مدفوعات Stripe في وضع الاختبار",
+  "hero.badgeTest": "نسخة تجريبية مفتوحة · عمولة 0٪",
   "hero.titleLead": "المجتمع الذي يموّل",
   "hero.titleAccent": "جيلك",
   "hero.subtitle":

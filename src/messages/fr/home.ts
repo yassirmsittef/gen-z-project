@@ -3,7 +3,7 @@ import type { Dict } from "@/lib/i18n/t";
 /** La page d'accueil : héros, appels à remplacer, étapes, vitrine, pouls. */
 export const home = {
   "hero.badgeLive": "0 % de commission · paiements sécurisés par Stripe",
-  "hero.badgeTest": "Bêta · 0 % de commission · paiements Stripe en mode test",
+  "hero.badgeTest": "Bêta ouverte · 0 % de commission",
   "hero.titleLead": "La communauté qui finance",
   "hero.titleAccent": "ta génération",
   "hero.subtitle":

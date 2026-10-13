@@ -3,7 +3,7 @@ import type { Messages } from "../types";
 /** A página de entrada: herói, apelos a substituir, etapas, montra, pulso. */
 export const home = {
   "hero.badgeLive": "0 % de comissão · pagamentos protegidos pela Stripe",
-  "hero.badgeTest": "Beta · 0 % de comissão · pagamentos Stripe em modo de teste",
+  "hero.badgeTest": "Beta aberta · 0 % de comissão",
   "hero.titleLead": "A comunidade que financia",
   "hero.titleAccent": "a tua geração",
   "hero.subtitle":

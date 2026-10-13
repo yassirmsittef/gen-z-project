@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   Clapperboard,
   FolderKanban,
+  LogIn,
   LogOut,
   Megaphone,
   MessagesSquare,
@@ -160,7 +161,15 @@ export async function Navbar() {
             </>
           ) : (
             <>
-              <Button variant="ghost" size="sm" asChild>
+              {/* Sur téléphone, « Connexion » passe en icône : en toutes lettres,
+                  elle poussait « S'inscrire » hors de l'écran (vu sur iPhone). */}
+              <Button variant="ghost" size="icon" asChild title={t("signIn")} className={`sm:hidden ${iconButton}`}>
+                <Link href="/login">
+                  <LogIn className="rtl:-scale-x-100" aria-hidden />
+                  <span className="sr-only">{t("signIn")}</span>
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
                 <Link href="/login">{t("signIn")}</Link>
               </Button>
               <Button variant="default" size="sm" asChild>
