@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { FrozenNotice } from "@/components/frozen-notice";
+import { LockedButton } from "@/components/locked-button";
 import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState, useEffect, useState } from "react";
 import { BadgePercent, EyeOff, ShieldCheck } from "lucide-react";
@@ -124,7 +124,8 @@ function ContributeFormOpen({
   );
 }
 
-/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+/** Avant-lancement : un cadenas à la place du formulaire ; un appui dit pourquoi (voir lib/launch). */
 export function ContributeForm(props: ComponentProps<typeof ContributeFormOpen>) {
-  return FEATURES_FROZEN ? <FrozenNotice /> : <ContributeFormOpen {...props} />;
+  const t = useT("common");
+  return FEATURES_FROZEN ? <LockedButton className="w-full">{t("frozen.contribute")}</LockedButton> : <ContributeFormOpen {...props} />;
 }

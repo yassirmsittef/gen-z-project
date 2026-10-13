@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { FrozenNotice } from "@/components/frozen-notice";
+import { LockedButton } from "@/components/locked-button";
 import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState, useEffect } from "react";
 import { Landmark } from "lucide-react";
@@ -127,7 +127,8 @@ function ConnectFormOpen({
   );
 }
 
-/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+/** Avant-lancement : un cadenas à la place du formulaire ; un appui dit pourquoi (voir lib/launch). */
 export function ConnectForm(props: ComponentProps<typeof ConnectFormOpen>) {
-  return FEATURES_FROZEN ? <FrozenNotice /> : <ConnectFormOpen {...props} />;
+  const t = useT("account");
+  return FEATURES_FROZEN ? <LockedButton variant="outline" size="sm">{t("connectForm.setup")}</LockedButton> : <ConnectFormOpen {...props} />;
 }

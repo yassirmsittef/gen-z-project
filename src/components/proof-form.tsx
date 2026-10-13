@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { FrozenNotice } from "@/components/frozen-notice";
+import { LockedButton } from "@/components/locked-button";
 import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState } from "react";
 import { Paperclip } from "lucide-react";
@@ -71,7 +71,8 @@ function ProofFormOpen({ milestoneId, lastAttempt }: { milestoneId: string; last
   );
 }
 
-/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+/** Avant-lancement : un cadenas à la place du formulaire ; un appui dit pourquoi (voir lib/launch). */
 export function ProofForm(props: ComponentProps<typeof ProofFormOpen>) {
-  return FEATURES_FROZEN ? <FrozenNotice /> : <ProofFormOpen {...props} />;
+  const t = useT("project");
+  return FEATURES_FROZEN ? <LockedButton size="sm">{t("proofForm.submit")}</LockedButton> : <ProofFormOpen {...props} />;
 }

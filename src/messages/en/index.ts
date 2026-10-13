@@ -65,6 +65,7 @@ export const en = {
     "frozen.banner": "Open beta: sign up and join the rooms now. Projects, calls and contributions open after legal validation.",
     "frozen.close": "Got it",
     "frozen.locked": "Closed until legal validation",
+    "frozen.contribute": "Contribute",
   },
   labels,
   meta,

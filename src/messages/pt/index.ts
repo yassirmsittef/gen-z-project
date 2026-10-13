@@ -65,6 +65,7 @@ export const pt = {
     "frozen.banner": "Beta aberta: inscreve-te e entra nas salas já. Projetos, apelos e contribuições abrem após a validação jurídica.",
     "frozen.close": "Entendi",
     "frozen.locked": "Fechado até à validação jurídica",
+    "frozen.contribute": "Contribuir",
   },
   labels,
   meta,

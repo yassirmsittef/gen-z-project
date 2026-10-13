@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { FrozenNotice } from "@/components/frozen-notice";
+import { LockedButton } from "@/components/locked-button";
 import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState } from "react";
 import { Send } from "lucide-react";
@@ -142,7 +142,8 @@ function PartnershipFormOpen({ projectId }: { projectId: string }) {
   );
 }
 
-/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+/** Avant-lancement : un cadenas à la place du formulaire ; un appui dit pourquoi (voir lib/launch). */
 export function PartnershipForm(props: ComponentProps<typeof PartnershipFormOpen>) {
-  return FEATURES_FROZEN ? <FrozenNotice /> : <PartnershipFormOpen {...props} />;
+  const t = useT("calls");
+  return FEATURES_FROZEN ? <LockedButton>{t("partnershipForm.submit")}</LockedButton> : <PartnershipFormOpen {...props} />;
 }

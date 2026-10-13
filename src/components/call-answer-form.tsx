@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { FrozenNotice } from "@/components/frozen-notice";
+import { LockedButton } from "@/components/locked-button";
 import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState } from "react";
 import Link from "next/link";
@@ -90,7 +90,8 @@ function CallAnswerFormOpen({
   );
 }
 
-/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+/** Avant-lancement : un cadenas à la place du formulaire ; un appui dit pourquoi (voir lib/launch). */
 export function CallAnswerForm(props: ComponentProps<typeof CallAnswerFormOpen>) {
-  return FEATURES_FROZEN ? <FrozenNotice /> : <CallAnswerFormOpen {...props} />;
+  const t = useT("calls");
+  return FEATURES_FROZEN ? <LockedButton className="mt-4">{t("callAnswerForm.submit", { target: props.target })}</LockedButton> : <CallAnswerFormOpen {...props} />;
 }

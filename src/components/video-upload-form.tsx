@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { FrozenNotice } from "@/components/frozen-notice";
+import { LockedButton } from "@/components/locked-button";
 import { FEATURES_FROZEN } from "@/lib/launch";
 import { useActionState, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
@@ -272,7 +272,8 @@ function VideoUploadFormOpen({ callId, target }: { callId: string; target: strin
   );
 }
 
-/** Avant-lancement : le formulaire attend la validation juridique (voir lib/launch). */
+/** Avant-lancement : un cadenas à la place du formulaire ; un appui dit pourquoi (voir lib/launch). */
 export function VideoUploadForm(props: ComponentProps<typeof VideoUploadFormOpen>) {
-  return FEATURES_FROZEN ? <FrozenNotice /> : <VideoUploadFormOpen {...props} />;
+  const t = useT("calls");
+  return FEATURES_FROZEN ? <LockedButton className="mt-4">{t("videoUploadForm.submit")}</LockedButton> : <VideoUploadFormOpen {...props} />;
 }

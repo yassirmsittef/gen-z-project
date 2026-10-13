@@ -65,6 +65,7 @@ export const de = {
     "frozen.banner": "Offene Beta: Registriere dich und komm jetzt in die Räume. Projekte, Aufrufe und Beiträge öffnen nach der rechtlichen Prüfung.",
     "frozen.close": "Verstanden",
     "frozen.locked": "Geschlossen bis zur rechtlichen Prüfung",
+    "frozen.contribute": "Beitragen",
   },
   labels,
   meta,

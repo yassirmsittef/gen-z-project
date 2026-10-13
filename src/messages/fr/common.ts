@@ -31,4 +31,5 @@ export const common = {
   "frozen.banner": "Bêta ouverte : inscris-toi et rejoins les salons dès maintenant. Projets, appels et contributions ouvrent après validation juridique.",
   "frozen.close": "Compris",
   "frozen.locked": "Fermé jusqu'à la validation juridique",
+  "frozen.contribute": "Contribuer",
 } as const satisfies Dict;
